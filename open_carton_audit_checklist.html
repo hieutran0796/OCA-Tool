@@ -124,7 +124,10 @@
   --logo-font: 'Courier New', Courier, monospace;
 }
 *{box-sizing:border-box;}
-html,body{margin:0;padding:0;}
+/* Stop the browser's swipe-down-to-refresh gesture from firing on mobile — that gesture
+   reloads the page (losing in-progress audit data) and is very easy to trigger by accident
+   while scrolling a long checklist/report. */
+html,body{margin:0;padding:0; overscroll-behavior-y:contain;}
 body{
   font-family:var(--font);
   background:var(--beige);
@@ -149,6 +152,13 @@ button, input, select, textarea{ font-family:inherit; font-size:14px; }
 .topbar-brand{ display:flex; align-items:baseline; gap:12px; }
 .boka-logo{ font-family:var(--logo-font); font-size:16px; font-weight:normal; color:var(--accent); text-transform:lowercase; }
 .app-title{ font-family:var(--font); font-size:19px; font-weight:600; letter-spacing:0.5px; color:#fff; }
+.topbar-contact{
+  font-size:10px; line-height:1.5; text-align:right; color:var(--accent); opacity:0.9; flex-shrink:1;
+}
+.topbar-contact-vi{ font-style:italic; }
+.topbar-contact a{ color:#fff; font-weight:600; text-decoration:none; }
+.topbar-contact a:hover{ text-decoration:underline; }
+@media (max-width:600px){ .topbar-contact{ display:none; } }
 
 .view{ display:none; padding:16px; }
 .view.active{ display:block; }
@@ -186,6 +196,13 @@ h2.section-title .vi{ text-transform:uppercase; font-size:13px; }
 .product-table td input:focus{ outline:1px solid var(--accent); background:#fff; }
 .product-table .empty-row td{ text-align:center; color:var(--vi); font-size:12px; padding:16px; }
 .product-table td:last-child{ text-align:center; padding:4px 6px; }
+/* "Min for AQL" column only makes sense in AQL quality mode — hidden by default, shown
+   when onQualityModeChange() toggles the .aql-mode class on the table. Hiding both the
+   <col> and the cells collapses the column width instead of leaving a blank gap. */
+.product-table col.aql-col, .product-table th.aql-col, .product-table td.aql-col{ display:none; }
+.product-table.aql-mode col.aql-col, .product-table.aql-mode th.aql-col, .product-table.aql-mode td.aql-col{ display:table-cell; }
+.product-table.aql-mode col.aql-col{ display:table-column; }
+.aql-min-cell{ font-size:11px; color:var(--brown); text-align:center; }
 /* higher specificity (element+class) so this always wins over the generic .thumb-del
    rule below regardless of source order — that mismatch was why the delete button
    was invisible/mispositioned (stuck at position:absolute) and the column looked
@@ -231,11 +248,11 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 
 /* ---------------- Summary bar (carton list) ---------------- */
 #rep-summary-bar{
-  display:flex; flex-wrap:wrap; gap:8px 20px; background:#fff; border:1px solid var(--border);
-  border-radius:10px; padding:12px 16px; margin-bottom:16px; font-size:12px;
+  display:flex; flex-wrap:wrap; gap:16px 32px; background:#fff; border:1px solid var(--border);
+  border-radius:10px; padding:16px 20px; margin-bottom:16px; font-size:12px;
 }
-.rsum-item{ display:flex; flex-direction:column; gap:2px; }
-.rsum-item b{ color:var(--en); font-size:13px; }
+.rsum-item{ display:flex; flex-direction:column; gap:6px; }
+.rsum-item b{ color:var(--en); font-size:13px; text-transform:uppercase; }
 
 .empty-hint{ text-align:center; padding:40px 16px; color:var(--vi); font-size:13px; }
 
@@ -243,7 +260,8 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 #carton-cards{ display:flex; flex-direction:column; gap:12px; margin-bottom:90px; }
 .carton-card{ background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
 .cc-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-.cc-title{ font-weight:600; color:var(--en); }
+.cc-title{ font-weight:600; color:var(--en); line-height:1.6; }
+.cc-num{ color:var(--ng); font-weight:800; }
 .badge{ font-size:10px; font-weight:700; padding:4px 8px; border-radius:20px; letter-spacing:0.5px; }
 .badge-pending{ background:#eee; color:#777; }
 .badge-pass{ background:var(--ok-bg); color:var(--ok); }
@@ -345,12 +363,20 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 
 /* ---------------- Stepbar ---------------- */
 .stepbar{ display:flex; background:#fff; border-bottom:1px solid var(--border); position:sticky; top:57px; z-index:45; }
-.stepbar .step{ flex:1; text-align:center; padding:10px 4px; font-size:11px; font-weight:600; color:#999; border-bottom:3px solid transparent; }
+.stepbar .step{ flex:1; text-align:center; padding:10px 4px; font-size:11px; font-weight:600; color:#999; border-bottom:3px solid transparent; text-transform:uppercase; letter-spacing:0.3px; }
 .stepbar .step.active{ color:var(--brown); border-bottom-color:var(--accent); }
+.step-gear{
+  margin-left:4px; border:none; background:none; color:inherit; font-size:12px; cursor:pointer;
+  padding:2px 4px; vertical-align:middle; opacity:0.75;
+}
+.step-gear:hover{ opacity:1; }
 
 /* ---------------- Report / print pages ---------------- */
 #view-report{ background:#e9e4d8; }
-.report-toolbar{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.report-toolbar{
+  display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;
+  position:sticky; top:97px; z-index:40; background:#e9e4d8; padding:10px 0; margin-top:-10px;
+}
 
 .upper{ text-transform:uppercase; }
 
@@ -369,8 +395,14 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 
 .pg-header{ display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--brown); padding-bottom:10px; margin-bottom:14px; }
 .pg-logo{ font-family:var(--logo-font); font-size:18px; color:var(--brown); }
-.pg-hdr-mid{ font-size:12px; text-align:center; }
-.pg-hdr-right{ font-size:11px; color:var(--vi); }
+.pg-header .boka-logo{ color:#000; font-size:17px; }
+.pg-hdr-mid{ font-size:10px; text-align:center; }
+.pg-hdr-right{ font-size:10px; color:#000; }
+.report-title{ text-align:center; font-size:22px; font-weight:700; letter-spacing:1px; color:var(--brown); margin:2px 0 16px; }
+.rpt-section-title{
+  font-size:13px; font-weight:800; letter-spacing:0.5px; color:var(--brown); text-transform:uppercase;
+  margin:18px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--group-bg);
+}
 
 .meta-table{ width:100%; border-collapse:collapse; margin-bottom:16px; }
 .meta-table td{ border:1px solid var(--border); padding:8px 10px; font-size:12px; }
@@ -383,18 +415,60 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 
 .carton-summary-table{ width:100%; border-collapse:collapse; font-size:11px; }
 .carton-summary-table th, .carton-summary-table td{ border:1px solid var(--border); padding:6px 8px; text-align:center; }
+/* Product List variant: the Product Name column reads better left-aligned than centered. */
+.order-list-table td:nth-child(2){ text-align:left; }
 .carton-summary-table th{ background:var(--brown); color:#fff; text-transform:none; }
 .vcell{ font-weight:700; }
 .v-pass{ color:var(--ok); } .v-fail{ color:var(--ng); } .v-conditional{ color:var(--maj); } .v-pending{ color:#999; }
 
 .carton-section{ margin-bottom:28px; }
 .carton-banner{
-  font-size:13px; font-weight:700; margin-bottom:6px; padding:8px 10px;
-  display:flex; align-items:center; gap:10px; background:var(--group-bg); border-radius:6px 6px 0 0;
-  page-break-after:avoid; break-after:avoid;
+  font-size:14px; font-weight:400; margin-bottom:6px; padding:10px 14px;
+  display:flex; align-items:center; gap:0; background:var(--brown); color:#fff; border-radius:6px 6px 0 0;
+  border-left:8px solid #999; page-break-after:avoid; break-after:avoid;
 }
-.cd-verdict{ margin-left:auto; font-size:11px; padding:3px 10px; border-radius:12px; }
-.cd-verdict.v-pass{ background:var(--ok-bg); } .cd-verdict.v-fail{ background:var(--ng-bg); } .cd-verdict.v-conditional{ background:#fff3d6; }
+.cb-label{ font-weight:400; }
+.cb-detail{ font-size:13px; font-weight:400; }
+/* Left stripe + banner tint reads the carton's verdict at a glance while scrolling a
+   long multi-carton report, without needing to stop and read the badge text. */
+.carton-banner.v-pass{ border-left-color:var(--ok); }
+.carton-banner.v-fail{ border-left-color:var(--ng); }
+.carton-banner.v-conditional{ border-left-color:var(--maj); }
+.carton-banner.v-pending{ border-left-color:#999; }
+.cd-verdict{ margin-left:auto; font-size:13px; font-weight:700; padding:4px 12px; border-radius:12px; }
+.cd-verdict.v-pass{ background:var(--ok); color:#fff; }
+.cd-verdict.v-fail{ background:var(--ng); color:#fff; }
+.cd-verdict.v-conditional{ background:var(--maj); color:#fff; }
+.cd-verdict.v-pending{ background:rgba(255,255,255,0.25); color:#fff; }
+/* the bi() helper's .en/.vi/.sep spans default to dark brown/tan text (fine on the light
+   page background) — override to light colors so "Carton # Thùng" stays readable on the
+   now-dark banner. */
+.carton-banner .en{ color:#fff; }
+.carton-banner .vi{ color:var(--accent); }
+.carton-banner .sep{ color:var(--accent); }
+
+/* SKU summary banner — groups a SKU's cartons together in the flowing report content so
+   defects read as a cumulative lot decision, not a per-carton one (see computeSkuAudit()).
+   Distinct lighter tone from .carton-banner (--accent, not --brown) so the visual hierarchy
+   reads SKU (accent) > carton (brown) > checklist group row (group-bg) top to bottom. */
+.sku-banner{
+  font-size:13px; font-weight:400; margin:0 0 10px 0; padding:10px 14px;
+  display:flex; align-items:center; flex-wrap:wrap; gap:4px 0; background:var(--accent); color:var(--h-en);
+  border-radius:8px; border-left:8px solid #999;
+}
+.sku-banner.sku-break{ margin-top:26px; }
+.sku-banner .cb-label{ font-weight:700; }
+.sku-banner .cb-detail{ font-size:11.5px; color:var(--h-en); }
+.sku-banner.v-pass{ border-left-color:var(--ok); }
+.sku-banner.v-fail{ border-left-color:var(--ng); }
+.sku-banner .cd-verdict.v-pass{ background:var(--ok); color:#fff; }
+.sku-banner .cd-verdict.v-fail{ background:var(--ng); color:#fff; }
+
+/* AQL appendix (Report, AQL mode only) */
+.aql-appendix{ margin-top:20px; }
+.aql-note{ font-size:11px; color:var(--vi); font-style:italic; margin-bottom:12px; line-height:1.5; }
+.aql-note .en{ font-style:italic; font-weight:400; }
+.cb-bold{ font-weight:700; }
 
 .carton-section .legend-line{ margin:0 0 8px 0; }
 
@@ -402,9 +476,11 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .check-table{ width:100%; border-collapse:collapse; font-size:11.5px; table-layout:fixed; }
 .check-table thead{ display:table-header-group; }
 .check-table th, .check-table td{ border:1px solid var(--border); padding:6px 8px; vertical-align:top; word-wrap:break-word; overflow-wrap:break-word; }
-.check-table th{ background:var(--brown); color:#fff; text-align:left; }
+/* Three-tone hierarchy top to bottom: carton banner (darkest, --brown) > column header
+   (mid-tone, --accent) > group row (lightest, --group-bg). */
+.check-table th{ background:var(--accent); color:var(--brown); text-align:left; }
 .check-table tr{ page-break-inside:avoid; break-inside:avoid; }
-.col-code{ width:12%; } .col-item{ width:36%; } .col-result{ width:12%; } .col-note{ width:40%; }
+.col-code{ width:7%; } .col-item{ width:39%; } .col-result{ width:12%; } .col-note{ width:42%; }
 .check-table th{ font-size:10.5px; letter-spacing:0.2px; }
 .code-cell{ font-family:var(--font); font-size:10.5px; color:var(--vi); }
 .code-cell .code-suffix{ display:block; white-space:nowrap; }
@@ -414,6 +490,9 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .bi-break .sep{ margin-right:2px; }
 .status-cell{ font-weight:700; text-align:center; }
 .status-ok{ color:var(--ok); } .status-ng{ color:var(--ng); } .status-na{ color:var(--na); }
+.plist-status{ font-weight:700; text-align:center; }
+.plist-status.status-done{ color:var(--ok); }
+.plist-status.status-waiting{ color:var(--maj); }
 .note-text{ font-style:italic; color:var(--en); }
 /* 2 photos per row, each filling half the Note column's width; an odd photo out lands in the
    next row's left cell automatically, since grid auto-flow just leaves the right cell empty. */
@@ -448,6 +527,10 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
   *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
   .topbar, .stepbar, .actionbar, .report-toolbar{ display:none !important; }
   #view-report{ display:block !important; padding:0; background:#fff; }
+  /* #app's 100px bottom padding (clearance for the mobile action bar) was leaking into
+     print — often just enough extra height after the sign-block to spill an otherwise-
+     empty page onto the end of the PDF. */
+  #app{ padding-bottom:0; }
   .page.cover-page, .flow-content{ box-shadow:none; margin:0; width:auto; padding:0; }
   .flow-content{ padding-top:6mm; }
   body{ background:#fff; font-size:12pt; }
@@ -503,9 +586,10 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
       <div class="boka-logo">Boka</div>
       <div class="app-title">OCA Tool</div>
     </div>
+    <div class="topbar-contact">For copyright &amp; technical support, please contact<br><span class="topbar-contact-vi">Bản quyền &amp; hỗ trợ kỹ thuật vui lòng liên hệ</span>: <a href="mailto:Hieu.tran@boka.ltd">Hieu.tran@boka.ltd</a></div>
   </div>
   <div class="stepbar">
-    <div class="step" data-step="setup">1. Setup</div>
+    <div class="step" data-step="setup">1. Setup <button type="button" class="step-gear" onclick="event.stopPropagation(); editSetup()" title="Edit setup info / Sửa lại thông tin thiết lập">⚙</button></div>
     <div class="step" data-step="list">2. Cartons</div>
     <div class="step" data-step="audit">3. Checklist</div>
     <div class="step" data-step="report">4. Report</div>
@@ -541,6 +625,11 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
         <input id="f-auditor" type="text" required>
       </div>
       <div class="field">
+        <label><span class="en">Dept.</span><span class="sep"> # </span><span class="vi">Bộ phận</span></label>
+        <select id="f-dept-select" onchange="onDeptSelect(this.value)"></select>
+        <input id="f-dept" type="text" style="display:none; margin-top:8px;" placeholder="Enter department" onchange="onDeptManualChange()">
+      </div>
+      <div class="field">
         <label><span class="en">Date</span><span class="sep"> # </span><span class="vi">Ngày</span></label>
         <input id="f-date" type="text" placeholder="DD-MMM-YYYY">
       </div>
@@ -552,17 +641,25 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
         <label><span class="en">Product Category</span><span class="sep"> # </span><span class="vi">Nhóm sản phẩm</span> *</label>
         <select id="f-category"></select>
       </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label><span class="en">Quality Evaluation Mode</span><span class="sep"> # </span><span class="vi">Mức đánh giá chất lượng</span></label>
+        <select id="f-qualitymode" onchange="onQualityModeChange()">
+          <option value="NONAQL">Non-AQL — tỉ lệ lỗi đơn giản / simplified defect rate</option>
+          <option value="AQL">AQL — ANSI/ASQ Z1.4 sampling</option>
+        </select>
+      </div>
     </div>
     <h2 class="section-title" style="margin-top:24px;"><span class="en">Product List</span><span class="sep"> # </span><span class="vi">Danh Sách Sản Phẩm</span></h2>
     <div class="product-table-wrap">
-      <table class="product-table">
+      <table class="product-table" id="product-table">
         <colgroup>
-          <col style="width:16%"><col style="width:60%"><col style="width:16%"><col style="width:8%">
+          <col style="width:14%"><col style="width:48%"><col style="width:14%"><col class="aql-col" style="width:16%"><col style="width:8%">
         </colgroup>
         <thead><tr>
           <th><span class="en">Code</span><span class="sep"> # </span><span class="vi">Mã</span></th>
           <th><span class="en">Product Name</span><span class="sep"> # </span><span class="vi">Tên sản phẩm</span></th>
           <th><span class="en">Order Qty</span><span class="sep"> # </span><span class="vi">SL đơn hàng</span></th>
+          <th class="aql-col">Min for AQL</th>
           <th></th>
         </tr></thead>
         <tbody id="product-list-body"></tbody>
@@ -584,7 +681,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     </div>
   </div>
   <div class="actionbar" id="actionbar-setup">
-    <button class="btn btn-primary" onclick="startAudit()">Start Audit / Bắt Đầu →</button>
+    <button class="btn btn-primary" id="setup-primary-btn" onclick="startAudit()">Start Audit / Bắt Đầu →</button>
   </div>
 
   <!-- ============ VIEW: CARTON LIST ============ -->
@@ -619,8 +716,12 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
         <div id="ca-sku-qtyinfo" class="sku-qty-info"></div>
       </div>
       <div class="field">
-        <label><span class="en">Qty Inspected</span><span class="sep"> # </span><span class="vi">SL kiểm tra</span></label>
-        <input id="ca-qty" type="text" inputmode="numeric" pattern="[0-9]*" oninput="digitsOnly(this)" onchange="syncCartonMeta()">
+        <label><span class="en">Products per Carton</span><span class="sep"> # </span><span class="vi">SL sản phẩm/thùng</span></label>
+        <input id="ca-qty" type="text" inputmode="numeric" pattern="[0-9]*" oninput="digitsOnly(this)" onchange="syncCartonMeta()" value="1" readonly>
+        <label class="orderqty-manual-toggle">
+          <input type="checkbox" id="ca-qty-multi" onchange="toggleQtyMulti()">
+          <span class="en">Multi (multiple pcs/carton)</span><span class="sep"> # </span><span class="vi">Nhiều SP/thùng</span>
+        </label>
       </div>
     </div>
     <div class="legend-line">
@@ -690,6 +791,20 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
   </div>
 </div>
 
+<!-- ══ DELETE CARTON CONFIRM MODAL ══ -->
+<div class="modal-overlay" id="oca-delete-confirm-modal" style="display:none">
+  <div class="modal-box">
+    <div style="font-size:28px;margin-bottom:10px">🗑️</div>
+    <div class="modal-subtitle"><span class="en">Delete this carton?</span><span class="sep"> # </span><span class="vi">Xoá carton này?</span></div>
+    <div class="modal-fname" id="oca-delete-confirm-label"></div>
+    <div class="modal-question"><span class="en">This cannot be undone.</span><br><span class="vi">Không thể hoàn tác sau khi xoá.</span></div>
+    <div class="modal-btns">
+      <button id="oca-delete-confirm-yes" class="btn btn-outline" style="color:#c0392b;border-color:#c0392b;">🗑️ Xoá / Delete</button>
+      <button id="oca-delete-confirm-cancel" class="btn btn-primary">✕ Huỷ / Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script id="__oca_saved_state__" type="application/json">null</script>
@@ -713,7 +828,74 @@ const CAT_ORDER = ["BED","CABINET","CHAIR","TABLE","SOFA","GLASS","ACCESSORIES",
 // "Other" always lets the auditor type a name manually if it's not in this list.
 const FACTORY_OPTIONS = ["FITTING", "UPHOLSTERY", "PACKING", "WAREHOUSE"];
 
-let report = null;      // {buyer, poNo, factory, auditorName, date, orderQty, category, products:[{code,name,qty}]}
+// Dept. / Bộ phận — same select-with-manual-fallback pattern as Factory/Line above.
+const DEPT_OPTIONS = ["QA", "QC", "CLIENT"];
+
+/* ====================== AQL (ANSI/ASQ Z1.4 / ISO 2859-1) reference data ======================
+   General Inspection Level II, single sampling, normal inspection. Used only in "AQL" quality
+   mode (see QUALITY_MODES) — "Non-AQL" mode never touches this table. Source: ANSI/ASQ Z1.4
+   master tables (Sample Size Code Letters + Single Sampling Plans for Normal Inspection). */
+const QUALITY_MODES = { NONAQL: 'NONAQL', AQL: 'AQL' };
+
+// Lot size (in CARTONS, not pcs — see pcsPerCartonFor()) → sample size code letter.
+const AQL_LOT_TO_CODE = [
+  {max: 8,      code: 'A'}, {max: 15,     code: 'B'}, {max: 25,     code: 'C'},
+  {max: 50,     code: 'D'}, {max: 90,     code: 'E'}, {max: 150,    code: 'F'},
+  {max: 280,    code: 'G'}, {max: 500,    code: 'H'}, {max: 1200,   code: 'J'},
+  {max: 3200,   code: 'K'}, {max: 10000,  code: 'L'}, {max: 35000,  code: 'M'},
+  {max: 150000, code: 'N'}, {max: 500000, code: 'P'}, {max: Infinity, code: 'Q'}
+];
+const AQL_CODE_TO_N = {A:2,B:3,C:5,D:8,E:13,F:20,G:32,H:50,J:80,K:125,L:200,M:315,N:500,P:800,Q:1250};
+const AQL_CODE_ORDER = ['A','B','C','D','E','F','G','H','J','K','L','M','N','P','Q'];
+
+// Ac/Re ("x/y" = Accept/Reject) per code letter, fixed at Major=AQL2.5 and Minor=AQL4.0 —
+// the two levels this tool always uses in AQL mode. Critical is NOT looked up here: it is
+// always zero-tolerance (Ac0/Re1) regardless of sample size, per standard QC practice for
+// critical defects — see acReForSeverity() below.
+const AQL_ACRE_MAJOR = {A:'0/1',B:'0/1',C:'0/1',D:'1/2',E:'2/3',F:'3/4',G:'5/6',H:'7/8',J:'10/11',K:'14/15',L:'21/22'};
+const AQL_ACRE_MINOR = {A:'0/1',B:'0/1',C:'1/2',D:'2/3',E:'3/4',F:'5/6',G:'7/8',H:'10/11',J:'14/15',K:'21/22'};
+
+function aqlSampleCodeForLot(lotCartons) {
+  const n = parseInt(lotCartons, 10);
+  if (!n || n < 1) return AQL_LOT_TO_CODE[0].code;
+  const row = AQL_LOT_TO_CODE.find(r => n <= r.max);
+  return row ? row.code : 'Q';
+}
+
+// Resolves Ac/Re for a code letter against one of the tables above, stepping up to the next
+// larger code letter when the exact cell isn't tabulated (mirrors the official table's
+// "use the plan below the arrow" convention for very small/large samples).
+function aqlAcRe(table, code) {
+  let idx = AQL_CODE_ORDER.indexOf(code);
+  if (idx === -1) idx = 0;
+  while (idx < AQL_CODE_ORDER.length && !table[AQL_CODE_ORDER[idx]]) idx++;
+  if (idx >= AQL_CODE_ORDER.length) return null;
+  const [ac, re] = table[AQL_CODE_ORDER[idx]].split('/').map(Number);
+  return {ac, re, codeUsed: AQL_CODE_ORDER[idx]};
+}
+
+// Non-AQL mode's fixed, simplified thresholds (see handoff discussion): Critical/Major are
+// zero-tolerance regardless of order size, Minor allows a small, fixed margin. No lot-size
+// lookup at all — these numbers are used no matter how many cartons were audited.
+const NONAQL_ACRE = { major: {ac:0, re:1}, minor: {ac:2, re:3} };
+
+// Every carton records its own "products per carton" (pcsPerCarton, default 1 / Multi
+// toggle) — this reads the value off whichever of a SKU's audited cartons has it set, since
+// packing quantity per carton is a property of the SKU/packing method, not of one carton.
+function pcsPerCartonFor(skuCartons) {
+  // Prefer a carton where the auditor explicitly ticked "Multi" (packing qty is a SKU-wide
+  // property — if any carton of this SKU was marked multi-pack, that's the real number,
+  // even if an earlier carton of the same SKU was left at the default 1).
+  for (const c of skuCartons) {
+    if (c.pcsMulti) {
+      const n = parseInt(c.qtyInspected, 10);
+      if (n > 0) return n;
+    }
+  }
+  return 1;
+}
+
+let report = null;      // {buyer, poNo, factory, auditorName, date, orderQty, category, qualityMode, products:[{code,name,qty}]}
 let cartons = [];        // list of carton audit objects
 let activeCartonId = null;
 let cartonSeq = 0;
@@ -796,7 +978,17 @@ function initSetupScreen() {
   }).join('');
   $('#f-date').value = todayStr();
   initFactorySelect();
+  initDeptSelect();
+  $('#f-qualitymode').value = QUALITY_MODES.NONAQL;
+  onQualityModeChange();
   productsDraft = [];
+  renderProductList();
+}
+
+/* ---- Quality evaluation mode: Non-AQL (simplified, fixed thresholds) vs AQL (ANSI Z1.4) ---- */
+function onQualityModeChange() {
+  const isAql = $('#f-qualitymode').value === QUALITY_MODES.AQL;
+  $('#product-table').classList.toggle('aql-mode', isAql);
   renderProductList();
 }
 
@@ -833,20 +1025,62 @@ function setFactoryValue(val) {
   else { sel.value = '__other__'; manual.style.display = ''; manual.value = v; }
 }
 
+/* ---- Dept / Bộ phận select (same pattern as Factory/Line) ---- */
+function initDeptSelect() {
+  const sel = $('#f-dept-select');
+  let opts = `<option value="">— Select / Chọn —</option>`;
+  opts += DEPT_OPTIONS.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+  opts += `<option value="__other__">Other / Khác...</option>`;
+  sel.innerHTML = opts;
+}
+
+function onDeptSelect(val) {
+  const manual = $('#f-dept');
+  if (val === '__other__') {
+    manual.style.display = '';
+    manual.value = '';
+    manual.focus();
+  } else {
+    manual.style.display = 'none';
+    manual.value = val;
+  }
+}
+
+function onDeptManualChange() { /* value already live in #f-dept, read directly at submit */ }
+
+function setDeptValue(val) {
+  const sel = $('#f-dept-select');
+  const manual = $('#f-dept');
+  const v = val || '';
+  const known = DEPT_OPTIONS.includes(v);
+  if (!v) { sel.value = ''; manual.style.display = 'none'; manual.value = ''; }
+  else if (known) { sel.value = v; manual.style.display = 'none'; manual.value = v; }
+  else { sel.value = '__other__'; manual.style.display = ''; manual.value = v; }
+}
+
 /* ---- Product list (page 1) ---- */
 function renderProductList() {
   const body = $('#product-list-body');
   if (!body) return;
   if (productsDraft.length === 0) {
-    body.innerHTML = `<tr class="empty-row"><td colspan="4"><span class="en">No products added yet.</span><span class="sep"> # </span><span class="vi">Chưa có sản phẩm nào.</span></td></tr>`;
+    body.innerHTML = `<tr class="empty-row"><td colspan="5"><span class="en">No products added yet.</span><span class="sep"> # </span><span class="vi">Chưa có sản phẩm nào.</span></td></tr>`;
   } else {
-    body.innerHTML = productsDraft.map((p, i) => `
+    body.innerHTML = productsDraft.map((p, i) => {
+      // Setup-time estimate only — assumes 1 pc/carton (true for most categories). The
+      // real lot size (and this minimum) is re-derived per SKU from the actual "products
+      // per carton" recorded on its audited cartons once auditing starts (see
+      // computeSkuAudit()), which is what the Report actually uses.
+      const qtyNum = parseInt(p.qty, 10) || 0;
+      const est = qtyNum > 0 ? `${aqlSampleCodeForLot(qtyNum)} / n=${AQL_CODE_TO_N[aqlSampleCodeForLot(qtyNum)]}` : '—';
+      return `
       <tr>
         <td><input type="text" value="${escapeHtml(p.code)}" oninput="updateProduct(${i},'code',this.value)" onpaste="onCellPaste(event,${i},'code')" placeholder="Code"></td>
         <td><input type="text" value="${escapeHtml(p.name)}" oninput="updateProduct(${i},'name',this.value)" onpaste="onCellPaste(event,${i},'name')" placeholder="Product name"></td>
         <td><input type="text" value="${escapeHtml(p.qty)}" oninput="digitsOnly(this); updateProduct(${i},'qty',this.value)" onpaste="onCellPaste(event,${i},'qty')" placeholder="Qty" inputmode="numeric" pattern="[0-9]*"></td>
+        <td class="aql-col aql-min-cell">${est}</td>
         <td><button class="thumb-del pl-del" onclick="removeProduct(${i})">×</button></td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
   }
   recalcOrderQtyFromProducts();
 }
@@ -879,7 +1113,18 @@ function addProductRow() {
 function updateProduct(i, field, val) {
   if (productsDraft[i]) productsDraft[i][field] = val;
   if (report) report.products = productsDraft;
-  if (field === 'qty') recalcOrderQtyFromProducts();
+  if (field === 'qty') { recalcOrderQtyFromProducts(); refreshAqlMinCell(i); }
+}
+
+// Updates just the "Min for AQL" cell for one Product List row in place, without a full
+// renderProductList() (which would steal focus from the input the auditor is still typing
+// in) — kept in sync with the same estimate renderProductList() computes for each row.
+function refreshAqlMinCell(i) {
+  const row = $('#product-list-body').children[i];
+  const cell = row && row.querySelector('.aql-min-cell');
+  if (!cell) return;
+  const qtyNum = parseInt(productsDraft[i] && productsDraft[i].qty, 10) || 0;
+  cell.textContent = qtyNum > 0 ? `${aqlSampleCodeForLot(qtyNum)} / n=${AQL_CODE_TO_N[aqlSampleCodeForLot(qtyNum)]}` : '—';
 }
 
 function removeProduct(i) {
@@ -936,11 +1181,13 @@ function startAudit() {
   const poNo = $('#f-po').value.trim();
   const factory = $('#f-factory').value.trim();
   const auditor = $('#f-auditor').value.trim();
+  const dept = $('#f-dept').value.trim();
   const date = $('#f-date').value.trim();
   const orderQty = $('#f-orderqty').value.trim();
   const orderQtyManual = $('#f-orderqty-manual').checked;
   const reportNo = $('#f-reportno').value.trim() || '1';
   const category = $('#f-category').value;
+  const qualityMode = $('#f-qualitymode').value || QUALITY_MODES.NONAQL;
 
   if (!auditor || !category) {
     alert('Vui lòng nhập tên Auditor và chọn Category. / Please enter Auditor name and select Category.');
@@ -948,9 +1195,60 @@ function startAudit() {
   }
 
   const products = productsDraft.filter(p => p.code || p.name);
-  report = { buyer, poNo, factory, auditorName: auditor, date, orderQty, orderQtyManual, reportNo, category, products };
+  report = { buyer, poNo, factory, auditorName: auditor, dept, date, orderQty, orderQtyManual, reportNo, category, qualityMode, products };
   cartons = [];
   activeCartonId = null;
+  renderCartonList();
+  showView('list');
+}
+
+// Gear icon on the "1. Setup" step — lets the auditor jump back to fix a typo/detail in
+// the setup info WITHOUT losing carton progress (unlike startAudit(), this never resets
+// `cartons`). Populates the setup form from the live `report` object and swaps the
+// primary button into "Save changes" mode (see applySetupEdits()).
+function editSetup() {
+  if (!report) { showView('setup'); return; } // nothing started yet — just show it as normal
+  $('#f-buyer').value = report.buyer || '';
+  $('#f-po').value = report.poNo || '';
+  setFactoryValue(report.factory || '');
+  $('#f-auditor').value = report.auditorName || '';
+  setDeptValue(report.dept || '');
+  $('#f-date').value = report.date || '';
+  $('#f-reportno').value = report.reportNo || '';
+  $('#f-category').value = report.category || '';
+  $('#f-orderqty-manual').checked = !!report.orderQtyManual;
+  $('#f-orderqty').readOnly = !report.orderQtyManual;
+  $('#f-qualitymode').value = report.qualityMode || QUALITY_MODES.NONAQL;
+  onQualityModeChange();
+  productsDraft = (report.products || []).map(p => ({...p}));
+  renderProductList();
+  if (report.orderQtyManual) $('#f-orderqty').value = report.orderQty || '';
+  const btn = $('#setup-primary-btn');
+  btn.innerHTML = `<span class="en">Save changes</span><span class="sep"> # </span><span class="vi">Lưu thay đổi</span> →`;
+  btn.setAttribute('onclick', 'applySetupEdits()');
+  showView('setup');
+}
+
+function applySetupEdits() {
+  const buyer = $('#f-buyer').value.trim();
+  const poNo = $('#f-po').value.trim();
+  const factory = $('#f-factory').value.trim();
+  const auditor = $('#f-auditor').value.trim();
+  const dept = $('#f-dept').value.trim();
+  const date = $('#f-date').value.trim();
+  const orderQty = $('#f-orderqty').value.trim();
+  const orderQtyManual = $('#f-orderqty-manual').checked;
+  const reportNo = $('#f-reportno').value.trim() || '1';
+  const category = $('#f-category').value;
+  const qualityMode = $('#f-qualitymode').value || QUALITY_MODES.NONAQL;
+
+  if (!auditor || !category) {
+    alert('Vui lòng nhập tên Auditor và chọn Category. / Please enter Auditor name and select Category.');
+    return;
+  }
+
+  const products = productsDraft.filter(p => p.code || p.name);
+  Object.assign(report, { buyer, poNo, factory, auditorName: auditor, dept, date, orderQty, orderQtyManual, reportNo, category, qualityMode, products });
   renderCartonList();
   showView('list');
 }
@@ -978,7 +1276,8 @@ function addCarton() {
     cartonNo: String(cartons.length + 1),
     linkedCode: '',
     sku: '',
-    qtyInspected: '',
+    qtyInspected: '1',   // "Products per carton" — default 1, see pcsMulti
+    pcsMulti: false,     // ticked when this SKU packs more than 1 pc per carton (e.g. hardware)
     groups: buildEmptyGroups(report.category),
     skippedGroups: {},   // {gid: true} — group intentionally not inspected on this carton
     verdict: null, // 'PASS' | 'FAIL' | 'CONDITIONAL'
@@ -999,10 +1298,74 @@ function toggleSkipGroup(gid) {
 
 function getCarton(id) { return cartons.find(c => c.id === id); }
 
-function removeCarton(id) {
-  if (!confirm('Xóa carton này khỏi báo cáo? / Remove this carton from the report?')) return;
-  cartons = cartons.filter(c => c.id !== id);
+// Custom in-page confirm modal — native confirm()/alert() get silently suppressed inside
+// some mobile in-app webviews, which would otherwise let a delete tap go through unconfirmed.
+function confirmDeleteCarton(label) {
+  return new Promise(resolve => {
+    const modal = $('#oca-delete-confirm-modal');
+    $('#oca-delete-confirm-label').textContent = label;
+    modal.style.display = 'flex';
+    const btnYes = $('#oca-delete-confirm-yes');
+    const btnNo = $('#oca-delete-confirm-cancel');
+    function cleanup() { modal.style.display = 'none'; btnYes.onclick = null; btnNo.onclick = null; }
+    btnYes.onclick = () => { cleanup(); resolve(true); };
+    btnNo.onclick = () => { cleanup(); resolve(false); };
+  });
+}
+
+async function removeCarton(id) {
+  const c = getCarton(id);
+  const label = c ? `Carton #${c.cartonNo}${c.sku ? ' · '+c.sku : ''}` : '';
+  const ok = await confirmDeleteCarton(label);
+  if (!ok) return;
+  cartons = cartons.filter(cc => cc.id !== id);
   renderCartonList();
+}
+
+// A group with ZERO ticked items is treated as implicitly skipped in the printed report
+// (the auditor never got to it) — separate from cartonStats() below, which is used for the
+// LIVE progress display while auditing and must keep showing real pending counts there.
+function isGroupAutoSkippedForReport(c, gid) {
+  if (c.skippedGroups && c.skippedGroups[gid]) return true;
+  const items = c.groups[gid] || [];
+  if (!items.length) return false;
+  return items.every(it => !it.status);
+}
+
+// Same tallies as cartonStats(), but for report generation: a group with zero ticked
+// items (or explicitly skipped) contributes nothing, so its items never show up as
+// "pending" in the printed summary table.
+function reportStats(c) {
+  let ok=0, ng=0, na=0, pending=0, crit=0, maj=0, min=0;
+  GROUPS.forEach(g => {
+    if (isGroupAutoSkippedForReport(c, g.id)) return;
+    c.groups[g.id].forEach(item => {
+      if (item.status === 'OK') ok++;
+      else if (item.status === 'NG') {
+        ng++;
+        if (item.severity === 'Critical') crit++;
+        else if (item.severity === 'Major') maj++;
+        else if (item.severity === 'Minor') min++;
+      }
+      else if (item.status === 'NA') na++;
+      else pending++;
+    });
+  });
+  return {ok, ng, na, pending, crit, maj, min};
+}
+
+// A group the auditor has started (some items ticked) but not finished (others still
+// blank) — must be completed or explicitly Skipped before the carton can be marked Done.
+function findPartiallyTouchedGroups(c) {
+  const bad = [];
+  GROUPS.forEach(g => {
+    if (c.skippedGroups && c.skippedGroups[g.id]) return;
+    const items = c.groups[g.id] || [];
+    if (!items.length) return;
+    const touched = items.filter(it => it.status).length;
+    if (touched > 0 && touched < items.length) bad.push(`${g.id}. ${g.en}`);
+  });
+  return bad;
 }
 
 /* ------------------------------ Carton list ------------------------------ */
@@ -1046,10 +1409,14 @@ function renderCartonList() {
       if (c.verdict === 'PASS') badge = '<span class="badge badge-pass">PASS</span>';
       else if (c.verdict === 'FAIL') badge = '<span class="badge badge-fail">FAIL</span>';
       else if (c.verdict === 'CONDITIONAL') badge = '<span class="badge badge-cond">CONDITIONAL</span>';
+      const linkedProduct = (report.products||[]).find(p => p.code === c.linkedCode);
+      const prodName = linkedProduct ? linkedProduct.name : '';
+      const multiTag = c.pcsMulti && c.qtyInspected ? ` &nbsp;·&nbsp; ${escapeHtml(c.qtyInspected)} pcs/thùng` : '';
+      const cardTitle = `Thùng số <span class="cc-num">#${escapeHtml(c.cartonNo)}</span> &nbsp;·&nbsp; ${escapeHtml(c.sku||c.linkedCode||'—')}${prodName ? ' &nbsp;·&nbsp; '+escapeHtml(prodName) : ''}${multiTag}`;
       return `
       <div class="carton-card">
         <div class="cc-top">
-          <div class="cc-title">Carton #${escapeHtml(c.cartonNo)} ${c.sku ? '· '+escapeHtml(c.sku) : ''}</div>
+          <div class="cc-title">${cardTitle}</div>
           ${badge}
         </div>
         <div class="cc-progress"><div class="cc-progress-fill" style="width:${pct}%"></div></div>
@@ -1074,8 +1441,15 @@ function renderCartonList() {
 function populateSkuSelect() {
   const sel = $('#ca-sku-select');
   const products = (report && report.products) || [];
+  // Codes already linked to another carton — shown checked/bold in the list so the
+  // auditor can see at a glance which SKUs in this report have already been done.
+  const usedCodes = new Set(cartons.filter(c => c.id !== activeCartonId && c.linkedCode).map(c => c.linkedCode));
   let opts = `<option value="">— Manual entry / Nhập tay —</option>`;
-  opts += products.map(p => `<option value="${escapeHtml(p.code)}">${escapeHtml(p.code)} — ${escapeHtml(p.name)}</option>`).join('');
+  opts += products.map(p => {
+    const used = usedCodes.has(p.code);
+    const label = `${p.code} — ${p.name}`;
+    return `<option value="${escapeHtml(p.code)}"${used ? ' class="sku-opt-used" style="font-weight:700"' : ''}>${used ? '✓ ' : ''}${escapeHtml(label)}</option>`;
+  }).join('');
   sel.innerHTML = opts;
   sel.parentElement.style.display = products.length ? '' : 'none';
 }
@@ -1092,7 +1466,9 @@ function openCarton(id) {
   activeCartonId = id;
   const c = getCarton(id);
   $('#ca-cartonno').value = c.cartonNo;
-  $('#ca-qty').value = c.qtyInspected;
+  $('#ca-qty-multi').checked = !!c.pcsMulti;
+  $('#ca-qty').value = c.pcsMulti ? (c.qtyInspected || '1') : '1';
+  $('#ca-qty').readOnly = !c.pcsMulti;
   populateSkuSelect();
   $('#ca-sku-select').value = c.linkedCode || '';
   $('#ca-sku').value = c.sku || '';
@@ -1132,19 +1508,25 @@ function updateSkuQtyInfo(c) {
 /* ---- QR scan (photo-decode, works offline in file:// context) ---- */
 function parseQrString(raw) {
   const s = String(raw || '').trim();
-  if (!s) return {code:'', name:'', qty:''};
+  if (!s) return {code:'', name:'', qty:'', cartonNo:''};
   // labeled format seen on Boka carton QR labels, e.g.:
   // "Website: www.boka.ltd  Product Information:  CWI07094200 WISH BENCH 180cm VO 023NHD 12/20 #00016 QC 02 TONE 2.2"
   const piMatch = s.match(/product\s*information\s*:?\s*([\s\S]+)/i);
   if (piMatch) {
     let info = piMatch[1].trim().replace(/\s+/g, ' ');
+    // Carton sequence number: printed on Boka labels as "xx/yy" (this carton is #xx of yy
+    // total for this SKU in the batch) — grab it before the trailing-metadata regex below
+    // strips that whole block out.
+    let cartonNo = '';
+    const seqMatch = info.match(/\b(\d{1,4})\s*\/\s*(\d{1,4})\b/);
+    if (seqMatch) cartonNo = seqMatch[1];
     // Drop the trailing batch/variant block after the product name, e.g. "... VO 023NHD
     // 12/20 #00016 QC 02 TONE 2.2" — starts at a "V"+short-code token followed by a
     // "###NHD" token, and everything from there on is packing/batch metadata, not the name.
     info = info.replace(/\s+V[A-Za-z0-9]{0,3}\s+\d{2,4}\s*NHD\b[\s\S]*$/i, '');
     const sp = info.indexOf(' ');
-    if (sp === -1) return {code: info, name: '', qty: ''};
-    return {code: info.slice(0, sp).trim(), name: info.slice(sp + 1).trim(), qty: ''};
+    if (sp === -1) return {code: info, name: '', qty: '', cartonNo};
+    return {code: info.slice(0, sp).trim(), name: info.slice(sp + 1).trim(), qty: '', cartonNo};
   }
   // try JSON payload
   try {
@@ -1153,7 +1535,8 @@ function parseQrString(raw) {
       return {
         code: String(obj.code || obj.Code || obj.sku || obj.SKU || '').trim(),
         name: String(obj.name || obj.Name || obj.product || obj.Product || '').trim(),
-        qty: String(obj.qty || obj.Qty || obj.quantity || obj.Quantity || '').trim()
+        qty: String(obj.qty || obj.Qty || obj.quantity || obj.Quantity || '').trim(),
+        cartonNo: String(obj.cartonNo || obj.CartonNo || obj.carton || '').trim()
       };
     }
   } catch (e) { /* not JSON, fall through */ }
@@ -1162,11 +1545,26 @@ function parseQrString(raw) {
   for (const d of delims) {
     if (s.indexOf(d) !== -1) {
       const parts = s.split(d).map(x => x.trim());
-      return {code: parts[0]||'', name: parts[1]||'', qty: parts[2]||''};
+      return {code: parts[0]||'', name: parts[1]||'', qty: parts[2]||'', cartonNo:''};
     }
   }
   // fallback: whole string is treated as the code
-  return {code: s, name:'', qty:''};
+  return {code: s, name:'', qty:'', cartonNo:''};
+}
+
+// Simple linear contrast boost (grayscale) — helps jsQR lock onto QR codes shot
+// under glare, dim/uneven light, or re-photographed off another screen, where the
+// black/white modules aren't cleanly separated in the raw pixel values.
+function boostContrast(imageData) {
+  const d = imageData.data;
+  const contrast = 60; // -255..255
+  const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+  for (let i = 0; i < d.length; i += 4) {
+    const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+    let v = factor * (gray - 128) + 128;
+    v = v < 0 ? 0 : (v > 255 ? 255 : v);
+    d[i] = d[i+1] = d[i+2] = v;
+  }
 }
 
 function decodeQrFromFile(file, cb) {
@@ -1180,21 +1578,31 @@ function decodeQrFromFile(file, cb) {
       // another, since it shifts how the image samples against the QR's own pixel grid.
       const scales = [1, 0.5, 0.75, 1.5, 2, 0.33];
       const opts = {inversionAttempts: 'attemptBoth'};
-      for (const scale of scales) {
-        const w = Math.max(1, Math.round(img.width * scale));
-        const h = Math.max(1, Math.round(img.height * scale));
-        if (w * h > 30_000_000 || w < 20 || h < 20) continue; // skip absurd sizes
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        let imageData;
-        try { imageData = ctx.getImageData(0, 0, w, h); }
-        catch (err) { continue; }
-        const result = jsQR(imageData.data, imageData.width, imageData.height, opts);
-        if (result && result.data) { cb(result.data); return; }
+
+      function tryDecode(enhance) {
+        for (const scale of scales) {
+          const w = Math.max(1, Math.round(img.width * scale));
+          const h = Math.max(1, Math.round(img.height * scale));
+          if (w * h > 30_000_000 || w < 20 || h < 20) continue; // skip absurd sizes
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          let imageData;
+          try { imageData = ctx.getImageData(0, 0, w, h); }
+          catch (err) { continue; }
+          if (enhance) boostContrast(imageData);
+          const result = jsQR(imageData.data, imageData.width, imageData.height, opts);
+          if (result && result.data) return result.data;
+        }
+        return null;
       }
-      cb(null);
+
+      // Pass 1: photo as-is (fast path — most photos decode here). Pass 2 only runs
+      // if pass 1 found nothing: same scales, contrast-boosted — this is what actually
+      // rescues the hard cases (glare, dim light, low-quality print).
+      const text = tryDecode(false) || tryDecode(true);
+      cb(text);
     };
     img.onerror = () => cb(null);
     img.src = e.target.result;
@@ -1221,6 +1629,17 @@ function onQrDecoded(text) {
     alert('Mã QR không chứa dữ liệu hợp lệ. / QR code did not contain valid data.');
     return;
   }
+  // Duplicate guard: same product code AND same carton sequence number ("xx" in "xx/yy")
+  // already used on a DIFFERENT carton in this report means this exact carton was already
+  // audited — block it before touching anything. Same code with a different sequence number
+  // (another carton of the same SKU) is normal and allowed.
+  if (parsed.cartonNo) {
+    const dup = cartons.find(c => c.id !== activeCartonId && c.linkedCode === parsed.code && String(c.cartonNo) === String(parsed.cartonNo));
+    if (dup) {
+      alert(`Mã ${parsed.code} - Thùng số ${parsed.cartonNo} đã được kiểm tra rồi (ở Carton khác trong danh sách).\nThis code / carton number has already been audited (on another carton in this report).`);
+      return;
+    }
+  }
   report.products = report.products || [];
   let p = report.products.find(pp => pp.code === parsed.code);
   if (!p) {
@@ -1239,16 +1658,30 @@ function onQrDecoded(text) {
     $('#ca-sku').value = p.code;
     syncSkuFieldVisibility(c);
     updateSkuQtyInfo(c);
+    // Carton sequence number ("xx" in the label's "xx/yy") comes straight off the QR —
+    // it's the authoritative source, so it overwrites whatever's in the field.
+    if (parsed.cartonNo) {
+      c.cartonNo = parsed.cartonNo;
+      $('#ca-cartonno').value = parsed.cartonNo;
+      // Default products-per-carton stays 1 unless the auditor already ticked "Multi" for
+      // this carton (packing quantity is a SKU property, not something the QR scan knows).
+      if (!c.pcsMulti) { c.qtyInspected = '1'; $('#ca-qty').value = '1'; }
+    }
   }
 }
 
-// The product's own Order Qty (from the Product List, when the carton is linked to one) is
-// the hard ceiling for how many units this carton's Qty Inspected can claim.
-function orderQtyLimit(c) {
-  if (!c || !c.linkedCode) return null;
-  const p = (report.products || []).find(pp => pp.code === c.linkedCode);
-  const n = p && p.qty ? parseInt(p.qty, 10) : NaN;
-  return isNaN(n) ? null : n;
+// "Products per carton" (was "Qty Inspected") — defaults to 1 pc/carton, which covers most
+// categories (1 carton = 1 finished piece). Ticking "Multi" unlocks free entry for the
+// uncommon case where a SKU is packed several-pcs-to-a-carton (e.g. dining chairs, 2/carton).
+// This value feeds the AQL lot-size math in computeSkuAudit() — it is NOT a per-carton
+// inspection cap any more.
+function toggleQtyMulti() {
+  const c = getCarton(activeCartonId);
+  const multi = $('#ca-qty-multi').checked;
+  const el = $('#ca-qty');
+  el.readOnly = !multi;
+  if (!multi) { el.value = '1'; if (c) { c.pcsMulti = false; c.qtyInspected = '1'; } }
+  else { if (c) c.pcsMulti = true; el.focus(); }
 }
 
 function syncCartonMeta() {
@@ -1256,14 +1689,12 @@ function syncCartonMeta() {
   if (!c) return;
   c.cartonNo = $('#ca-cartonno').value.trim();
   if (!c.linkedCode) c.sku = $('#ca-sku').value.trim();
+  c.pcsMulti = $('#ca-qty-multi').checked;
   let qty = $('#ca-qty').value.trim();
-  const limit = orderQtyLimit(c);
-  if (limit != null && qty !== '' && parseInt(qty, 10) > limit) {
-    alert(`Số lượng kiểm tra (${qty}) không được vượt quá Order Qty của sản phẩm (${limit}).\nQty Inspected (${qty}) cannot exceed the product's Order Qty (${limit}).`);
-    qty = String(limit);
-    $('#ca-qty').value = qty;
-  }
+  if (!c.pcsMulti) qty = '1';
+  else if (!qty || parseInt(qty, 10) < 1) qty = '1';
   c.qtyInspected = qty;
+  $('#ca-qty').value = qty;
 }
 
 function renderGroups(c) {
@@ -1359,9 +1790,8 @@ function setStatus(gid, idx, status) {
   const c = getCarton(activeCartonId);
   const item = c.groups[gid][idx];
   const newStatus = item.status === status ? null : status;
-  // Only Qty Inspected vs. the product's Order Qty is enforced (see orderQtyLimit /
-  // syncCartonMeta) — the OK/NG/NA breakdown inside the checklist is never capped, it just
-  // reports as-is in the summary table.
+  // The OK/NG/NA breakdown inside the checklist is never capped — it just reports as-is,
+  // and defect counts are rolled up per SKU (across all its cartons) in computeSkuAudit().
   item.status = newStatus;
   if (item.status !== 'NG') { item.severity = null; }
   // re-render just this row + group header count
@@ -1543,6 +1973,12 @@ function findIncompleteNg(c) {
 function finishCarton() {
   syncCartonMeta();
   const c = getCarton(activeCartonId);
+  const partialGroups = findPartiallyTouchedGroups(c);
+  if (partialGroups.length) {
+    alert('Nhóm sau đã bắt đầu kiểm nhưng chưa tick hết toàn bộ mục (OK/NG/N-A) — hoàn tất hết hoặc dùng nút Skip:\n' + partialGroups.join(', ') +
+      '\n\nThe following group(s) were started but not every item was ticked (OK/NG/N/A) yet — finish them, or use the Skip button:\n' + partialGroups.join(', '));
+    return;
+  }
   const badNg = findIncompleteNg(c);
   if (badNg.length) {
     alert('Các mục NG sau chưa đủ điều kiện (cần mức độ + ghi chú hoặc ảnh):\n' + badNg.join(', ') +
@@ -1559,13 +1995,95 @@ function finishCarton() {
 /* ------------------------------ Report / print ------------------------------ */
 function goToReport() {
   if (cartons.length === 0) { alert('Chưa có carton nào để xuất báo cáo. / No cartons to report yet.'); return; }
+  if (report.qualityMode === QUALITY_MODES.AQL) {
+    const short = computeSkuAudit().filter(r => r.insufficientSample && r.audited > 0);
+    if (short.length) {
+      const lines = short.map(r => `${r.code || r.name} — đã audit ${r.audited}/${r.sampleN} thùng yêu cầu`).join('\n');
+      alert('⚠️ Các SKU sau CHƯA đủ số thùng audit theo yêu cầu AQL (vẫn có thể xuất báo cáo):\n' + lines +
+        '\n\nThe following SKUs have not yet reached the AQL-required sample size (report can still be generated):\n' + lines);
+    }
+  }
   buildReportPages();
   showView('report');
 }
 
+/* ------------------------------ SKU-level defect rollup (Non-AQL / AQL) ------------------------------
+   Fixes the "diluted defect" problem: a carton's own PASS/FAIL badge (auditor's manual call,
+   kept for reference) only looks at that one carton. The report's actual accept/reject
+   decision must look at every carton of the SAME SKU together — e.g. 1 Major defect on two
+   different cartons of one SKU can each look fine alone but must reject the SKU once summed.
+   Groups every carton by its linked product code (or by its typed SKU / carton id when not
+   linked to a Product List row), sums OK/NG/N-A + severity counts across that group, then
+   applies either the fixed Non-AQL thresholds or a full ANSI Z1.4 lookup (AQL mode). */
+function computeSkuAudit() {
+  const products = report.products || [];
+  const bySku = new Map();
+  products.forEach(p => {
+    bySku.set(p.code, {code: p.code, name: p.name, lotQtyPcs: parseInt(p.qty, 10) || 0, cartons: []});
+  });
+  cartons.forEach(c => {
+    const key = c.linkedCode || ('__unlinked__' + (c.sku || c.id));
+    if (!bySku.has(key)) {
+      bySku.set(key, {code: c.linkedCode || '', name: c.sku || '(No SKU / Không có mã)', lotQtyPcs: 0, cartons: []});
+    }
+    bySku.get(key).cartons.push(c);
+  });
+
+  const isAql = report.qualityMode === QUALITY_MODES.AQL;
+  const rows = [];
+  bySku.forEach(entry => {
+    const s = {ok:0, ng:0, na:0, crit:0, maj:0, min:0};
+    entry.cartons.forEach(c => {
+      const cs = reportStats(c);
+      s.ok += cs.ok; s.ng += cs.ng; s.na += cs.na; s.crit += cs.crit; s.maj += cs.maj; s.min += cs.min;
+    });
+    const audited = entry.cartons.length;
+    const row = {code: entry.code, name: entry.name, lotQtyPcs: entry.lotQtyPcs, audited, ...s};
+
+    if (isAql) {
+      // Computed even with 0 cartons audited yet, so the summary table can still show the
+      // required sample size up front — pcsPerCartonFor() falls back to 1 pc/carton.
+      const pcsPerCarton = pcsPerCartonFor(entry.cartons);
+      const lotCartons = entry.lotQtyPcs > 0 ? Math.ceil(entry.lotQtyPcs / pcsPerCarton) : (audited || 1);
+      const sampleCode = aqlSampleCodeForLot(lotCartons);
+      const sampleN = AQL_CODE_TO_N[sampleCode];
+      const majAcRe = aqlAcRe(AQL_ACRE_MAJOR, sampleCode);
+      const minAcRe = aqlAcRe(AQL_ACRE_MINOR, sampleCode);
+      Object.assign(row, {pcsPerCarton, lotCartons, sampleCode, sampleN, majAcRe, minAcRe, insufficientSample: audited < sampleN});
+    }
+
+    if (audited === 0) {
+      // Product List entry with no cartons audited yet — not PASS (nothing was checked),
+      // not FAIL. Skips the accept/reject math entirely.
+      row.verdict = 'PENDING';
+    } else if (isAql) {
+      let verdict = 'PASS';
+      if (s.crit > 0) verdict = 'FAIL';                                       // Critical: zero-tolerance, any sample size
+      else if (row.majAcRe && s.maj >= row.majAcRe.re) verdict = 'FAIL';
+      else if (row.minAcRe && s.min >= row.minAcRe.re) verdict = 'FAIL';
+      row.verdict = verdict;
+    } else {
+      let verdict = 'PASS';
+      if (s.crit > 0) verdict = 'FAIL';                                       // Critical: zero-tolerance
+      else if (s.maj >= NONAQL_ACRE.major.re) verdict = 'FAIL';               // Major: zero-tolerance
+      else if (s.min >= NONAQL_ACRE.minor.re) verdict = 'FAIL';               // Minor: fixed Ac2/Re3
+      row.verdict = verdict;
+    }
+    row.cartons = entry.cartons;
+    rows.push(row);
+  });
+
+  // Keep Product List order, unlinked/manual SKUs (not on the list) trail at the end.
+  const order = new Map(products.map((p, i) => [p.code, i]));
+  rows.sort((a, b) => (order.has(a.code) ? order.get(a.code) : 1e9) - (order.has(b.code) ? order.get(b.code) : 1e9));
+  return rows;
+}
+
 function overallVerdict() {
-  if (cartons.some(c => c.verdict === 'FAIL')) return 'FAIL';
-  if (cartons.some(c => c.verdict === 'CONDITIONAL' || !c.verdict)) return 'CONDITIONAL';
+  const rows = computeSkuAudit();
+  if (!rows.length) return 'PASS';
+  if (rows.some(r => r.verdict === 'FAIL')) return 'FAIL';
+  if (rows.some(r => r.verdict === 'PENDING')) return 'CONDITIONAL'; // some SKUs on the Product List not audited yet
   return 'PASS';
 }
 
@@ -1575,11 +2093,43 @@ const LEGEND_HTML = `<div class="legend-line">
   <span class="en">N/A</span> = <span class="vi">Không áp dụng</span>
 </div>`;
 
+// Display-only lot-size range label per AQL code letter, for the Setup product list, the
+// report's summary table and the AQL appendix — purely cosmetic, not used in any lookup.
+const AQL_LOT_RANGE_LABEL = {A:'2–8',B:'9–15',C:'16–25',D:'26–50',E:'51–90',F:'91–150',G:'151–280',H:'281–500',J:'501–1.200'};
+
 function buildReportPages() {
+  const isAql = report.qualityMode === QUALITY_MODES.AQL;
+  const skuRows = computeSkuAudit();
   const ov = overallVerdict();
   const auditorUpper = escapeHtml((report.auditorName||'').toUpperCase());
+  const modeLabel = isAql ? bi('AQL (ANSI/ASQ Z1.4)','AQL (ANSI/ASQ Z1.4)') : bi('Non-AQL (fixed threshold)','Non-AQL (ngưỡng cố định)');
 
   // ---- Cover page ----
+  const resultHead = isAql
+    ? `<tr><th>SKU</th><th>Product</th><th>Order Qty</th><th>PCS/thùng</th><th>Lot (thùng)</th><th>n (yêu cầu)</th><th>Audited</th><th>Critical</th><th>Major</th><th>Minor</th><th>Verdict</th></tr>`
+    : `<tr><th>SKU</th><th>Product</th><th>Order Qty</th><th>Audited (thùng)</th><th>Critical</th><th>Major</th><th>Minor</th><th>Verdict</th></tr>`;
+  const resultRows = skuRows.map(r => {
+    const shortFlag = (r.insufficientSample && r.audited > 0) ? ' <span class="grp-skip-note">(thiếu mẫu)</span>' : '';
+    if (isAql) {
+      return `<tr>
+        <td>${escapeHtml(r.code || r.name || '—')}</td><td>${escapeHtml(r.name||'—')}</td>
+        <td>${r.lotQtyPcs || '—'}</td><td>${r.pcsPerCarton}</td><td>${r.lotCartons}</td>
+        <td>${r.sampleN}</td><td>${r.audited}${shortFlag}</td>
+        <td>${r.crit}</td>
+        <td>${r.maj} <span class="grp-skip-note">(${r.majAcRe?('Ac'+r.majAcRe.ac+'/Re'+r.majAcRe.re):'—'})</span></td>
+        <td>${r.min} <span class="grp-skip-note">(${r.minAcRe?('Ac'+r.minAcRe.ac+'/Re'+r.minAcRe.re):'—'})</span></td>
+        <td class="vcell v-${r.verdict.toLowerCase()}">${r.verdict}</td>
+      </tr>`;
+    }
+    return `<tr>
+      <td>${escapeHtml(r.code || r.name || '—')}</td><td>${escapeHtml(r.name||'—')}</td>
+      <td>${r.lotQtyPcs || '—'}</td><td>${r.audited}</td>
+      <td>${r.crit}</td><td>${r.maj}</td><td>${r.min}</td>
+      <td class="vcell v-${r.verdict.toLowerCase()}">${r.verdict}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="${isAql?11:8}" style="text-align:center;color:var(--vi);">—</td></tr>`;
+
+  const auditedProductCodes = new Set(skuRows.filter(r => r.audited > 0).map(r => r.code));
   const cover = `
     <div class="page cover-page">
       <div class="pg-header">
@@ -1587,6 +2137,7 @@ function buildReportPages() {
         <div class="pg-hdr-mid">${bi('OPEN CARTON AUDIT REPORT', 'BÁO CÁO KIỂM TRA KHUI THÙNG')}</div>
         <div class="pg-hdr-right upper"></div>
       </div>
+      <div class="report-title">OCA REPORT</div>
       <div class="cover-body">
         <table class="meta-table upper">
           <tr><td class="mt-label">${biBreak('Client','Khách hàng')}</td><td>${escapeHtml(report.buyer||'—')}</td>
@@ -1595,74 +2146,99 @@ function buildReportPages() {
               <td class="mt-label">${biBreak('Order Qty','SL đơn hàng')}</td><td>${escapeHtml(report.orderQty||'—')}</td></tr>
           <tr><td class="mt-label">${biBreak('Category','Nhóm sản phẩm')}</td><td>${bi(CATEGORIES[report.category].label.en, CATEGORIES[report.category].label.vi)}</td>
               <td class="mt-label">${biBreak('Date','Ngày')}</td><td>${escapeHtml(report.date||'—')}</td></tr>
-          <tr><td class="mt-label">${biBreak('Auditor','Người kiểm tra')}</td><td colspan="3">${escapeHtml(report.auditorName||'—')}</td></tr>
+          <tr><td class="mt-label">${biBreak('Auditor','Người kiểm tra')}</td><td>${escapeHtml(report.auditorName||'—')}</td>
+              <td class="mt-label">${biBreak('Dept.','Bộ phận')}</td><td>${escapeHtml(report.dept||'—')}</td></tr>
+          <tr><td class="mt-label">${biBreak('Quality Mode','Mức đánh giá')}</td><td colspan="3">${modeLabel}</td></tr>
         </table>
         <div class="overall-verdict ov-${ov.toLowerCase()}">
           ${bi('Overall Result','Kết Quả Chung')} : ${ov}
         </div>
+        <div class="rpt-section-title">${isAql ? bi('AQL AUDIT SUMMARY (per SKU)','Tổng Hợp Kiểm AQL (theo SKU)') : bi('RESULT (per SKU)','Kết Quả Kiểm Tra (theo SKU)')}</div>
         <div class="table-scroll">
           <table class="carton-summary-table upper">
-            <thead><tr>
-              <th>Carton #</th><th>SKU / Model</th><th>Qty Inspected</th>
-              <th>OK</th><th>NG</th><th>N/A</th><th>Critical</th><th>Major</th><th>Minor</th><th>Verdict</th>
-            </tr></thead>
+            <thead>${resultHead}</thead>
+            <tbody>${resultRows}</tbody>
+          </table>
+        </div>
+        <div class="rpt-section-title">${bi('PRODUCT LIST','Danh Sách Sản Phẩm')}</div>
+        <div class="table-scroll">
+          <table class="carton-summary-table order-list-table upper">
+            <thead><tr><th>Code</th><th>Product Name</th><th>Order Qty</th>${isAql?'<th>Min for AQL</th>':''}<th>${bi('Status','Trạng Thái')}</th></tr></thead>
             <tbody>
-              ${cartons.map(c => {
-                const s = cartonStats(c);
+              ${(report.products||[]).map(p => {
+                const isDone = auditedProductCodes.has(p.code);
+                const qtyNum = parseInt(p.qty, 10) || 0;
+                const minCell = isAql ? `<td>${qtyNum>0 ? aqlSampleCodeForLot(qtyNum)+' / n='+AQL_CODE_TO_N[aqlSampleCodeForLot(qtyNum)] : '—'}</td>` : '';
                 return `<tr>
-                  <td>${escapeHtml(c.cartonNo)}</td><td>${escapeHtml(c.sku||'—')}</td><td>${escapeHtml(c.qtyInspected||'—')}</td>
-                  <td>${s.ok}</td><td>${s.ng}</td><td>${s.na}</td><td>${s.crit}</td><td>${s.maj}</td><td>${s.min}</td>
-                  <td class="vcell v-${(c.verdict||'pending').toLowerCase()}">${c.verdict||'PENDING'}</td>
-                </tr>`;
-              }).join('')}
+                <td>${escapeHtml(p.code)}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.qty||'—')}</td>${minCell}
+                <td class="plist-status ${isDone ? 'status-done' : 'status-waiting'}">${isDone ? 'Done' : 'Waiting'}</td>
+              </tr>`;
+              }).join('') || `<tr><td colspan="${isAql?5:4}" style="text-align:center;color:var(--vi);">—</td></tr>`}
             </tbody>
           </table>
         </div>
       </div>
     </div>`;
 
-  // ---- Flowing checklist content (continuous, no forced page breaks except natural pagination) ----
+  // ---- Flowing checklist content, grouped by SKU (fixes defects being read per-carton
+  // instead of summed for the whole lot) — each SKU block starts with a summary banner,
+  // then lists that SKU's cartons in full checklist detail same as before. ----
   let flow = '<div class="flow-content">';
-  cartons.forEach((c, cIdx) => {
-    let bodyRows = '';
-    GROUPS.forEach(g => {
-      const items = c.groups[g.id];
-      if (!items.length) return;
-      const skipped = !!(c.skippedGroups && c.skippedGroups[g.id]);
-      if (skipped) {
-        bodyRows += `<tr class="grp-row"><td colspan="4">${g.id}. ${bi(g.en, g.vi)} <span class="grp-skip-note">(${bi('Not inspected','Không kiểm tra mục này')})</span></td></tr>`;
-        return;
-      }
-      bodyRows += `<tr class="grp-row"><td colspan="4">${g.id}. ${bi(g.en, g.vi)}</td></tr>`;
-      items.forEach(item => {
-        const noteHtml = item.note ? `<div class="note-text">${escapeHtml(capFirst(item.note))}</div>` : '';
-        const photosHtml = (item.status === 'NG' && item.photos.length)
-          ? `<div class="note-photos">${item.photos.map(p => `<img src="${p.src}" onclick="openLightbox(this.src)">`).join('')}</div>`
-          : '';
-        bodyRows += `<tr>
-          <td class="code-cell">${formatCode(item.code)}</td>
-          <td>${bi(item.en, item.vi)}</td>
-          <td class="status-cell status-${(item.status||'pending').toLowerCase()}">${item.status||'—'}${item.status==='NG' && item.severity? ' ('+item.severity+')':''}</td>
-          <td>${noteHtml}${photosHtml}</td>
-        </tr>`;
-      });
-    });
+  let cIdxGlobal = 0;
+  skuRows.forEach((row, skuIdx) => {
+    if (!row.cartons.length) return; // Product List entries with zero cartons audited yet
+    const skuAqlBits = isAql
+      ? ` &nbsp;·&nbsp; Lot: <b class="cb-bold">${row.lotCartons}</b> thùng &nbsp;·&nbsp; Yêu cầu n=<b class="cb-bold">${row.sampleN}</b> &nbsp;·&nbsp; Đã audit: <b class="cb-bold">${row.audited}</b>${row.insufficientSample ? ' <span class="grp-skip-note">(thiếu mẫu)</span>' : ''}`
+      : ` &nbsp;·&nbsp; Đã audit: <b class="cb-bold">${row.audited}</b> thùng`;
     flow += `
-      <div class="carton-section${cIdx > 0 ? ' carton-break' : ''}">
-        <div class="carton-banner">
-          ${bi('Carton','Thùng')} #${escapeHtml(c.cartonNo)}
-          ${c.sku? ' · SKU: '+escapeHtml(c.sku):''} ${c.qtyInspected? ' · Qty: '+escapeHtml(c.qtyInspected):''}
-          <span class="cd-verdict v-${(c.verdict||'pending').toLowerCase()}">${c.verdict||'PENDING'}</span>
-        </div>
-        ${LEGEND_HTML}
-        <div class="check-table-wrap table-scroll">
-          <table class="check-table">
-            <colgroup><col class="col-code"><col class="col-item"><col class="col-result"><col class="col-note"></colgroup>
-            <thead><tr><th>PRODUCT CODE</th><th>PRODUCT NAME</th><th>RESULT</th><th>NOTE</th></tr></thead>
-            <tbody>${bodyRows}</tbody>
-          </table>
-        </div>
+      <div class="sku-banner v-${row.verdict.toLowerCase()}${skuIdx>0?' sku-break':''}">
+        <span class="cb-label">SKU <b class="cb-bold">${escapeHtml(row.code || row.name)}</b>${row.name && row.code ? ' — '+escapeHtml(row.name) : ''}</span>
+        <span class="cb-detail">${skuAqlBits} &nbsp;·&nbsp; Critical:<b class="cb-bold">${row.crit}</b> Major:<b class="cb-bold">${row.maj}</b> Minor:<b class="cb-bold">${row.min}</b></span>
+        <span class="cd-verdict v-${row.verdict.toLowerCase()}">${row.verdict}</span>
       </div>`;
+    row.cartons.forEach((c) => {
+      let bodyRows = '';
+      GROUPS.forEach(g => {
+        const items = c.groups[g.id];
+        if (!items.length) return;
+        const skipped = isGroupAutoSkippedForReport(c, g.id);
+        if (skipped) {
+          bodyRows += `<tr class="grp-row"><td colspan="4">${g.id}. ${bi(g.en, g.vi)} <span class="grp-skip-note">(${bi('Not inspected','Không kiểm tra mục này')})</span></td></tr>`;
+          return;
+        }
+        bodyRows += `<tr class="grp-row"><td colspan="4">${g.id}. ${bi(g.en, g.vi)}</td></tr>`;
+        items.forEach(item => {
+          const noteHtml = item.note ? `<div class="note-text">${escapeHtml(capFirst(item.note))}</div>` : '';
+          const photosHtml = (item.status === 'NG' && item.photos.length)
+            ? `<div class="note-photos">${item.photos.map(p => `<img src="${p.src}" onclick="openLightbox(this.src)">`).join('')}</div>`
+            : '';
+          bodyRows += `<tr>
+            <td class="code-cell">${formatCode(item.code)}</td>
+            <td>${bi(item.en, item.vi)}</td>
+            <td class="status-cell status-${(item.status||'pending').toLowerCase()}">${item.status||'—'}${item.status==='NG' && item.severity? ' ('+item.severity+')':''}</td>
+            <td>${noteHtml}${photosHtml}</td>
+          </tr>`;
+        });
+      });
+      const multiTag = c.pcsMulti && c.qtyInspected && c.qtyInspected !== '1' ? ' ('+escapeHtml(c.qtyInspected)+' pcs/thùng)' : '';
+      flow += `
+        <div class="carton-section${cIdxGlobal > 0 ? ' carton-break' : ''}">
+          <div class="carton-banner v-${(c.verdict||'pending').toLowerCase()}">
+            <span class="cb-label">Thùng <b class="cb-bold">#${escapeHtml(c.cartonNo)}</b></span>
+            <span class="cb-detail">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${c.sku? '· SKU: <b class="cb-bold">'+escapeHtml(c.sku)+'</b>'+multiTag:''}</span>
+            <span class="cd-verdict v-${(c.verdict||'pending').toLowerCase()}">${c.verdict||'PENDING'}</span>
+          </div>
+          ${LEGEND_HTML}
+          <div class="check-table-wrap table-scroll">
+            <table class="check-table">
+              <colgroup><col class="col-code"><col class="col-item"><col class="col-result"><col class="col-note"></colgroup>
+              <thead><tr><th>CODE</th><th>DESCRIPTIONS</th><th>RESULT</th><th>NOTE</th></tr></thead>
+              <tbody>${bodyRows}</tbody>
+            </table>
+          </div>
+        </div>`;
+      cIdxGlobal++;
+    });
   });
 
   flow += `
@@ -1685,7 +2261,27 @@ function buildReportPages() {
     </div>
   </div>`; // close flow-content
 
-  $('#report-pages').innerHTML = cover + flow;
+  // ---- AQL appendix — only in AQL mode: reference table + short explanation ----
+  const appendix = isAql ? `
+    <div class="flow-content aql-appendix">
+      <div class="rpt-section-title">${bi('APPENDIX — AQL SAMPLING REFERENCE','PHỤ LỤC — BẢNG TRA AQL')}</div>
+      <div class="aql-note">${bi(
+        'ANSI/ASQ Z1.4 (ISO 2859-1), General Inspection Level II, normal inspection. n = number of cartons randomly audited per SKU lot. Ac = max defects still accepted; Re = defects that reject the whole SKU lot. Critical defects are zero-tolerance regardless of sample size.',
+        'Chuẩn ANSI/ASQ Z1.4 (ISO 2859-1), Mức kiểm tra chung II, kiểm tra thường. n = số thùng cần audit ngẫu nhiên cho mỗi lô SKU. Ac = số lỗi tối đa vẫn được chấp nhận; Re = số lỗi khiến cả lô SKU bị loại. Lỗi Critical luôn zero-tolerance bất kể cỡ mẫu.'
+      )}</div>
+      <table class="carton-summary-table upper">
+        <thead><tr><th>${bi('Lot Size','Cỡ Lô')} (thùng)</th><th>Code</th><th>n</th><th>Critical</th><th>Major (AQL 2.5)</th><th>Minor (AQL 4.0)</th></tr></thead>
+        <tbody>
+          ${['A','B','C','D','E','F','G','H','J'].map(code => `<tr>
+            <td>${AQL_LOT_RANGE_LABEL[code]}</td><td>${code}</td><td>${AQL_CODE_TO_N[code]}</td>
+            <td>Ac0/Re1</td><td>Ac${aqlAcRe(AQL_ACRE_MAJOR,code).ac}/Re${aqlAcRe(AQL_ACRE_MAJOR,code).re}</td>
+            <td>Ac${aqlAcRe(AQL_ACRE_MINOR,code).ac}/Re${aqlAcRe(AQL_ACRE_MINOR,code).re}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : '';
+
+  $('#report-pages').innerHTML = cover + flow + appendix;
 }
 
 /* ------------------------------ Save / Load / Resume ------------------------------ */
@@ -1704,12 +2300,16 @@ function restoreAppState(state) {
   initFactorySelect();
   setFactoryValue(report.factory||'');
   $('#f-auditor').value = report.auditorName||'';
+  initDeptSelect();
+  setDeptValue(report.dept||'');
   $('#f-date').value = report.date||todayStr();
   $('#f-orderqty-manual').checked = !!report.orderQtyManual;
   $('#f-orderqty').readOnly = !report.orderQtyManual;
   $('#f-orderqty').value = report.orderQty||'';
   $('#f-reportno').value = report.reportNo||'';
   $('#f-category').value = report.category;
+  $('#f-qualitymode').value = report.qualityMode || QUALITY_MODES.NONAQL;
+  onQualityModeChange();
   renderProductList();
   // renderProductList() re-runs the auto-sum unless manual mode is on, so re-apply the
   // saved value afterwards to make sure a manually-entered Order Qty survives the reload.
@@ -1961,6 +2561,17 @@ function startFreshFromResume() {
   $('#oca-resume-modal').style.display = 'none';
   showView('setup');
 }
+
+// Safety net against losing in-progress work to an accidental reload/close (e.g. a
+// mis-swipe pull-to-refresh on mobile that the overscroll-behavior CSS above didn't
+// catch, or the back/close gesture). Only warns once there's actually something to lose.
+window.addEventListener('beforeunload', (e) => {
+  const hasWork = !!(report && (cartons.length > 0 || (productsDraft && productsDraft.length > 0)));
+  if (!hasWork) return;
+  e.preventDefault();
+  e.returnValue = '';
+  return '';
+});
 
 /* ------------------------------ Init ------------------------------ */
 document.addEventListener('DOMContentLoaded', () => {
