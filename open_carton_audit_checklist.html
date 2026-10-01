@@ -264,6 +264,21 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 }
 .actionbar .btn{ flex:1; min-height:48px; }
 
+/* The carton-list action bar has 3 buttons (Save / Add Carton / Report) whose bilingual
+   labels are too long to fit evenly on a phone-width screen — the 3rd button gets clipped
+   off the right edge. Below the breakpoint, wrap it onto two rows instead: the primary
+   "+ Add Carton" action gets its own full-width row on top (it's the one tapped most), and
+   the two secondary actions share the row underneath. Scoped to #actionbar-list specifically
+   (not every .actionbar) so the 1- and 2-button bars elsewhere keep their single-row layout. */
+@media (max-width:480px){
+  #actionbar-list{ flex-wrap:wrap; }
+  #actionbar-list .btn-primary{ flex:1 1 100%; order:-1; }
+  #actionbar-list .btn-outline{ flex:1 1 calc(50% - 5px); font-size:13px; padding:12px 8px; }
+  /* two rows of buttons now sit taller in the fixed bar — give the scrolling content below
+     enough bottom padding so the last carton card isn't hidden underneath it. */
+  #app{ padding-bottom:150px; }
+}
+
 /* ---------------- Summary bar (carton list) ---------------- */
 #rep-summary-bar{
   display:flex; flex-wrap:wrap; gap:16px 32px; background:#fff; border:1px solid var(--border);
