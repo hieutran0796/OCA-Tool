@@ -257,6 +257,19 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .dev-tools-row:hover, .dev-tools-row:focus-within{ opacity:1; }
 .dev-tools-row .btn{ font-size:11px; padding:5px 10px; min-height:auto; }
 
+/* ---------------- Split into Multiple Reports (admin batch-generation screen) ---------------- */
+.split-entry-row{ margin-top:14px; }
+.split-hint{ font-size:12.5px; color:var(--vi); line-height:1.5; margin-bottom:4px; }
+.split-part{
+  border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px; background:#fafafa;
+}
+.split-part-head{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.split-part-label{
+  font-weight:700; font-size:15px; border:1px solid var(--border); border-radius:6px;
+  padding:6px 10px; width:90px; flex:none;
+}
+.split-part-head .thumb-del{ margin-left:auto; }
+
 .actionbar{
   position:fixed; bottom:0; left:0; right:0; background:#fff;
   border-top:1px solid var(--border); padding:12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); display:flex; gap:10px;
@@ -756,9 +769,65 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
       <button class="btn btn-sm btn-ghost" type="button" onclick="document.getElementById('demo-import-input').click()"><span class="en">Import data</span><span class="sep"> # </span><span class="vi">Nhập dữ liệu</span></button>
       <button class="btn btn-sm btn-ghost" type="button" onclick="exportDemoData()"><span class="en">Export data</span><span class="sep"> # </span><span class="vi">Xuất dữ liệu</span></button>
     </div>
+
+    <div class="split-entry-row">
+      <button class="btn btn-sm btn-outline" type="button" onclick="openSplitScreen()">⇄ <span class="en">Split into Multiple Reports</span><span class="sep"> # </span><span class="vi">Tách Thành Nhiều Báo Cáo</span></button>
+    </div>
   </div>
   <div class="actionbar" id="actionbar-setup">
     <button class="btn btn-primary" id="setup-primary-btn" onclick="startAudit()"><span class="en">Start Audit</span><span class="sep"> # </span><span class="vi">Bắt đầu</span> →</button>
+  </div>
+
+  <!-- ============ VIEW: SPLIT REPORTS ============ -->
+  <div class="view" id="view-split">
+    <h2 class="section-title"><span class="en">Split into Multiple Reports</span><span class="sep"> # </span><span class="vi">Tách Thành Nhiều Báo Cáo</span></h2>
+    <div class="split-hint">
+      <span class="en">Fill in the shared info once, add one block per product/QC below, then generate a ready-to-open report file for each.</span><br>
+      <span class="vi">Nhập thông tin chung 1 lần, thêm từng khối cho mỗi sản phẩm/QC bên dưới, rồi tạo file báo cáo sẵn dùng cho từng người.</span>
+    </div>
+
+    <h2 class="section-title" style="margin-top:20px; font-size:16px;"><span class="en">Shared Info</span><span class="sep"> # </span><span class="vi">Thông Tin Chung</span></h2>
+    <div class="form-grid">
+      <div class="field">
+        <label><span class="en">Client</span><span class="sep"> # </span><span class="vi">Khách hàng</span> *</label>
+        <input id="sp-buyer" type="text" placeholder="e.g. Arhaus">
+      </div>
+      <div class="field">
+        <label><span class="en">PO Number</span><span class="sep"> # </span><span class="vi">Số PO</span> *</label>
+        <input id="sp-po" type="text" placeholder="PO-xxxxx">
+      </div>
+      <div class="field">
+        <label><span class="en">Batch ID</span><span class="sep"> # </span><span class="vi">Mã lô</span></label>
+        <input id="sp-batchid" type="text" placeholder="e.g. PI023">
+      </div>
+      <div class="field">
+        <label><span class="en">Factory / Line</span><span class="sep"> # </span><span class="vi">Nhà máy / Chuyền</span></label>
+        <input id="sp-factory" type="text">
+      </div>
+      <div class="field">
+        <label><span class="en">Dept.</span><span class="sep"> # </span><span class="vi">Bộ phận</span></label>
+        <input id="sp-dept" type="text">
+      </div>
+      <div class="field">
+        <label><span class="en">Date</span><span class="sep"> # </span><span class="vi">Ngày</span></label>
+        <input id="sp-date" type="text" placeholder="DD-MMM-YYYY">
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label><span class="en">Quality Evaluation Mode</span><span class="sep"> # </span><span class="vi">Mức đánh giá chất lượng</span></label>
+        <select id="sp-qualitymode">
+          <option value="NONAQL">Non-AQL — tỉ lệ lỗi đơn giản / simplified defect rate</option>
+          <option value="AQL">AQL — ANSI/ASQ Z1.4 sampling</option>
+        </select>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-top:20px; font-size:16px;"><span class="en">Report Parts</span><span class="sep"> # </span><span class="vi">Các Báo Cáo Con</span></h2>
+    <div id="split-parts"></div>
+    <button class="btn btn-sm btn-outline" onclick="addSplitPart()" style="margin-top:8px;"><span class="en">+ Add Part</span><span class="sep"> # </span><span class="vi">Thêm báo cáo con</span></button>
+  </div>
+  <div class="actionbar" id="actionbar-split" style="display:none;">
+    <button class="btn btn-outline" onclick="showView('setup')">← <span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
+    <button class="btn btn-primary" onclick="generateSplitReports()">⇩ <span class="en">Generate Files</span><span class="sep"> # </span><span class="vi">Tạo File</span></button>
   </div>
 
   <!-- ============ VIEW: CARTON LIST ============ -->
@@ -4612,6 +4681,226 @@ function applySetupEdits() {
   showView('list');
 }
 
+/* ------------------------- Split into Multiple Reports -------------------------
+   Lets an admin pre-fill N "report shells" in one pass — one per product/QC — when a
+   single PI/PO needs to be split across several auditors (e.g. PI023: SKU A → QC 1,
+   SKU B → QC 2, SKU C → QC 3). Shared fields (Client, PO, Date...) are entered once;
+   each "part" only needs its own Category, Auditor and Product List. Generating produces
+   one ready-to-open .html file per part (same embedded-state mechanism as Save), each
+   tagged with a common `batchId` (defaults to the PO No.) plus its own `partLabel`, so the
+   finished reports can still be told apart as belonging to the same batch even though each
+   auditor works on their own file independently — no live sync between them. */
+let splitParts = [];
+let splitPartSeq = 0;
+
+function openSplitScreen() {
+  // Default the shared fields from whatever's already on the normal Setup screen, if any.
+  $('#sp-buyer').value = $('#f-buyer').value || '';
+  $('#sp-po').value = $('#f-po').value || '';
+  $('#sp-batchid').value = $('#f-po').value || '';
+  $('#sp-factory').value = $('#f-factory').value || '';
+  $('#sp-dept').value = $('#f-dept').value || '';
+  $('#sp-date').value = $('#f-date').value || todayStr();
+  $('#sp-qualitymode').value = $('#f-qualitymode').value || QUALITY_MODES.NONAQL;
+  if (splitParts.length === 0) {
+    addSplitPart();
+    addSplitPart();
+    return; // addSplitPart() already calls renderSplitParts()+showView via the 2nd call below
+  }
+  renderSplitParts();
+  showView('split');
+}
+
+function addSplitPart() {
+  const letter = String.fromCharCode(65 + splitParts.length); // A, B, C...
+  splitParts.push({ id: ++splitPartSeq, label: letter, category: CAT_ORDER[0], auditor: '', reportNo: String(splitParts.length + 1), products: [] });
+  renderSplitParts();
+  showView('split');
+}
+
+function removeSplitPart(i) {
+  splitParts.splice(i, 1);
+  renderSplitParts();
+}
+
+function updateSplitPart(i, field, val) {
+  if (splitParts[i]) splitParts[i][field] = val;
+}
+
+function addSplitProductRow(i) {
+  splitParts[i].products.push({code:'', name:'', qty:''});
+  renderSplitParts();
+}
+
+function updateSplitProduct(i, j, field, val) {
+  if (splitParts[i] && splitParts[i].products[j]) splitParts[i].products[j][field] = val;
+}
+
+function removeSplitProduct(i, j) {
+  splitParts[i].products.splice(j, 1);
+  renderSplitParts();
+}
+
+// Same paste parsing as the main Product List's parsePaste() — tab-separated (Excel) or
+// comma/semicolon-separated, Code/Name/Qty per line — scoped to one part's own textarea.
+function parseSplitPaste(i) {
+  const ta = $('#split-paste-' + i);
+  if (!ta || !ta.value.trim()) return;
+  const lines = ta.value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  lines.forEach(line => {
+    const parts = line.split('\t').length > 1 ? line.split('\t') : line.split(/,|;/);
+    const code = (parts[0]||'').trim();
+    const name = (parts[1]||'').trim();
+    const qty = (parts[2]||'').trim().replace(/[^0-9]/g, '');
+    if (code || name) splitParts[i].products.push({code, name, qty});
+  });
+  renderSplitParts();
+}
+
+function renderSplitProductRows(i) {
+  const part = splitParts[i];
+  if (!part.products.length) {
+    return `<tr class="empty-row"><td colspan="4"><span class="en">No products yet.</span><span class="sep"> # </span><span class="vi">Chưa có sản phẩm.</span></td></tr>`;
+  }
+  return part.products.map((p, j) => `
+    <tr>
+      <td><input type="text" value="${escapeHtml(p.code)}" oninput="updateSplitProduct(${i},${j},'code',this.value)" placeholder="Code"></td>
+      <td><input type="text" value="${escapeHtml(p.name)}" oninput="updateSplitProduct(${i},${j},'name',this.value)" placeholder="Product name"></td>
+      <td><input type="text" value="${escapeHtml(p.qty)}" inputmode="numeric" pattern="[0-9]*" oninput="digitsOnly(this); updateSplitProduct(${i},${j},'qty',this.value)" placeholder="Qty"></td>
+      <td><button class="thumb-del pl-del" onclick="removeSplitProduct(${i},${j})">×</button></td>
+    </tr>`).join('');
+}
+
+function renderSplitParts() {
+  const wrap = $('#split-parts');
+  if (!wrap) return;
+  wrap.innerHTML = splitParts.map((part, i) => {
+    const catOpts = CAT_ORDER.map(k => `<option value="${k}" ${k===part.category?'selected':''}>${CATEGORIES[k].label.en} # ${CATEGORIES[k].label.vi}</option>`).join('');
+    return `
+    <div class="split-part">
+      <div class="split-part-head">
+        <input class="split-part-label" type="text" value="${escapeHtml(part.label)}" oninput="updateSplitPart(${i},'label',this.value)" placeholder="A, B, C...">
+        ${splitParts.length > 1 ? `<button class="thumb-del" onclick="removeSplitPart(${i})">×</button>` : ''}
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label><span class="en">Category</span><span class="sep"> # </span><span class="vi">Nhóm sản phẩm</span> *</label>
+          <select onchange="updateSplitPart(${i},'category',this.value)">${catOpts}</select>
+        </div>
+        <div class="field">
+          <label><span class="en">Auditor / QC Name</span><span class="sep"> # </span><span class="vi">Tên QC</span> *</label>
+          <input type="text" value="${escapeHtml(part.auditor)}" oninput="updateSplitPart(${i},'auditor',this.value)">
+        </div>
+        <div class="field">
+          <label><span class="en">Report No.</span><span class="sep"> # </span><span class="vi">Số báo cáo</span></label>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" value="${escapeHtml(part.reportNo)}" oninput="digitsOnly(this); updateSplitPart(${i},'reportNo',this.value)">
+        </div>
+      </div>
+      <div class="product-table-wrap">
+        <table class="product-table">
+          <colgroup><col style="width:16%"><col style="width:52%"><col style="width:22%"><col style="width:10%"></colgroup>
+          <thead><tr>
+            <th><span class="en">Code</span><span class="sep"> # </span><span class="vi">Mã</span></th>
+            <th><span class="en">Product Name</span><span class="sep"> # </span><span class="vi">Tên sản phẩm</span></th>
+            <th><span class="en">Qty</span><span class="sep"> # </span><span class="vi">SL</span></th>
+            <th></th>
+          </tr></thead>
+          <tbody>${renderSplitProductRows(i)}</tbody>
+        </table>
+      </div>
+      <button class="btn btn-sm btn-outline" onclick="addSplitProductRow(${i})" style="margin-top:8px;"><span class="en">+ Add Row</span><span class="sep"> # </span><span class="vi">Thêm dòng</span></button>
+      <div class="field" style="margin-top:12px;">
+        <label><span class="en">Paste from Excel / Clipboard</span><span class="sep"> # </span><span class="vi">Dán từ Excel / Clipboard</span></label>
+        <textarea id="split-paste-${i}" class="paste-area" placeholder="Code[TAB]Name[TAB]Qty — one row per line / mỗi dòng 1 sản phẩm"></textarea>
+        <button class="btn btn-sm btn-outline" onclick="parseSplitPaste(${i})" style="margin-top:8px;"><span class="en">Import</span><span class="sep"> # </span><span class="vi">Nhập</span></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getSplitShared() {
+  return {
+    buyer: $('#sp-buyer').value.trim(),
+    poNo: $('#sp-po').value.trim(),
+    batchId: $('#sp-batchid').value.trim(),
+    factory: $('#sp-factory').value.trim(),
+    dept: $('#sp-dept').value.trim(),
+    date: $('#sp-date').value.trim(),
+    qualityMode: $('#sp-qualitymode').value || QUALITY_MODES.NONAQL
+  };
+}
+
+// Validates shared + per-part fields and, if all good, returns an array of
+// {filename, state} ready to snapshot/download — one per part. Returns null (after
+// alerting) if something required is missing, so the caller just bails out.
+function buildSplitReportsData() {
+  const shared = getSplitShared();
+  const missingEn = [], missingVi = [];
+  if (!shared.buyer) { missingEn.push('Client'); missingVi.push('Khách hàng'); }
+  if (!shared.poNo) { missingEn.push('PO Number'); missingVi.push('Số PO'); }
+  if (missingEn.length) {
+    alert('Vui lòng nhập đầy đủ: ' + missingVi.join(', ') + '\n\nPlease fill in the required fields: ' + missingEn.join(', '));
+    return null;
+  }
+  if (!splitParts.length) {
+    alert('Chưa có báo cáo con nào. / No report parts added yet.');
+    return null;
+  }
+  const partErrors = [];
+  splitParts.forEach((part, i) => {
+    const tag = part.label || ('#' + (i+1));
+    if (!part.category) partErrors.push(`${tag}: Category`);
+    if (!part.auditor || !part.auditor.trim()) partErrors.push(`${tag}: Auditor / QC Name`);
+  });
+  if (partErrors.length) {
+    alert('Thiếu thông tin ở các báo cáo con / Missing info in these report parts:\n' + partErrors.join('\n'));
+    return null;
+  }
+
+  const batchId = shared.batchId || shared.poNo;
+  const usedNames = {};
+  return splitParts.map((part, i) => {
+    const products = part.products.filter(p => p.code || p.name);
+    const orderQty = products.reduce((s,p) => s + (parseInt(p.qty,10)||0), 0);
+    const partLabel = part.label || String.fromCharCode(65+i);
+    const rpt = {
+      buyer: shared.buyer, poNo: shared.poNo, factory: shared.factory,
+      auditorName: part.auditor.trim(), dept: shared.dept, date: shared.date || todayStr(),
+      orderQty: String(orderQty), orderQtyManual: false,
+      reportNo: part.reportNo || String(i+1),
+      category: part.category, qualityMode: shared.qualityMode,
+      products, batchId, partLabel
+    };
+    const state = { report: rpt, cartons: [], cartonSeq: 0 };
+    const base = `${batchId} - ${partLabel} - OCA Report`.replace(/[\\/:*?"<>|]/g, '_').trim();
+    let fname = base, n = 1;
+    while (usedNames[fname]) fname = `${base} (${++n})`;
+    usedNames[fname] = true;
+    return { filename: fname + '.html', state };
+  });
+}
+
+function downloadSplitFile(item) {
+  const html = snapshotHtmlWithState(item.state);
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = item.filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function generateSplitReports() {
+  const items = buildSplitReportsData();
+  if (!items) return;
+  // Staggered so the browser doesn't treat near-simultaneous downloads as a popup flood.
+  items.forEach((item, idx) => setTimeout(() => downloadSplitFile(item), idx * 300));
+  toast(`✅ Đang tạo ${items.length} file báo cáo...\nGenerating ${items.length} report file(s)...`);
+}
+
 /* ------------------------------ Carton model ----------------------------- */
 function buildEmptyGroups(category) {
   const catData = CATEGORIES[category];
@@ -4766,6 +5055,7 @@ function renderCartonList() {
   $('#rep-summary-bar').innerHTML = `
     <div class="rsum-item">${bi('Client','Khách hàng')}<b>${escapeHtml(report.buyer||'—')}</b></div>
     <div class="rsum-item">${bi('PO No.','Số PO')}<b>${escapeHtml(report.poNo||'—')}</b></div>
+    ${report.batchId ? `<div class="rsum-item">${bi('Batch / Part','Lô / Phần')}<b>${escapeHtml(report.batchId)}${report.partLabel ? ' - '+escapeHtml(report.partLabel) : ''}</b></div>` : ''}
     <div class="rsum-item">${bi('Category','Nhóm SP')}<b>${CATEGORIES[report.category].label.en}</b></div>
     <div class="rsum-item">${bi('Auditor','Người audit')}<b>${escapeHtml(report.auditorName||'—')}</b></div>
     <div class="rsum-item">${bi('Date','Ngày')}<b>${escapeHtml(report.date||'—')}</b></div>
@@ -5648,6 +5938,7 @@ function buildReportPages() {
           <tr><td class="mt-label">${bi('Client','Khách hàng')}</td><td>${escapeHtml(report.buyer||'—')}</td></tr>
           <tr><td class="mt-label">${bi('Factory / Line','Nhà máy / Chuyền')}</td><td>${escapeHtml(report.factory||'—')}</td></tr>
           <tr><td class="mt-label">${bi('PO No.','Số PO')}</td><td>${escapeHtml(report.poNo||'—')}</td></tr>
+          ${report.batchId ? `<tr><td class="mt-label">${bi('Batch / Part','Lô / Phần')}</td><td>${escapeHtml(report.batchId)}${report.partLabel ? ' - '+escapeHtml(report.partLabel) : ''}</td></tr>` : ''}
           <tr><td class="mt-label">${bi('Category','Nhóm sản phẩm')}</td><td>${bi(CATEGORIES[report.category].label.en, CATEGORIES[report.category].label.vi)}</td></tr>
           <tr><td class="mt-label">${bi('Order Qty','SL đơn hàng')}</td><td>${escapeHtml(report.orderQty||'—')}</td></tr>
           <tr><td class="mt-label">${bi('Date','Ngày')}</td><td>${escapeHtml(report.date||'—')}</td></tr>
@@ -5790,6 +6081,19 @@ function buildReportPages() {
 }
 
 /* ------------------------------ Save / Load / Resume ------------------------------ */
+// Embeds `state` into a fresh snapshot of this very page's HTML, so opening that snapshot
+// later (as a .html file) automatically offers to Resume with everything exactly as it was.
+// Used by the normal Save button (with the live state) and by the Split Report generator
+// (with a freshly-built, cartons-empty state per part) — same mechanism either way.
+function snapshotHtmlWithState(state) {
+  const stateEl = $('#__oca_saved_state__');
+  const prev = stateEl.textContent;
+  stateEl.textContent = JSON.stringify(state);
+  const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  stateEl.textContent = prev; // the live app keeps running fresh — only the snapshot carries state
+  return html;
+}
+
 function buildAppState() {
   syncCartonMeta();
   return { report, cartons, cartonSeq };
@@ -6182,14 +6486,8 @@ async function saveReportFile() {
   if (!report) { alert('Chưa có audit nào để lưu. / No audit to save yet.'); return; }
   const fname = `${reportFilename()}.html`;
 
-  // Embed the current app state into a fresh snapshot of this very page, so opening the
-  // saved file later automatically offers to Resume with everything exactly as it was.
   const state = buildAppState();
-  const stateJson = JSON.stringify(state);
-  const stateEl = $('#__oca_saved_state__');
-  stateEl.textContent = stateJson;
-  const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-  stateEl.textContent = 'null'; // the live app keeps running fresh — only the saved copy carries state
+  const html = snapshotHtmlWithState(state);
 
   // ── File System Access API (desktop Chrome / Edge) ──
   if (window.showDirectoryPicker) {
@@ -6350,7 +6648,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const _origShowView = showView;
   showView = function(name){
     _origShowView(name);
-    ['setup','list','audit','report'].forEach(v=>{
+    ['setup','list','audit','report','split'].forEach(v=>{
       const bar = document.getElementById('actionbar-'+v);
       if (bar) bar.style.display = (v===name) ? 'flex' : 'none';
     });
