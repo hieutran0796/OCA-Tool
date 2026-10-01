@@ -102,14 +102,14 @@
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 }
 :root{
-  --beige:#f5f0e8;
-  --brown:#5c4a32;
-  --accent:#c8a96e;
-  --border:#c8b89a;
-  --en:#3a2e1e;
-  --vi:#9e8a74;
-  --h-en:#2a1e0e;
-  --h-vi:#b8a490;
+  --beige:#f7faf8;
+  --brown:#145a43;
+  --accent:#2e8060;
+  --border:#d3e2dc;
+  --en:#17352b;
+  --vi:#637a70;
+  --h-en:#145a43;
+  --h-vi:#8fae9f;
   --ok:#2e7d4f;
   --ok-bg:#e5f3ea;
   --ng:#c0392b;
@@ -119,7 +119,7 @@
   --crit:#b30000;
   --maj:#d98c00;
   --min:#c9a227;
-  --group-bg:#e8d6ae;
+  --group-bg:#e4f0eb;
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --logo-font: 'Courier New', Courier, monospace;
 }
@@ -150,10 +150,10 @@ button, input, select, textarea{ font-family:inherit; font-size:14px; }
   position:sticky; top:0; z-index:50;
 }
 .topbar-brand{ display:flex; align-items:baseline; gap:12px; }
-.boka-logo{ font-family:var(--logo-font); font-size:16px; font-weight:normal; color:var(--accent); text-transform:lowercase; }
+.boka-logo{ font-family:var(--logo-font); font-size:16px; font-weight:normal; color:#fff; text-transform:lowercase; }
 .app-title{ font-family:var(--font); font-size:19px; font-weight:600; letter-spacing:0.5px; color:#fff; }
 .topbar-contact{
-  font-size:10px; line-height:1.5; text-align:right; color:var(--accent); opacity:0.9; flex-shrink:1;
+  font-size:10px; line-height:1.5; text-align:right; color:#fff; opacity:0.95; flex-shrink:1;
 }
 .topbar-contact-vi{ font-style:italic; }
 .topbar-contact a{ color:#fff; font-weight:600; text-decoration:none; }
@@ -234,10 +234,28 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
   min-height:44px;
 }
 .btn-primary{ background:var(--brown); color:#fff; border-color:var(--brown); }
+/* the bi() helper's .en/.vi/.sep spans default to dark brown/tan text, which is unreadable
+   on a .btn-primary's dark brown fill — force both halves to white on any primary button. */
+.btn-primary .en, .btn-primary .vi, .btn-primary .sep{ color:#fff; }
 .btn-outline{ background:#fff; }
 .btn-block{ width:100%; }
 .btn-sm{ padding:8px 12px; font-size:12px; min-height:36px; }
 .btn:active{ transform:scale(0.98); }
+/* Quiet, low-emphasis variant for dev/test-only controls (demo import/export) — same shape
+   as .btn-outline but visually recessive so it doesn't compete with the real action buttons. */
+.btn-ghost{ background:transparent; border-style:dashed; color:var(--vi); font-weight:400; }
+
+/* ---------------- Dev/test tools (demo data import/export) ---------------- */
+/* Deliberately tucked below the real form content and dimmed until hovered — a convenience
+   for re-testing without retyping the setup + product list each time, not a feature meant to
+   stand out next to Start Audit. Generic by design (plain JSON of buildAppState()'s shape) so
+   it can later double as an import/export point for other data, not just demo/test runs. */
+.dev-tools-row{
+  margin-top:24px; padding-top:10px; border-top:1px dashed var(--border);
+  display:flex; gap:8px; opacity:0.6;
+}
+.dev-tools-row:hover, .dev-tools-row:focus-within{ opacity:1; }
+.dev-tools-row .btn{ font-size:11px; padding:5px 10px; min-height:auto; }
 
 .actionbar{
   position:fixed; bottom:0; left:0; right:0; background:#fff;
@@ -366,7 +384,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .stepbar .step{ flex:1; text-align:center; padding:10px 4px; font-size:11px; font-weight:600; color:#999; border-bottom:3px solid transparent; text-transform:uppercase; letter-spacing:0.3px; }
 .stepbar .step.active{ color:var(--brown); border-bottom-color:var(--accent); }
 .step-gear{
-  margin-left:4px; border:none; background:none; color:inherit; font-size:12px; cursor:pointer;
+  margin-left:4px; border:none; background:none; color:inherit; font-size:14.4px; font-weight:700; cursor:pointer;
   padding:2px 4px; vertical-align:middle; opacity:0.75;
 }
 .step-gear:hover{ opacity:1; }
@@ -401,34 +419,57 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .report-title{ text-align:center; font-size:22px; font-weight:700; letter-spacing:1px; color:var(--brown); margin:2px 0 16px; }
 .rpt-section-title{
   font-size:13px; font-weight:800; letter-spacing:0.5px; color:var(--brown); text-transform:uppercase;
-  margin:18px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--group-bg);
+  margin:36px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--group-bg);
 }
 
-.meta-table{ width:100%; border-collapse:collapse; margin-bottom:16px; }
+/* Cover page info table: one label/value pair per row (not two side by side) — order is
+   fixed by the caller (client, factory, po, category, qty, date, auditor, dept, mode), not
+   alphabetical or by original grouping. Label column shrinks to fit its own header text
+   (width:1% + nowrap, same trick used on the report tables' short columns) instead of a
+   fixed 150px, and labels use bi() (inline "EN # VI") instead of biBreak() since each row now
+   has plenty of width for both languages on one line. */
+.meta-table{ width:100%; border-collapse:collapse; margin-bottom:34px; }
 .meta-table td{ border:1px solid var(--border); padding:8px 10px; font-size:12px; }
-.mt-label{ background:var(--group-bg); font-weight:600; width:150px; color:var(--brown); text-transform:none; }
+.mt-label{ background:var(--group-bg); font-weight:600; width:1%; white-space:nowrap; color:var(--brown); text-transform:none; }
 
-.overall-verdict{ text-align:center; font-size:18px; font-weight:700; padding:12px; border-radius:8px; margin-bottom:16px; }
+.overall-verdict{ text-align:center; font-size:18px; font-weight:700; padding:12px; border-radius:8px; margin-bottom:34px; }
 .ov-pass{ background:var(--ok-bg); color:var(--ok); }
 .ov-fail{ background:var(--ng-bg); color:var(--ng); }
 .ov-conditional{ background:#fff3d6; color:var(--maj); }
 
-.carton-summary-table{ width:100%; border-collapse:collapse; font-size:11px; }
-.carton-summary-table th, .carton-summary-table td{ border:1px solid var(--border); padding:6px 8px; text-align:center; }
-/* Product List variant: the Product Name column reads better left-aligned than centered. */
-.order-list-table td:nth-child(2){ text-align:left; }
+/* Font 1px smaller and rows ~10% shorter than the default .carton-summary-table size — these
+   two (per-SKU result + Product List) are the ones that grow with the auditor's own product
+   list, so keeping each row a bit more compact means importing many products doesn't burn
+   through pages as fast. Padding only shrinks vertically; horizontal stays put so cell text
+   doesn't feel cramped against its neighbours. */
+.carton-summary-table{ width:100%; border-collapse:collapse; font-size:10px; }
+.carton-summary-table th, .carton-summary-table td{ border:1px solid var(--border); padding:5.4px 8px; text-align:center; }
+/* Column sizing: SKU/Product left-aligned and get all spare width (SKU can still grow if its
+   content is long); the short numeric/status columns shrink and lock to their header width via
+   the classic width:1%+nowrap trick (table-layout stays auto, so unconstrained columns absorb
+   the rest). */
+.carton-summary-table th.col-sku, .carton-summary-table td.col-sku{ text-align:left; width:auto; white-space:normal; word-break:break-word; }
+.carton-summary-table th.col-product, .carton-summary-table td.col-product{ text-align:left; width:auto; }
+.carton-summary-table th.col-num, .carton-summary-table td.col-num{ width:1%; white-space:nowrap; text-align:center; }
 .carton-summary-table th{ background:var(--brown); color:#fff; text-transform:none; }
+.carton-summary-table th .en, .carton-summary-table th .vi, .carton-summary-table th .sep{ color:#fff; }
 .vcell{ font-weight:700; }
 .v-pass{ color:var(--ok); } .v-fail{ color:var(--ng); } .v-conditional{ color:var(--maj); } .v-pending{ color:#999; }
 
 .carton-section{ margin-bottom:28px; }
+/* Carton banner is the SKU banner's sub-heading (one SKU banner groups several carton
+   banners under it), so it's deliberately sized down from the sku-banner — 10% smaller text,
+   row height now trimmed twice (an initial ~15%, then another ~15% on top) — to read as a
+   subordinate level rather than competing with it. margin-bottom:0 so it sits flush against
+   its checklist table below, as one visually attached unit, rather than floating above it. */
 .carton-banner{
-  font-size:14px; font-weight:400; margin-bottom:6px; padding:10px 14px;
+  font-size:12.6px; font-weight:400; margin-bottom:0; padding:7.2px 14px;
   display:flex; align-items:center; gap:0; background:var(--brown); color:#fff; border-radius:6px 6px 0 0;
   border-left:8px solid #999; page-break-after:avoid; break-after:avoid;
 }
 .cb-label{ font-weight:400; }
 .cb-detail{ font-size:13px; font-weight:400; }
+.carton-banner .cb-detail{ font-size:11.7px; }
 /* Left stripe + banner tint reads the carton's verdict at a glance while scrolling a
    long multi-carton report, without needing to stop and read the badge text. */
 .carton-banner.v-pass{ border-left-color:var(--ok); }
@@ -436,6 +477,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .carton-banner.v-conditional{ border-left-color:var(--maj); }
 .carton-banner.v-pending{ border-left-color:#999; }
 .cd-verdict{ margin-left:auto; font-size:13px; font-weight:700; padding:4px 12px; border-radius:12px; }
+.carton-banner .cd-verdict{ font-size:11.7px; padding:3.5px 10px; }
 .cd-verdict.v-pass{ background:var(--ok); color:#fff; }
 .cd-verdict.v-fail{ background:var(--ng); color:#fff; }
 .cd-verdict.v-conditional{ background:var(--maj); color:#fff; }
@@ -453,15 +495,21 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
    reads SKU (accent) > carton (brown) > checklist group row (group-bg) top to bottom. */
 .sku-banner{
   font-size:13px; font-weight:400; margin:0 0 10px 0; padding:10px 14px;
-  display:flex; align-items:center; flex-wrap:wrap; gap:4px 0; background:var(--accent); color:var(--h-en);
-  border-radius:8px; border-left:8px solid #999;
+  display:flex; align-items:center; flex-wrap:wrap; gap:4px 0; background:var(--accent); color:#fff;
+  border-radius:8px; border-left:8px solid #999; page-break-after:avoid; break-after:avoid;
 }
 .sku-banner.sku-break{ margin-top:26px; }
 .sku-banner .cb-label{ font-weight:700; }
-.sku-banner .cb-detail{ font-size:11.5px; color:var(--h-en); }
+.sku-banner .cb-detail{ font-size:11.5px; color:#fff; }
 .sku-banner.v-pass{ border-left-color:var(--ok); }
 .sku-banner.v-fail{ border-left-color:var(--ng); }
-.sku-banner .cd-verdict.v-pass{ background:var(--ok); color:#fff; }
+/* PASS badge on the sku-banner needs its own color, not var(--ok): the banner's own
+   background is var(--accent), a mid-tone green almost the same lightness as --ok, so the
+   pill nearly disappears into it. A bright yellow-green ("banana-shoot" green) with dark text
+   gives a big lightness jump against the banner on screen AND stays clearly distinct from the
+   accent background when printed in black & white (where hue is lost and only lightness is
+   left to read). */
+.sku-banner .cd-verdict.v-pass{ background:#9acd32; color:var(--brown); }
 .sku-banner .cd-verdict.v-fail{ background:var(--ng); color:#fff; }
 
 /* AQL appendix (Report, AQL mode only) */
@@ -470,7 +518,10 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .aql-note .en{ font-style:italic; font-weight:400; }
 .cb-bold{ font-weight:700; }
 
-.carton-section .legend-line{ margin:0 0 8px 0; }
+/* Sits once between a SKU banner and its first carton banner (see renderReport()'s flow+=),
+   not inside .carton-section any more — re-scoped from the old .carton-section .legend-line
+   selector, same spacing. */
+.report-legend{ margin:8px 0 10px 0; }
 
 .check-table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
 .check-table{ width:100%; border-collapse:collapse; font-size:11.5px; table-layout:fixed; }
@@ -478,7 +529,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .check-table th, .check-table td{ border:1px solid var(--border); padding:6px 8px; vertical-align:top; word-wrap:break-word; overflow-wrap:break-word; }
 /* Three-tone hierarchy top to bottom: carton banner (darkest, --brown) > column header
    (mid-tone, --accent) > group row (lightest, --group-bg). */
-.check-table th{ background:var(--accent); color:var(--brown); text-align:left; }
+.check-table th{ background:var(--accent); color:#fff; text-align:left; }
 .check-table tr{ page-break-inside:avoid; break-inside:avoid; }
 .col-code{ width:7%; } .col-item{ width:39%; } .col-result{ width:12%; } .col-note{ width:42%; }
 .check-table th{ font-size:10.5px; letter-spacing:0.2px; }
@@ -535,10 +586,22 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
   .flow-content{ padding-top:6mm; }
   body{ background:#fff; font-size:12pt; }
   .check-table{ font-size:10.5pt; }
-  .meta-table td, .carton-summary-table th, .carton-summary-table td{ font-size:10.5pt; }
+  .meta-table td{ font-size:10.5pt; }
+  .carton-summary-table th, .carton-summary-table td{ font-size:9.5pt; }
   .check-table-wrap, .table-scroll{ overflow:visible; }
-  /* start each additional carton on a fresh page */
+  /* Page breaks between cartons/SKUs are no longer forced on every single one — that wasted
+     most of a page whenever a carton happened to fall near the top. Instead, applyCartonPageBreaks()
+     measures real printed-page heights right before printing and only adds these classes where
+     less than 20% of an A4 page would otherwise be left after the previous section — a SKU's
+     banner and its first carton are measured as one unit so the banner never ends up alone at
+     the bottom of a page with its checklist stranded on the next one. */
   .carton-section.carton-break{ page-break-before:always; break-before:page; }
+  .sku-banner.sku-page-break{ page-break-before:always; break-before:page; }
+  /* Chrome's flexbox break-inside:avoid on .sign-block (above) isn't reliable in print — this
+     class is the JS-measured fallback applyCartonPageBreaks() reaches for when the block won't
+     fully fit in what's left of the page, forcing it onto a fresh one instead of letting it
+     get torn between the name/line row and the label row. */
+  .sign-block.sign-block-page-break{ page-break-before:always; break-before:page; }
 }
 @page{ size:210mm 297mm; margin:10mm; }
 
@@ -613,14 +676,6 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
         <input id="f-factory" type="text" style="display:none; margin-top:8px;" placeholder="Enter factory / line name" onchange="onFactoryManualChange()">
       </div>
       <div class="field">
-        <label><span class="en">Order Quantity</span><span class="sep"> # </span><span class="vi">SL đơn hàng</span></label>
-        <input id="f-orderqty" type="text" inputmode="numeric" pattern="[0-9]*" oninput="digitsOnly(this)" readonly>
-        <label class="orderqty-manual-toggle">
-          <input type="checkbox" id="f-orderqty-manual" onchange="toggleOrderQtyManual()">
-          <span class="en">Enter manually</span><span class="sep"> # </span><span class="vi">Nhập tay</span>
-        </label>
-      </div>
-      <div class="field">
         <label><span class="en">Auditor Name</span><span class="sep"> # </span><span class="vi">Người kiểm tra</span> *</label>
         <input id="f-auditor" type="text" required>
       </div>
@@ -650,10 +705,18 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
       </div>
     </div>
     <h2 class="section-title" style="margin-top:24px;"><span class="en">Product List</span><span class="sep"> # </span><span class="vi">Danh Sách Sản Phẩm</span></h2>
+    <div class="field" style="max-width:260px;">
+      <label><span class="en">Order Quantity</span><span class="sep"> # </span><span class="vi">SL đơn hàng</span></label>
+      <input id="f-orderqty" type="text" inputmode="numeric" pattern="[0-9]*" oninput="digitsOnly(this)" readonly>
+      <label class="orderqty-manual-toggle">
+        <input type="checkbox" id="f-orderqty-manual" onchange="toggleOrderQtyManual()">
+        <span class="en">Enter manually</span><span class="sep"> # </span><span class="vi">Nhập tay</span>
+      </label>
+    </div>
     <div class="product-table-wrap">
       <table class="product-table" id="product-table">
         <colgroup>
-          <col style="width:14%"><col style="width:48%"><col style="width:14%"><col class="aql-col" style="width:16%"><col style="width:8%">
+          <col style="width:12%"><col style="width:40%"><col style="width:22%"><col class="aql-col" style="width:18%"><col style="width:8%">
         </colgroup>
         <thead><tr>
           <th><span class="en">Code</span><span class="sep"> # </span><span class="vi">Mã</span></th>
@@ -665,55 +728,43 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
         <tbody id="product-list-body"></tbody>
       </table>
     </div>
-    <button class="btn btn-sm btn-outline" onclick="addProductRow()" style="margin-top:8px;">+ Add Row / Thêm dòng</button>
+    <button class="btn btn-sm btn-outline" onclick="addProductRow()" style="margin-top:8px;"><span class="en">+ Add Row</span><span class="sep"> # </span><span class="vi">Thêm dòng</span></button>
 
     <div class="field" style="margin-top:16px;">
       <label><span class="en">Paste from Excel / Clipboard</span><span class="sep"> # </span><span class="vi">Dán từ Excel / Clipboard</span></label>
       <textarea id="paste-area" class="paste-area" placeholder="Code[TAB]Name[TAB]Qty — one row per line / mỗi dòng 1 sản phẩm"></textarea>
-      <button class="btn btn-sm btn-outline" onclick="parsePaste()" style="margin-top:8px;">Parse &amp; Add / Phân Tích &amp; Thêm</button>
+      <button class="btn btn-sm btn-outline" onclick="parsePaste()" style="margin-top:8px;"><span class="en">Parse &amp; Add</span><span class="sep"> # </span><span class="vi">Thêm vào bảng</span></button>
     </div>
 
-    <div class="field" style="margin-top:24px;">
-      <label><span class="en">Continue a saved audit</span><span class="sep"> # </span><span class="vi">Tiếp tục audit đã lưu</span></label>
-      <label class="btn btn-outline btn-block photo-input-label">Load JSON File
-        <input type="file" accept="application/json" onchange="loadProgress(this)">
-      </label>
+    <div class="dev-tools-row">
+      <input type="file" id="demo-import-input" accept="application/json" style="display:none" onchange="importDemoData(this)">
+      <button class="btn btn-sm btn-ghost" type="button" onclick="document.getElementById('demo-import-input').click()"><span class="en">Import data</span><span class="sep"> # </span><span class="vi">Nhập dữ liệu</span></button>
+      <button class="btn btn-sm btn-ghost" type="button" onclick="exportDemoData()"><span class="en">Export data</span><span class="sep"> # </span><span class="vi">Xuất dữ liệu</span></button>
     </div>
   </div>
   <div class="actionbar" id="actionbar-setup">
-    <button class="btn btn-primary" id="setup-primary-btn" onclick="startAudit()">Start Audit / Bắt Đầu →</button>
+    <button class="btn btn-primary" id="setup-primary-btn" onclick="startAudit()"><span class="en">Start Audit</span><span class="sep"> # </span><span class="vi">Bắt đầu</span> →</button>
   </div>
 
   <!-- ============ VIEW: CARTON LIST ============ -->
   <div class="view" id="view-list">
-    <h2 class="section-title"><span class="en">Cartons Audited</span><span class="sep"> # </span><span class="vi">Carton Đã Kiểm</span></h2>
+    <h2 class="section-title"><span class="en">Cartons Audited</span><span class="sep"> # </span><span class="vi">Thùng Đã Kiểm</span></h2>
     <div id="rep-summary-bar"></div>
     <div id="carton-cards"></div>
   </div>
   <div class="actionbar" id="actionbar-list" style="display:none;">
-    <button class="btn btn-outline" onclick="saveReportFile()">💾 Lưu file gốc</button>
-    <button class="btn btn-primary" onclick="addCarton()">+ Add Carton / Thêm Thùng Mới</button>
-    <button class="btn btn-outline" onclick="goToReport()">Report / Xuất Báo Cáo →</button>
+    <button class="btn btn-outline" onclick="saveReportFile()">💾 <span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
+    <button class="btn btn-primary" onclick="addCarton()"><span class="en">+ Add Carton</span><span class="sep"> # </span><span class="vi">Thêm thùng mới</span></button>
+    <button class="btn btn-outline" onclick="goToReport()"><span class="en">Report</span><span class="sep"> # </span><span class="vi">Xuất báo cáo</span> →</button>
   </div>
 
   <!-- ============ VIEW: CARTON AUDIT ============ -->
   <div class="view" id="view-audit">
-    <h2 class="section-title"><span class="en">Carton Checklist</span><span class="sep"> # </span><span class="vi">Checklist Carton</span></h2>
+    <h2 class="section-title"><span class="en">Carton Checklist</span><span class="sep"> # </span><span class="vi">Checklist Thùng</span></h2>
     <div class="form-grid">
       <div class="field">
         <label><span class="en">Carton No.</span><span class="sep"> # </span><span class="vi">Thùng số</span></label>
         <input id="ca-cartonno" type="text" onchange="syncCartonMeta()">
-      </div>
-      <div class="field">
-        <label><span class="en">SKU / Model</span><span class="sep"> # </span><span class="vi">Mã SKU / Model</span></label>
-        <div class="sku-select-wrap" style="display:none;">
-          <select id="ca-sku-select" onchange="onSkuSelect(this.value)"></select>
-        </div>
-        <input id="ca-sku" type="text" onchange="syncCartonMeta()" placeholder="SKU / Model" style="margin-top:8px;">
-        <label class="btn btn-sm btn-outline photo-input-label sku-scan-btn" style="margin-top:8px;">📷 Scan QR
-          <input type="file" accept="image/*" capture="environment" onchange="scanQr(this)">
-        </label>
-        <div id="ca-sku-qtyinfo" class="sku-qty-info"></div>
       </div>
       <div class="field">
         <label><span class="en">Products per Carton</span><span class="sep"> # </span><span class="vi">SL sản phẩm/thùng</span></label>
@@ -723,6 +774,17 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
           <span class="en">Multi (multiple pcs/carton)</span><span class="sep"> # </span><span class="vi">Nhiều SP/thùng</span>
         </label>
       </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label><span class="en">SKU / Model</span><span class="sep"> # </span><span class="vi">Mã SKU / Model</span></label>
+        <div class="sku-select-wrap" style="display:none;">
+          <select id="ca-sku-select" onchange="onSkuSelect(this.value)"></select>
+        </div>
+        <input id="ca-sku" type="text" onchange="onSkuManualChange()" placeholder="SKU / Model" style="margin-top:8px;">
+        <label class="btn btn-sm btn-outline photo-input-label sku-scan-btn" style="margin-top:8px;">📷 Scan QR
+          <input type="file" accept="image/*" capture="environment" onchange="scanQr(this)">
+        </label>
+        <div id="ca-sku-qtyinfo" class="sku-qty-info"></div>
+      </div>
     </div>
     <div class="legend-line">
       <span class="en">OK</span> = <span class="vi">Đạt</span> &nbsp;·&nbsp;
@@ -730,20 +792,20 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
       <span class="en">N/A</span> = <span class="vi">Không áp dụng</span>
     </div>
     <div id="groups-accordion"></div>
-    <h2 class="section-title"><span class="en">Final Verdict</span><span class="sep"> # </span><span class="vi">Kết Luận Cuối</span></h2>
+    <h2 class="section-title"><span class="en">Final Verdict</span><span class="sep"> # </span><span class="vi">Kết luận cuối cùng</span></h2>
     <div id="verdict-box"></div>
   </div>
   <div class="actionbar" id="actionbar-audit" style="display:none;">
-    <button class="btn btn-outline" onclick="syncCartonMeta(); renderCartonList();">← Back / Quay lại</button>
-    <button class="btn btn-primary" onclick="finishCarton()">Done / Xong</button>
+    <button class="btn btn-outline" onclick="syncCartonMeta(); renderCartonList();">← <span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
+    <button class="btn btn-primary" onclick="finishCarton()"><span class="en">Done</span><span class="sep"> # </span><span class="vi">Xong</span></button>
   </div>
 
   <!-- ============ VIEW: REPORT ============ -->
   <div class="view" id="view-report">
     <div class="report-toolbar">
-      <button class="btn btn-outline" onclick="renderCartonList()">← Back / Quay lại</button>
-      <button class="btn btn-outline" onclick="saveReportFile()">💾 Lưu file gốc</button>
-      <button class="btn btn-primary" onclick="printReport()">🖨 Print / In - Xuất PDF</button>
+      <button class="btn btn-outline" onclick="renderCartonList()">← <span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
+      <button class="btn btn-outline" onclick="saveReportFile()">💾 <span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
+      <button class="btn btn-primary" onclick="printReport()">🖨 <span class="en">Print</span><span class="sep"> # </span><span class="vi">In - Xuất PDF</span></button>
     </div>
     <div id="report-pages"></div>
   </div>
@@ -756,8 +818,8 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <h2 class="modal-title"><span class="en">Resume Saved Report?</span><br><span class="vi" style="font-size:14px;">Tiếp tục báo cáo đã lưu?</span></h2>
     <div class="modal-meta" id="oca-resume-meta"></div>
     <div class="modal-btns">
-      <button class="btn btn-primary" onclick="resumeFromSavedState()">📂 Resume / Tiếp tục</button>
-      <button class="btn btn-outline" onclick="startFreshFromResume()">🆕 New / Báo cáo mới</button>
+      <button class="btn btn-primary" onclick="resumeFromSavedState()">📂 <span class="en">Resume</span><span class="sep"> # </span><span class="vi">Tiếp tục</span></button>
+      <button class="btn btn-outline" onclick="startFreshFromResume()">🆕 <span class="en">New</span><span class="sep"> # </span><span class="vi">Báo cáo mới</span></button>
     </div>
   </div>
 </div>
@@ -770,9 +832,9 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <div class="modal-fname" id="oca-save-conflict-fname"></div>
     <div class="modal-question"><span class="en">Overwrite the existing file, or create a new report?</span><br><span class="vi">Lưu đè lên file cũ, hay tạo báo cáo mới?</span></div>
     <div class="modal-btns">
-      <button id="oca-save-conflict-overwrite" class="btn btn-primary">💾 Lưu đè / Overwrite</button>
-      <button id="oca-save-conflict-new" class="btn btn-outline">📄 Báo cáo mới / New</button>
-      <button id="oca-save-conflict-cancel" class="btn btn-outline">✕ Huỷ / Cancel</button>
+      <button id="oca-save-conflict-overwrite" class="btn btn-primary">💾 <span class="en">Overwrite</span><span class="sep"> # </span><span class="vi">Lưu đè</span></button>
+      <button id="oca-save-conflict-new" class="btn btn-outline">📄 <span class="en">New</span><span class="sep"> # </span><span class="vi">Báo cáo mới</span></button>
+      <button id="oca-save-conflict-cancel" class="btn btn-outline">✕ <span class="en">Cancel</span><span class="sep"> # </span><span class="vi">Huỷ</span></button>
     </div>
   </div>
 </div>
@@ -785,8 +847,8 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <div class="modal-question"><span class="en">Report No.</span><span class="sep"> # </span><span class="vi">Số báo cáo</span></div>
     <div class="modal-fname" id="oca-new-report-no"></div>
     <div class="modal-btns">
-      <button id="oca-new-report-confirm" class="btn btn-primary">✓ Xác nhận / Confirm</button>
-      <button id="oca-new-report-cancel" class="btn btn-outline">✕ Huỷ / Cancel</button>
+      <button id="oca-new-report-confirm" class="btn btn-primary">✓ <span class="en">Confirm</span><span class="sep"> # </span><span class="vi">Xác nhận</span></button>
+      <button id="oca-new-report-cancel" class="btn btn-outline">✕ <span class="en">Cancel</span><span class="sep"> # </span><span class="vi">Huỷ</span></button>
     </div>
   </div>
 </div>
@@ -795,12 +857,26 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 <div class="modal-overlay" id="oca-delete-confirm-modal" style="display:none">
   <div class="modal-box">
     <div style="font-size:28px;margin-bottom:10px">🗑️</div>
-    <div class="modal-subtitle"><span class="en">Delete this carton?</span><span class="sep"> # </span><span class="vi">Xoá carton này?</span></div>
+    <div class="modal-subtitle"><span class="en">Delete this carton?</span><span class="sep"> # </span><span class="vi">Xoá thùng này?</span></div>
     <div class="modal-fname" id="oca-delete-confirm-label"></div>
     <div class="modal-question"><span class="en">This cannot be undone.</span><br><span class="vi">Không thể hoàn tác sau khi xoá.</span></div>
     <div class="modal-btns">
-      <button id="oca-delete-confirm-yes" class="btn btn-outline" style="color:#c0392b;border-color:#c0392b;">🗑️ Xoá / Delete</button>
-      <button id="oca-delete-confirm-cancel" class="btn btn-primary">✕ Huỷ / Cancel</button>
+      <button id="oca-delete-confirm-yes" class="btn btn-outline" style="color:#c0392b;border-color:#c0392b;">🗑️ <span class="en">Delete</span><span class="sep"> # </span><span class="vi">Xoá</span></button>
+      <button id="oca-delete-confirm-cancel" class="btn btn-primary">✕ <span class="en">Cancel</span><span class="sep"> # </span><span class="vi">Huỷ</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DUPLICATE SKU CONFIRM MODAL ══ -->
+<div class="modal-overlay" id="oca-dupsku-confirm-modal" style="display:none">
+  <div class="modal-box">
+    <div style="font-size:28px;margin-bottom:10px">⚠️</div>
+    <div class="modal-subtitle"><span class="en">Product code already audited</span><span class="sep"> # </span><span class="vi">Mã sản phẩm đã kiểm tra</span></div>
+    <div class="modal-fname" id="oca-dupsku-confirm-detail"></div>
+    <div class="modal-question"><span class="en">Confirm this is the next carton of the same SKU, or did you select an already-audited carton by mistake?</span><br><span class="vi">Xác nhận đây là thùng tiếp theo chung SKU, hay chọn nhầm thùng đã kiểm tra?</span></div>
+    <div class="modal-btns">
+      <button id="oca-dupsku-confirm-newcarton" class="btn btn-primary">✓ <span class="en">Confirm new carton</span><span class="sep"> # </span><span class="vi">Xác nhận thùng mới</span></button>
+      <button id="oca-dupsku-confirm-skip" class="btn btn-outline">↺ <span class="en">Skip this carton</span><span class="sep"> # </span><span class="vi">Bỏ qua thùng này</span></button>
     </div>
   </div>
 </div>
@@ -808,7 +884,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 <div id="toast"></div>
 
 <script id="__oca_saved_state__" type="application/json">null</script>
-<script id="checklist-data" type="application/json">{"groups": [{"id": "A", "en": "Carton", "vi": "Thùng Carton"}, {"id": "B", "en": "Inner Packaging", "vi": "Đóng Gói Bên Trong"}, {"id": "C", "en": "Product", "vi": "Sản Phẩm"}, {"id": "D", "en": "Material", "vi": "Vật Liệu"}, {"id": "E", "en": "Construction", "vi": "Kết Cấu"}, {"id": "F", "en": "Hardware", "vi": "Phụ Kiện"}, {"id": "G", "en": "Manual", "vi": "Hướng Dẫn"}], "categories": {"BED": {"label": {"en": "Bed / Bed Frame", "vi": "Giường / Khung Giường"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "BED-A-01"}, {"en": "Carton Construction", "vi": "Kết cấu thùng carton", "code": "BED-A-02"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "BED-A-03"}, {"en": "Carton Strength", "vi": "Độ chắc chắn của thùng carton", "code": "BED-A-04"}, {"en": "Carton Sealing", "vi": "Tình trạng đóng kín thùng", "code": "BED-A-05"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "BED-A-06"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "BED-A-07"}, {"en": "Quantity per Carton", "vi": "Số lượng sản phẩm trong thùng", "code": "BED-A-08"}, {"en": "Barcode", "vi": "Mã vạch", "code": "BED-A-09"}, {"en": "Shipping Mark", "vi": "Thông tin shipping mark", "code": "BED-A-10"}], "B": [{"en": "PE Bag", "vi": "Túi PE", "code": "BED-B-01"}, {"en": "Foam Protection", "vi": "Mút xốp bảo vệ", "code": "BED-B-02"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "BED-B-03"}, {"en": "Edge Protection", "vi": "Bảo vệ cạnh", "code": "BED-B-04"}, {"en": "Surface Protection", "vi": "Bảo vệ bề mặt", "code": "BED-B-05"}, {"en": "Component Separation", "vi": "Phân tách các chi tiết", "code": "BED-B-06"}, {"en": "Hardware Packing", "vi": "Đóng gói phụ kiện", "code": "BED-B-07"}, {"en": "Packing Sequence", "vi": "Trình tự đóng gói", "code": "BED-B-08"}, {"en": "Internal Movement", "vi": "Độ dịch chuyển của sản phẩm bên trong thùng", "code": "BED-B-09"}], "C": [{"en": "Overall Length", "vi": "Chiều dài tổng thể", "code": "BED-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "BED-C-02"}, {"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "BED-C-03"}, {"en": "Headboard Dimension", "vi": "Kích thước đầu giường", "code": "BED-C-04"}, {"en": "Footboard Dimension", "vi": "Kích thước cuối giường", "code": "BED-C-05"}, {"en": "Slat Dimension", "vi": "Kích thước thanh giường", "code": "BED-C-06"}, {"en": "Component Thickness", "vi": "Độ dày chi tiết", "code": "BED-C-07"}, {"en": "Surface Appearance", "vi": "Ngoại quan bề mặt", "code": "BED-C-08"}, {"en": "Color", "vi": "Màu sắc", "code": "BED-C-09"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "BED-C-10"}, {"en": "Scratch / Dent / Damage", "vi": "Trầy xước / móp / hư hỏng", "code": "BED-C-11"}, {"en": "Deformation / Warpage", "vi": "Biến dạng / cong vênh", "code": "BED-C-12"}, {"en": "Alignment", "vi": "Độ thẳng hàng", "code": "BED-C-13"}, {"en": "Stability", "vi": "Độ ổn định", "code": "BED-C-14"}], "D": [{"en": "Material Type", "vi": "Loại vật liệu", "code": "BED-D-01"}, {"en": "Solid Wood", "vi": "Gỗ tự nhiên", "code": "BED-D-02"}, {"en": "MDF / Particle Board", "vi": "MDF / ván dăm", "code": "BED-D-03"}, {"en": "Plywood", "vi": "Ván ép", "code": "BED-D-04"}, {"en": "Veneer", "vi": "Veneer", "code": "BED-D-05"}, {"en": "Metal", "vi": "Kim loại", "code": "BED-D-06"}, {"en": "Fabric", "vi": "Vải", "code": "BED-D-07"}, {"en": "Foam", "vi": "Mút xốp", "code": "BED-D-08"}, {"en": "Material Thickness", "vi": "Độ dày vật liệu", "code": "BED-D-09"}, {"en": "Material Density", "vi": "Tỷ trọng vật liệu", "code": "BED-D-10"}, {"en": "Material Color", "vi": "Màu vật liệu", "code": "BED-D-11"}, {"en": "Material Finish", "vi": "Hoàn thiện vật liệu", "code": "BED-D-12"}], "E": [{"en": "Frame Construction", "vi": "Kết cấu khung", "code": "BED-E-01"}, {"en": "Joint Connection", "vi": "Mối nối", "code": "BED-E-02"}, {"en": "Joint Tightness", "vi": "Độ chắc của mối nối", "code": "BED-E-03"}, {"en": "Screw / Bolt Fixing", "vi": "Liên kết bằng vít / bu lông", "code": "BED-E-04"}, {"en": "Frame Alignment", "vi": "Độ thẳng hàng của khung", "code": "BED-E-05"}, {"en": "Frame Squareness", "vi": "Độ vuông của khung", "code": "BED-E-06"}, {"en": "Slat Support", "vi": "Kết cấu đỡ thanh giường", "code": "BED-E-07"}, {"en": "Leg Connection", "vi": "Liên kết chân", "code": "BED-E-08"}, {"en": "Center Support", "vi": "Thanh / khung đỡ giữa", "code": "BED-E-09"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "BED-E-10"}], "F": [{"en": "Hardware Type", "vi": "Loại phụ kiện", "code": "BED-F-01"}, {"en": "Hardware Size", "vi": "Kích thước phụ kiện", "code": "BED-F-02"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "BED-F-03"}, {"en": "Screw Specification", "vi": "Quy cách vít", "code": "BED-F-04"}, {"en": "Bolt / Nut Specification", "vi": "Quy cách bu lông / đai ốc", "code": "BED-F-05"}, {"en": "Connector", "vi": "Chi tiết liên kết", "code": "BED-F-06"}, {"en": "Dowel", "vi": "Chốt gỗ", "code": "BED-F-07"}, {"en": "Bracket", "vi": "Bát / pát liên kết", "code": "BED-F-08"}, {"en": "Leg / Foot", "vi": "Chân / đế", "code": "BED-F-09"}, {"en": "Hardware Finish", "vi": "Bề mặt hoàn thiện phụ kiện", "code": "BED-F-10"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "BED-F-11"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "BED-G-01"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "BED-G-02"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "BED-G-03"}, {"en": "Assembly Sequence", "vi": "Trình tự lắp ráp", "code": "BED-G-04"}, {"en": "Product Information", "vi": "Thông tin sản phẩm", "code": "BED-G-05"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "BED-G-06"}, {"en": "Language", "vi": "Ngôn ngữ", "code": "BED-G-07"}, {"en": "Print Quality", "vi": "Chất lượng in", "code": "BED-G-08"}]}}, "CABINET": {"label": {"en": "Cabinet / Storage", "vi": "Tủ / Kệ Lưu Trữ"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "CABINET-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "CABINET-A-02"}, {"en": "Carton Construction", "vi": "Kết cấu thùng carton", "code": "CABINET-A-03"}, {"en": "Carton Sealing", "vi": "Tình trạng đóng kín thùng", "code": "CABINET-A-04"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "CABINET-A-05"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "CABINET-A-06"}, {"en": "Quantity per Carton", "vi": "Số lượng sản phẩm trong thùng", "code": "CABINET-A-07"}, {"en": "Barcode", "vi": "Mã vạch", "code": "CABINET-A-08"}], "B": [{"en": "Panel Protection", "vi": "Bảo vệ các tấm", "code": "CABINET-B-01"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "CABINET-B-02"}, {"en": "Edge Protection", "vi": "Bảo vệ cạnh", "code": "CABINET-B-03"}, {"en": "Surface Protection", "vi": "Bảo vệ bề mặt", "code": "CABINET-B-04"}, {"en": "Foam / EPE Protection", "vi": "Bảo vệ bằng foam / EPE", "code": "CABINET-B-05"}, {"en": "Hardware Bag", "vi": "Túi phụ kiện", "code": "CABINET-B-06"}, {"en": "Component Separation", "vi": "Phân tách các chi tiết", "code": "CABINET-B-07"}, {"en": "Packing Sequence", "vi": "Trình tự đóng gói", "code": "CABINET-B-08"}], "C": [{"en": "Overall Length", "vi": "Chiều dài tổng thể", "code": "CABINET-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "CABINET-C-02"}, {"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "CABINET-C-03"}, {"en": "Panel Thickness", "vi": "Độ dày tấm", "code": "CABINET-C-04"}, {"en": "Door Gap", "vi": "Khe cửa", "code": "CABINET-C-05"}, {"en": "Drawer Gap", "vi": "Khe ngăn kéo", "code": "CABINET-C-06"}, {"en": "Door Alignment", "vi": "Độ thẳng hàng của cửa", "code": "CABINET-C-07"}, {"en": "Drawer Alignment", "vi": "Độ thẳng hàng của ngăn kéo", "code": "CABINET-C-08"}, {"en": "Surface Appearance", "vi": "Ngoại quan bề mặt", "code": "CABINET-C-09"}, {"en": "Color", "vi": "Màu sắc", "code": "CABINET-C-10"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "CABINET-C-11"}, {"en": "Edge Banding", "vi": "Dán cạnh", "code": "CABINET-C-12"}, {"en": "Scratch / Dent / Damage", "vi": "Trầy xước / móp / hư hỏng", "code": "CABINET-C-13"}, {"en": "Warpage", "vi": "Cong vênh", "code": "CABINET-C-14"}], "D": [{"en": "Material Type", "vi": "Loại vật liệu", "code": "CABINET-D-01"}, {"en": "Solid Wood", "vi": "Gỗ tự nhiên", "code": "CABINET-D-02"}, {"en": "MDF", "vi": "MDF", "code": "CABINET-D-03"}, {"en": "Particle Board", "vi": "Ván dăm", "code": "CABINET-D-04"}, {"en": "Plywood", "vi": "Ván ép", "code": "CABINET-D-05"}, {"en": "Veneer", "vi": "Veneer", "code": "CABINET-D-06"}, {"en": "Laminate", "vi": "Laminate", "code": "CABINET-D-07"}, {"en": "Edge Band Material", "vi": "Vật liệu dán cạnh", "code": "CABINET-D-08"}, {"en": "Material Thickness", "vi": "Độ dày vật liệu", "code": "CABINET-D-09"}, {"en": "Material Finish", "vi": "Hoàn thiện vật liệu", "code": "CABINET-D-10"}], "E": [{"en": "Panel Joint", "vi": "Mối nối tấm", "code": "CABINET-E-01"}, {"en": "Cam Lock Connection", "vi": "Liên kết cam lock", "code": "CABINET-E-02"}, {"en": "Dowel Connection", "vi": "Liên kết chốt", "code": "CABINET-E-03"}, {"en": "Back Panel Fixing", "vi": "Liên kết tấm lưng", "code": "CABINET-E-04"}, {"en": "Door Construction", "vi": "Kết cấu cửa", "code": "CABINET-E-05"}, {"en": "Drawer Construction", "vi": "Kết cấu ngăn kéo", "code": "CABINET-E-06"}, {"en": "Shelf Support", "vi": "Kết cấu đỡ kệ", "code": "CABINET-E-07"}, {"en": "Frame Squareness", "vi": "Độ vuông của khung", "code": "CABINET-E-08"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "CABINET-E-09"}, {"en": "Door Operation", "vi": "Hoạt động đóng mở cửa", "code": "CABINET-E-10"}, {"en": "Drawer Operation", "vi": "Hoạt động đóng mở ngăn kéo", "code": "CABINET-E-11"}], "F": [{"en": "Hinge", "vi": "Bản lề", "code": "CABINET-F-01"}, {"en": "Drawer Slide", "vi": "Ray ngăn kéo", "code": "CABINET-F-02"}, {"en": "Handle", "vi": "Tay nắm", "code": "CABINET-F-03"}, {"en": "Cam Lock", "vi": "Cam lock", "code": "CABINET-F-04"}, {"en": "Cam Screw", "vi": "Vít cam", "code": "CABINET-F-05"}, {"en": "Shelf Pin", "vi": "Chốt kệ", "code": "CABINET-F-06"}, {"en": "Screw / Bolt", "vi": "Vít / bu lông", "code": "CABINET-F-07"}, {"en": "Connector", "vi": "Chi tiết liên kết", "code": "CABINET-F-08"}, {"en": "Foot / Leg", "vi": "Chân / đế", "code": "CABINET-F-09"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "CABINET-F-10"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "CABINET-F-11"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "CABINET-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "CABINET-G-02"}, {"en": "Assembly Sequence", "vi": "Trình tự lắp ráp", "code": "CABINET-G-03"}, {"en": "Door / Drawer Adjustment Instruction", "vi": "Hướng dẫn điều chỉnh cửa / ngăn kéo", "code": "CABINET-G-04"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "CABINET-G-05"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "CABINET-G-06"}]}}, "CHAIR": {"label": {"en": "Chair", "vi": "Ghế"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "CHAIR-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "CHAIR-A-02"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "CHAIR-A-03"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "CHAIR-A-04"}, {"en": "Quantity per Carton", "vi": "Số lượng sản phẩm trong thùng", "code": "CHAIR-A-05"}, {"en": "Barcode", "vi": "Mã vạch", "code": "CHAIR-A-06"}], "B": [{"en": "Surface Protection", "vi": "Bảo vệ bề mặt", "code": "CHAIR-B-01"}, {"en": "Foam Protection", "vi": "Mút xốp bảo vệ", "code": "CHAIR-B-02"}, {"en": "Leg Protection", "vi": "Bảo vệ chân", "code": "CHAIR-B-03"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "CHAIR-B-04"}, {"en": "Seat Protection", "vi": "Bảo vệ mặt ghế", "code": "CHAIR-B-05"}, {"en": "Hardware Packing", "vi": "Đóng gói phụ kiện", "code": "CHAIR-B-06"}], "C": [{"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "CHAIR-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "CHAIR-C-02"}, {"en": "Overall Depth", "vi": "Chiều sâu tổng thể", "code": "CHAIR-C-03"}, {"en": "Seat Height", "vi": "Chiều cao mặt ghế", "code": "CHAIR-C-04"}, {"en": "Seat Width", "vi": "Chiều rộng mặt ghế", "code": "CHAIR-C-05"}, {"en": "Seat Depth", "vi": "Chiều sâu mặt ghế", "code": "CHAIR-C-06"}, {"en": "Armrest Height", "vi": "Chiều cao tay vịn", "code": "CHAIR-C-07"}, {"en": "Backrest Height", "vi": "Chiều cao tựa lưng", "code": "CHAIR-C-08"}, {"en": "Surface Appearance", "vi": "Ngoại quan bề mặt", "code": "CHAIR-C-09"}, {"en": "Upholstery Appearance", "vi": "Ngoại quan bọc", "code": "CHAIR-C-10"}, {"en": "Color", "vi": "Màu sắc", "code": "CHAIR-C-11"}, {"en": "Stitching Appearance", "vi": "Ngoại quan đường may", "code": "CHAIR-C-12"}, {"en": "Stability / Wobble", "vi": "Độ ổn định / rung lắc", "code": "CHAIR-C-13"}], "D": [{"en": "Frame Material", "vi": "Vật liệu khung", "code": "CHAIR-D-01"}, {"en": "Solid Wood", "vi": "Gỗ tự nhiên", "code": "CHAIR-D-02"}, {"en": "Metal", "vi": "Kim loại", "code": "CHAIR-D-03"}, {"en": "Plastic", "vi": "Nhựa", "code": "CHAIR-D-04"}, {"en": "Fabric", "vi": "Vải", "code": "CHAIR-D-05"}, {"en": "Leather / PU", "vi": "Da / PU", "code": "CHAIR-D-06"}, {"en": "Foam", "vi": "Mút xốp", "code": "CHAIR-D-07"}, {"en": "Foam Density", "vi": "Tỷ trọng mút", "code": "CHAIR-D-08"}, {"en": "Foam Thickness", "vi": "Độ dày mút", "code": "CHAIR-D-09"}, {"en": "Material Finish", "vi": "Hoàn thiện vật liệu", "code": "CHAIR-D-10"}], "E": [{"en": "Frame Construction", "vi": "Kết cấu khung", "code": "CHAIR-E-01"}, {"en": "Joint Connection", "vi": "Mối nối", "code": "CHAIR-E-02"}, {"en": "Leg Connection", "vi": "Liên kết chân", "code": "CHAIR-E-03"}, {"en": "Backrest Connection", "vi": "Liên kết tựa lưng", "code": "CHAIR-E-04"}, {"en": "Armrest Connection", "vi": "Liên kết tay vịn", "code": "CHAIR-E-05"}, {"en": "Screw Fixing", "vi": "Liên kết bằng vít", "code": "CHAIR-E-06"}, {"en": "Welding Quality", "vi": "Chất lượng mối hàn", "code": "CHAIR-E-07"}, {"en": "Frame Alignment", "vi": "Độ thẳng hàng của khung", "code": "CHAIR-E-08"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "CHAIR-E-09"}, {"en": "Chair Wobble", "vi": "Tình trạng ghế bị cập kênh", "code": "CHAIR-E-10"}], "F": [{"en": "Screw", "vi": "Vít", "code": "CHAIR-F-01"}, {"en": "Bolt / Nut", "vi": "Bu lông / đai ốc", "code": "CHAIR-F-02"}, {"en": "Insert Nut", "vi": "Tán cấy", "code": "CHAIR-F-03"}, {"en": "Bracket", "vi": "Bát / pát", "code": "CHAIR-F-04"}, {"en": "Leg / Foot", "vi": "Chân / đế", "code": "CHAIR-F-05"}, {"en": "Glide / Foot Pad", "vi": "Nút chân / đệm chân", "code": "CHAIR-F-06"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "CHAIR-F-07"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "CHAIR-F-08"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "CHAIR-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "CHAIR-G-02"}, {"en": "Assembly Sequence", "vi": "Trình tự lắp ráp", "code": "CHAIR-G-03"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "CHAIR-G-04"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "CHAIR-G-05"}]}}, "TABLE": {"label": {"en": "Table", "vi": "Bàn"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "TABLE-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "TABLE-A-02"}, {"en": "Carton Construction", "vi": "Kết cấu thùng carton", "code": "TABLE-A-03"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "TABLE-A-04"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "TABLE-A-05"}, {"en": "Quantity per Carton", "vi": "Số lượng sản phẩm trong thùng", "code": "TABLE-A-06"}, {"en": "Barcode", "vi": "Mã vạch", "code": "TABLE-A-07"}], "B": [{"en": "Tabletop Protection", "vi": "Bảo vệ mặt bàn", "code": "TABLE-B-01"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "TABLE-B-02"}, {"en": "Edge Protection", "vi": "Bảo vệ cạnh", "code": "TABLE-B-03"}, {"en": "Leg Protection", "vi": "Bảo vệ chân", "code": "TABLE-B-04"}, {"en": "Foam / EPE Protection", "vi": "Bảo vệ bằng foam / EPE", "code": "TABLE-B-05"}, {"en": "Hardware Packing", "vi": "Đóng gói phụ kiện", "code": "TABLE-B-06"}, {"en": "Component Separation", "vi": "Phân tách các chi tiết", "code": "TABLE-B-07"}], "C": [{"en": "Overall Length", "vi": "Chiều dài tổng thể", "code": "TABLE-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "TABLE-C-02"}, {"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "TABLE-C-03"}, {"en": "Tabletop Thickness", "vi": "Độ dày mặt bàn", "code": "TABLE-C-04"}, {"en": "Leg Height", "vi": "Chiều cao chân", "code": "TABLE-C-05"}, {"en": "Leg Thickness", "vi": "Độ dày chân", "code": "TABLE-C-06"}, {"en": "Tabletop Flatness", "vi": "Độ phẳng mặt bàn", "code": "TABLE-C-07"}, {"en": "Edge Profile", "vi": "Biên dạng cạnh", "code": "TABLE-C-08"}, {"en": "Surface Appearance", "vi": "Ngoại quan bề mặt", "code": "TABLE-C-09"}, {"en": "Color", "vi": "Màu sắc", "code": "TABLE-C-10"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "TABLE-C-11"}, {"en": "Scratch / Dent / Damage", "vi": "Trầy xước / móp / hư hỏng", "code": "TABLE-C-12"}, {"en": "Stability / Wobble", "vi": "Độ ổn định / cập kênh", "code": "TABLE-C-13"}], "D": [{"en": "Solid Wood", "vi": "Gỗ tự nhiên", "code": "TABLE-D-01"}, {"en": "MDF / Particle Board", "vi": "MDF / ván dăm", "code": "TABLE-D-02"}, {"en": "Plywood", "vi": "Ván ép", "code": "TABLE-D-03"}, {"en": "Veneer", "vi": "Veneer", "code": "TABLE-D-04"}, {"en": "Laminate", "vi": "Laminate", "code": "TABLE-D-05"}, {"en": "Metal", "vi": "Kim loại", "code": "TABLE-D-06"}, {"en": "Glass", "vi": "Kính", "code": "TABLE-D-07"}, {"en": "Material Thickness", "vi": "Độ dày vật liệu", "code": "TABLE-D-08"}, {"en": "Material Finish", "vi": "Hoàn thiện vật liệu", "code": "TABLE-D-09"}], "E": [{"en": "Tabletop Connection", "vi": "Liên kết mặt bàn", "code": "TABLE-E-01"}, {"en": "Leg Connection", "vi": "Liên kết chân", "code": "TABLE-E-02"}, {"en": "Frame Connection", "vi": "Liên kết khung", "code": "TABLE-E-03"}, {"en": "Joint Tightness", "vi": "Độ chắc của mối nối", "code": "TABLE-E-04"}, {"en": "Frame Squareness", "vi": "Độ vuông của khung", "code": "TABLE-E-05"}, {"en": "Leg Alignment", "vi": "Độ thẳng hàng của chân", "code": "TABLE-E-06"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "TABLE-E-07"}, {"en": "Folding Mechanism", "vi": "Cơ cấu gấp", "code": "TABLE-E-08"}, {"en": "Extension Mechanism", "vi": "Cơ cấu mở rộng", "code": "TABLE-E-09"}, {"en": "Locking Mechanism", "vi": "Cơ cấu khóa", "code": "TABLE-E-10"}], "F": [{"en": "Screw / Bolt", "vi": "Vít / bu lông", "code": "TABLE-F-01"}, {"en": "Nut / Washer", "vi": "Đai ốc / vòng đệm", "code": "TABLE-F-02"}, {"en": "Bracket", "vi": "Bát / pát", "code": "TABLE-F-03"}, {"en": "Connector", "vi": "Chi tiết liên kết", "code": "TABLE-F-04"}, {"en": "Extension Hardware", "vi": "Phụ kiện mở rộng", "code": "TABLE-F-05"}, {"en": "Locking Hardware", "vi": "Phụ kiện khóa", "code": "TABLE-F-06"}, {"en": "Foot / Glide", "vi": "Chân / nút chân", "code": "TABLE-F-07"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "TABLE-F-08"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "TABLE-F-09"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "TABLE-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "TABLE-G-02"}, {"en": "Assembly Sequence", "vi": "Trình tự lắp ráp", "code": "TABLE-G-03"}, {"en": "Function Instruction", "vi": "Hướng dẫn sử dụng chức năng", "code": "TABLE-G-04"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "TABLE-G-05"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "TABLE-G-06"}]}}, "SOFA": {"label": {"en": "Sofa / Upholstered Furniture", "vi": "Sofa / Nội Thất Bọc"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "SOFA-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "SOFA-A-02"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "SOFA-A-03"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "SOFA-A-04"}, {"en": "Quantity per Carton", "vi": "Số lượng sản phẩm trong thùng", "code": "SOFA-A-05"}], "B": [{"en": "PE Bag", "vi": "Túi PE", "code": "SOFA-B-01"}, {"en": "Fabric Protection", "vi": "Bảo vệ vải", "code": "SOFA-B-02"}, {"en": "Foam Protection", "vi": "Mút xốp bảo vệ", "code": "SOFA-B-03"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "SOFA-B-04"}, {"en": "Leg Protection", "vi": "Bảo vệ chân", "code": "SOFA-B-05"}, {"en": "Hardware Packing", "vi": "Đóng gói phụ kiện", "code": "SOFA-B-06"}], "C": [{"en": "Overall Length", "vi": "Chiều dài tổng thể", "code": "SOFA-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "SOFA-C-02"}, {"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "SOFA-C-03"}, {"en": "Seat Height", "vi": "Chiều cao mặt ngồi", "code": "SOFA-C-04"}, {"en": "Seat Depth", "vi": "Chiều sâu mặt ngồi", "code": "SOFA-C-05"}, {"en": "Armrest Height", "vi": "Chiều cao tay vịn", "code": "SOFA-C-06"}, {"en": "Cushion Dimension", "vi": "Kích thước đệm", "code": "SOFA-C-07"}, {"en": "Fabric Appearance", "vi": "Ngoại quan vải", "code": "SOFA-C-08"}, {"en": "Wrinkle", "vi": "Nếp nhăn", "code": "SOFA-C-09"}, {"en": "Stitching", "vi": "Đường may", "code": "SOFA-C-10"}, {"en": "Color", "vi": "Màu sắc", "code": "SOFA-C-11"}, {"en": "Surface Damage", "vi": "Hư hỏng bề mặt", "code": "SOFA-C-12"}, {"en": "Overall Appearance", "vi": "Ngoại quan tổng thể", "code": "SOFA-C-13"}], "D": [{"en": "Frame Material", "vi": "Vật liệu khung", "code": "SOFA-D-01"}, {"en": "Wood / Plywood", "vi": "Gỗ / ván ép", "code": "SOFA-D-02"}, {"en": "Metal", "vi": "Kim loại", "code": "SOFA-D-03"}, {"en": "Foam", "vi": "Mút xốp", "code": "SOFA-D-04"}, {"en": "Foam Density", "vi": "Tỷ trọng mút", "code": "SOFA-D-05"}, {"en": "Foam Thickness", "vi": "Độ dày mút", "code": "SOFA-D-06"}, {"en": "Fabric", "vi": "Vải", "code": "SOFA-D-07"}, {"en": "Leather / PU", "vi": "Da / PU", "code": "SOFA-D-08"}, {"en": "Webbing", "vi": "Dây đai", "code": "SOFA-D-09"}, {"en": "Spring", "vi": "Lò xo", "code": "SOFA-D-10"}], "E": [{"en": "Frame Construction", "vi": "Kết cấu khung", "code": "SOFA-E-01"}, {"en": "Joint Connection", "vi": "Mối nối", "code": "SOFA-E-02"}, {"en": "Seat Construction", "vi": "Kết cấu mặt ngồi", "code": "SOFA-E-03"}, {"en": "Backrest Construction", "vi": "Kết cấu tựa lưng", "code": "SOFA-E-04"}, {"en": "Armrest Construction", "vi": "Kết cấu tay vịn", "code": "SOFA-E-05"}, {"en": "Stitching Construction", "vi": "Kết cấu đường may", "code": "SOFA-E-06"}, {"en": "Cushion Fit", "vi": "Độ khớp của đệm", "code": "SOFA-E-07"}, {"en": "Leg Connection", "vi": "Liên kết chân", "code": "SOFA-E-08"}, {"en": "Recliner Mechanism", "vi": "Cơ cấu ngả", "code": "SOFA-E-09"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "SOFA-E-10"}], "F": [{"en": "Leg / Foot", "vi": "Chân / đế", "code": "SOFA-F-01"}, {"en": "Screw / Bolt", "vi": "Vít / bu lông", "code": "SOFA-F-02"}, {"en": "Bracket", "vi": "Bát / pát", "code": "SOFA-F-03"}, {"en": "Recliner Mechanism", "vi": "Cơ cấu ngả", "code": "SOFA-F-04"}, {"en": "Connector", "vi": "Chi tiết liên kết", "code": "SOFA-F-05"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "SOFA-F-06"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "SOFA-F-07"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "SOFA-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "SOFA-G-02"}, {"en": "Function Instruction", "vi": "Hướng dẫn sử dụng chức năng", "code": "SOFA-G-03"}, {"en": "Care Instruction", "vi": "Hướng dẫn bảo quản", "code": "SOFA-G-04"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "SOFA-G-05"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "SOFA-G-06"}]}}, "GLASS": {"label": {"en": "Glass / Mirror", "vi": "Kính / Gương"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "GLASS-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "GLASS-A-02"}, {"en": "Carton Strength", "vi": "Độ chắc chắn của thùng carton", "code": "GLASS-A-03"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "GLASS-A-04"}, {"en": "Fragile Marking", "vi": "Ký hiệu hàng dễ vỡ", "code": "GLASS-A-05"}], "B": [{"en": "Edge Protection", "vi": "Bảo vệ cạnh", "code": "GLASS-B-01"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "GLASS-B-02"}, {"en": "Foam Protection", "vi": "Mút xốp bảo vệ", "code": "GLASS-B-03"}, {"en": "Surface Protection", "vi": "Bảo vệ bề mặt", "code": "GLASS-B-04"}, {"en": "Glass Separation", "vi": "Phân tách kính", "code": "GLASS-B-05"}, {"en": "Anti-Scratch Protection", "vi": "Bảo vệ chống trầy", "code": "GLASS-B-06"}], "C": [{"en": "Overall Length", "vi": "Chiều dài tổng thể", "code": "GLASS-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "GLASS-C-02"}, {"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "GLASS-C-03"}, {"en": "Glass Thickness", "vi": "Độ dày kính", "code": "GLASS-C-04"}, {"en": "Surface Condition", "vi": "Tình trạng bề mặt", "code": "GLASS-C-05"}, {"en": "Edge Condition", "vi": "Tình trạng cạnh", "code": "GLASS-C-06"}, {"en": "Reflection Quality", "vi": "Chất lượng phản chiếu", "code": "GLASS-C-07"}, {"en": "Scratch / Crack / Chip", "vi": "Trầy / nứt / mẻ", "code": "GLASS-C-08"}, {"en": "Frame Alignment", "vi": "Độ thẳng hàng của khung", "code": "GLASS-C-09"}], "D": [{"en": "Glass Type", "vi": "Loại kính", "code": "GLASS-D-01"}, {"en": "Glass Thickness", "vi": "Độ dày kính", "code": "GLASS-D-02"}, {"en": "Mirror Type", "vi": "Loại gương", "code": "GLASS-D-03"}, {"en": "Frame Material", "vi": "Vật liệu khung", "code": "GLASS-D-04"}, {"en": "Backing Material", "vi": "Vật liệu mặt sau", "code": "GLASS-D-05"}, {"en": "Material Finish", "vi": "Hoàn thiện vật liệu", "code": "GLASS-D-06"}], "E": [{"en": "Glass Fixing", "vi": "Liên kết kính", "code": "GLASS-E-01"}, {"en": "Frame Construction", "vi": "Kết cấu khung", "code": "GLASS-E-02"}, {"en": "Frame Joint", "vi": "Mối nối khung", "code": "GLASS-E-03"}, {"en": "Bracket Fixing", "vi": "Liên kết bát / pát", "code": "GLASS-E-04"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "GLASS-E-05"}], "F": [{"en": "Bracket", "vi": "Bát / pát", "code": "GLASS-F-01"}, {"en": "Hook", "vi": "Móc", "code": "GLASS-F-02"}, {"en": "Screw / Bolt", "vi": "Vít / bu lông", "code": "GLASS-F-03"}, {"en": "Wall Mount Hardware", "vi": "Phụ kiện treo tường", "code": "GLASS-F-04"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "GLASS-F-05"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "GLASS-F-06"}], "G": [{"en": "Installation Manual", "vi": "Hướng dẫn lắp đặt", "code": "GLASS-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "GLASS-G-02"}, {"en": "Wall Mount Instruction", "vi": "Hướng dẫn treo tường", "code": "GLASS-G-03"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "GLASS-G-04"}]}}, "ACCESSORIES": {"label": {"en": "Accessories / Hardware Kit", "vi": "Phụ Kiện / Bộ Phụ Kiện"}, "groups": {"A": [{"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "ACCESSORIES-A-01"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "ACCESSORIES-A-02"}, {"en": "SKU / Part Number", "vi": "Mã SKU / mã linh kiện", "code": "ACCESSORIES-A-03"}, {"en": "Quantity per Carton", "vi": "Số lượng trong thùng", "code": "ACCESSORIES-A-04"}], "B": [{"en": "Individual Bag", "vi": "Túi riêng từng loại", "code": "ACCESSORIES-B-01"}, {"en": "Component Separation", "vi": "Phân tách các loại linh kiện", "code": "ACCESSORIES-B-02"}, {"en": "Protection", "vi": "Bảo vệ linh kiện", "code": "ACCESSORIES-B-03"}, {"en": "Hardware Label", "vi": "Nhãn phụ kiện", "code": "ACCESSORIES-B-04"}, {"en": "Packing Quantity", "vi": "Số lượng đóng gói", "code": "ACCESSORIES-B-05"}], "C": [{"en": "Part Type", "vi": "Loại linh kiện", "code": "ACCESSORIES-C-01"}, {"en": "Part Dimension", "vi": "Kích thước linh kiện", "code": "ACCESSORIES-C-02"}, {"en": "Part Thickness", "vi": "Độ dày linh kiện", "code": "ACCESSORIES-C-03"}, {"en": "Appearance", "vi": "Ngoại quan", "code": "ACCESSORIES-C-04"}, {"en": "Color / Finish", "vi": "Màu sắc / hoàn thiện", "code": "ACCESSORIES-C-05"}, {"en": "Function", "vi": "Chức năng", "code": "ACCESSORIES-C-06"}, {"en": "Compatibility", "vi": "Khả năng tương thích", "code": "ACCESSORIES-C-07"}], "D": [{"en": "Material Type", "vi": "Loại vật liệu", "code": "ACCESSORIES-D-01"}, {"en": "Material Grade", "vi": "Cấp vật liệu", "code": "ACCESSORIES-D-02"}, {"en": "Thickness", "vi": "Độ dày", "code": "ACCESSORIES-D-03"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "ACCESSORIES-D-04"}, {"en": "Color / Plating", "vi": "Màu sắc / lớp mạ", "code": "ACCESSORIES-D-05"}], "E": [{"en": "Part Assembly", "vi": "Lắp ráp linh kiện", "code": "ACCESSORIES-E-01"}, {"en": "Connection", "vi": "Liên kết", "code": "ACCESSORIES-E-02"}, {"en": "Thread Condition", "vi": "Tình trạng ren", "code": "ACCESSORIES-E-03"}, {"en": "Fit Condition", "vi": "Độ khớp", "code": "ACCESSORIES-E-04"}, {"en": "Function", "vi": "Chức năng", "code": "ACCESSORIES-E-05"}], "F": [{"en": "Part Number", "vi": "Mã linh kiện", "code": "ACCESSORIES-F-01"}, {"en": "Hardware Type", "vi": "Loại phụ kiện", "code": "ACCESSORIES-F-02"}, {"en": "Hardware Size", "vi": "Kích thước phụ kiện", "code": "ACCESSORIES-F-03"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "ACCESSORIES-F-04"}, {"en": "Hardware Finish", "vi": "Bề mặt hoàn thiện", "code": "ACCESSORIES-F-05"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ", "code": "ACCESSORIES-F-06"}, {"en": "Compatibility", "vi": "Tính tương thích", "code": "ACCESSORIES-F-07"}], "G": [{"en": "Installation Instruction", "vi": "Hướng dẫn lắp đặt", "code": "ACCESSORIES-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "ACCESSORIES-G-02"}, {"en": "Part Identification", "vi": "Nhận diện linh kiện", "code": "ACCESSORIES-G-03"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "ACCESSORIES-G-04"}]}}, "OTHER": {"label": {"en": "Other Furniture", "vi": "Nội Thất Khác"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "OTHER-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "OTHER-A-02"}, {"en": "Carton Construction", "vi": "Kết cấu thùng carton", "code": "OTHER-A-03"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "OTHER-A-04"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "OTHER-A-05"}, {"en": "Quantity per Carton", "vi": "Số lượng trong thùng", "code": "OTHER-A-06"}], "B": [{"en": "Product Protection", "vi": "Bảo vệ sản phẩm", "code": "OTHER-B-01"}, {"en": "Surface Protection", "vi": "Bảo vệ bề mặt", "code": "OTHER-B-02"}, {"en": "Corner / Edge Protection", "vi": "Bảo vệ góc / cạnh", "code": "OTHER-B-03"}, {"en": "Component Separation", "vi": "Phân tách các chi tiết", "code": "OTHER-B-04"}, {"en": "Hardware Packing", "vi": "Đóng gói phụ kiện", "code": "OTHER-B-05"}, {"en": "Packing Sequence", "vi": "Trình tự đóng gói", "code": "OTHER-B-06"}], "C": [{"en": "Overall Dimension", "vi": "Kích thước tổng thể", "code": "OTHER-C-01"}, {"en": "Key Dimension", "vi": "Kích thước quan trọng", "code": "OTHER-C-02"}, {"en": "Appearance", "vi": "Ngoại quan", "code": "OTHER-C-03"}, {"en": "Color", "vi": "Màu sắc", "code": "OTHER-C-04"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "OTHER-C-05"}, {"en": "Function", "vi": "Chức năng", "code": "OTHER-C-06"}, {"en": "Fit & Alignment", "vi": "Độ khớp và thẳng hàng", "code": "OTHER-C-07"}, {"en": "Stability", "vi": "Độ ổn định", "code": "OTHER-C-08"}], "D": [{"en": "Material Type", "vi": "Loại vật liệu", "code": "OTHER-D-01"}, {"en": "Material Grade", "vi": "Cấp vật liệu", "code": "OTHER-D-02"}, {"en": "Thickness / Density", "vi": "Độ dày / tỷ trọng", "code": "OTHER-D-03"}, {"en": "Color", "vi": "Màu sắc", "code": "OTHER-D-04"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "OTHER-D-05"}], "E": [{"en": "Frame / Structure", "vi": "Khung / kết cấu", "code": "OTHER-E-01"}, {"en": "Joint Connection", "vi": "Mối nối", "code": "OTHER-E-02"}, {"en": "Fixing Method", "vi": "Phương pháp liên kết", "code": "OTHER-E-03"}, {"en": "Assembly", "vi": "Lắp ráp", "code": "OTHER-E-04"}, {"en": "Alignment", "vi": "Độ thẳng hàng", "code": "OTHER-E-05"}, {"en": "Stability", "vi": "Độ ổn định", "code": "OTHER-E-06"}], "F": [{"en": "Hardware Type", "vi": "Loại phụ kiện", "code": "OTHER-F-01"}, {"en": "Hardware Size", "vi": "Kích thước phụ kiện", "code": "OTHER-F-02"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "OTHER-F-03"}, {"en": "Hardware Finish", "vi": "Bề mặt hoàn thiện", "code": "OTHER-F-04"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "OTHER-F-05"}, {"en": "Function / Compatibility", "vi": "Chức năng / tính tương thích", "code": "OTHER-F-06"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "OTHER-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "OTHER-G-02"}, {"en": "Installation Instruction", "vi": "Hướng dẫn lắp đặt", "code": "OTHER-G-03"}, {"en": "Function Instruction", "vi": "Hướng dẫn sử dụng", "code": "OTHER-G-04"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "OTHER-G-05"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "OTHER-G-06"}]}}}}</script>
+<script id="checklist-data" type="application/json">{"groups": [{"id": "A", "en": "Carton", "vi": "Thùng Carton"}, {"id": "B", "en": "Inner Packaging", "vi": "Đóng Gói Bên Trong"}, {"id": "C", "en": "Product", "vi": "Sản Phẩm"}, {"id": "D", "en": "Material", "vi": "Vật Liệu"}, {"id": "E", "en": "Construction", "vi": "Kết Cấu"}, {"id": "F", "en": "Hardware", "vi": "Phụ Kiện"}, {"id": "G", "en": "Manual", "vi": "Hướng Dẫn"}], "categories": {"BED": {"label": {"en": "Bed / Bed Frame", "vi": "Giường / Khung Giường"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "BED-A-01"}, {"en": "Carton Construction", "vi": "Kết cấu thùng carton", "code": "BED-A-02"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "BED-A-03"}, {"en": "Carton Strength", "vi": "Độ chắc chắn của thùng carton", "code": "BED-A-04"}, {"en": "Carton Sealing", "vi": "Tình trạng đóng kín thùng", "code": "BED-A-05"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "BED-A-06"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "BED-A-07"}, {"en": "Quantity per Carton", "vi": "Số lượng sản phẩm trong thùng", "code": "BED-A-08"}, {"en": "Barcode", "vi": "Mã vạch", "code": "BED-A-09"}, {"en": "Shipping Mark", "vi": "Thông tin shipping mark", "code": "BED-A-10"}], "B": [{"en": "PE Bag", "vi": "Túi PE", "code": "BED-B-01"}, {"en": "Foam Protection", "vi": "Mút xốp bảo vệ", "code": "BED-B-02"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "BED-B-03"}, {"en": "Edge Protection", "vi": "Bảo vệ cạnh", "code": "BED-B-04"}, {"en": "Surface Protection", "vi": "Bảo vệ bề mặt", "code": "BED-B-05"}, {"en": "Component Separation", "vi": "Phân tách các chi tiết", "code": "BED-B-06"}, {"en": "Hardware Packing", "vi": "Đóng gói phụ kiện", "code": "BED-B-07"}, {"en": "Packing Sequence", "vi": "Trình tự đóng gói", "code": "BED-B-08"}, {"en": "Internal Movement", "vi": "Độ dịch chuyển của sản phẩm bên trong thùng", "code": "BED-B-09"}, {"en": "Desiccant bag", "vi": "Túi hút ẩm", "code": "BED-B-10"}], "C": [{"en": "Overall Length", "vi": "Chiều dài tổng thể", "code": "BED-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "BED-C-02"}, {"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "BED-C-03"}, {"en": "Headboard Dimension", "vi": "Kích thước đầu giường", "code": "BED-C-04"}, {"en": "Footboard Dimension", "vi": "Kích thước đuôi giường", "code": "BED-C-05"}, {"en": "Slat Dimension", "vi": "Kích thước thanh vạt giường", "code": "BED-C-06"}, {"en": "Component Thickness", "vi": "Độ dày chi tiết", "code": "BED-C-07"}, {"en": "Surface Appearance", "vi": "Ngoại quan bề mặt", "code": "BED-C-08"}, {"en": "Color", "vi": "Màu sắc", "code": "BED-C-09"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "BED-C-10"}, {"en": "Scratch / Dent / Damage", "vi": "Trầy xước / móp / hư hỏng", "code": "BED-C-11"}, {"en": "Deformation / Warpage", "vi": "Biến dạng / cong vênh", "code": "BED-C-12"}, {"en": "Alignment", "vi": "Độ thẳng hàng", "code": "BED-C-13"}, {"en": "Stability", "vi": "Độ ổn định", "code": "BED-C-14"}], "D": [{"en": "Material Type", "vi": "Loại vật liệu", "code": "BED-D-01"}, {"en": "Solid Wood", "vi": "Gỗ tự nhiên", "code": "BED-D-02"}, {"en": "MDF / Particle Board", "vi": "MDF / ván dăm", "code": "BED-D-03"}, {"en": "Plywood", "vi": "Ván ép", "code": "BED-D-04"}, {"en": "Veneer", "vi": "Veneer", "code": "BED-D-05"}, {"en": "Metal", "vi": "Kim loại", "code": "BED-D-06"}, {"en": "Fabric", "vi": "Vải", "code": "BED-D-07"}, {"en": "Foam", "vi": "Mút xốp", "code": "BED-D-08"}, {"en": "Real leather", "vi": "Da tự nhiên", "code": "BED-D-09"}, {"en": "Faux leather", "vi": "Da nhân tạo", "code": "BED-D-10"}, {"en": "Stone / Brick", "vi": "Đá / gạch", "code": "BED-D-11"}, {"en": "Concrete", "vi": "Xi măng", "code": "BED-D-12"}, {"en": "Plastic", "vi": "Nhựa", "code": "BED-D-13"}, {"en": "Material Thickness", "vi": "Độ dày vật liệu", "code": "BED-D-14"}, {"en": "Material Density", "vi": "Tỷ trọng vật liệu", "code": "BED-D-15"}, {"en": "Material Color", "vi": "Màu vật liệu", "code": "BED-D-16"}, {"en": "Material Finish", "vi": "Hoàn thiện vật liệu", "code": "BED-D-17"}, {"en": "Other material", "vi": "Vật liệu khác", "code": "BED-D-18"}], "E": [{"en": "Frame Construction", "vi": "Kết cấu khung", "code": "BED-E-01"}, {"en": "Joint Connection", "vi": "Mối nối", "code": "BED-E-02"}, {"en": "Joint Tightness", "vi": "Độ chắc của mối nối", "code": "BED-E-03"}, {"en": "Screw / Bolt Fixing", "vi": "Liên kết bằng vít / bu lông", "code": "BED-E-04"}, {"en": "Frame Alignment", "vi": "Độ thẳng hàng của khung", "code": "BED-E-05"}, {"en": "Frame Squareness", "vi": "Độ vuông của khung", "code": "BED-E-06"}, {"en": "Slat Support", "vi": "Kết cấu đỡ thanh vạt giường", "code": "BED-E-07"}, {"en": "Leg Connection", "vi": "Liên kết chân", "code": "BED-E-08"}, {"en": "Center Support", "vi": "Thanh / khung đỡ giữa", "code": "BED-E-09"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "BED-E-10"}], "F": [{"en": "Hardware Type", "vi": "Loại phụ kiện", "code": "BED-F-01"}, {"en": "Hardware Size", "vi": "Kích thước phụ kiện", "code": "BED-F-02"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "BED-F-03"}, {"en": "Screw Specification", "vi": "Quy cách vít", "code": "BED-F-04"}, {"en": "Bolt / Nut Specification", "vi": "Quy cách bu lông / đai ốc", "code": "BED-F-05"}, {"en": "Connector", "vi": "Chi tiết liên kết", "code": "BED-F-06"}, {"en": "Dowel", "vi": "Chốt gỗ", "code": "BED-F-07"}, {"en": "Bracket", "vi": "Bát / pát liên kết", "code": "BED-F-08"}, {"en": "Leg / Foot", "vi": "Chân / đế", "code": "BED-F-09"}, {"en": "Hardware Finish", "vi": "Bề mặt hoàn thiện phụ kiện", "code": "BED-F-10"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "BED-F-11"}, {"en": "Other Hardware", "vi": "Phụ kiện khác", "code": "BED-F-12"}, {"en": "Hardware function", "vi": "Khả năng hoạt động của phụ kiện", "code": "BED-F-13"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "BED-G-01"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "BED-G-02"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "BED-G-03"}, {"en": "Assembly Sequence", "vi": "Trình tự lắp ráp", "code": "BED-G-04"}, {"en": "Product Information", "vi": "Thông tin sản phẩm", "code": "BED-G-05"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "BED-G-06"}, {"en": "Language", "vi": "Ngôn ngữ", "code": "BED-G-07"}, {"en": "Print Quality", "vi": "Chất lượng in", "code": "BED-G-08"}, {"en": "Disclaimer", "vi": "Thư miễn trừ trách nhiệm", "code": "BED-G-09"}, {"en": "Compliance label", "vi": "Nhãn tuân thủ", "code": "BED-G-10"}]}}, "CABINET": {"label": {"en": "Cabinet / Storage", "vi": "Tủ / Kệ Lưu Trữ"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "CABINET-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "CABINET-A-02"}, {"en": "Carton Construction", "vi": "Kết cấu thùng carton", "code": "CABINET-A-03"}, {"en": "Carton Sealing", "vi": "Tình trạng đóng kín thùng", "code": "CABINET-A-04"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "CABINET-A-05"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "CABINET-A-06"}, {"en": "Quantity per Carton", "vi": "Số lượng sản phẩm trong thùng", "code": "CABINET-A-07"}, {"en": "Barcode", "vi": "Mã vạch", "code": "CABINET-A-08"}], "B": [{"en": "Panel Protection", "vi": "Bảo vệ các tấm", "code": "CABINET-B-01"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "CABINET-B-02"}, {"en": "Edge Protection", "vi": "Bảo vệ cạnh", "code": "CABINET-B-03"}, {"en": "Surface Protection", "vi": "Bảo vệ bề mặt", "code": "CABINET-B-04"}, {"en": "Foam / EPE Protection", "vi": "Bảo vệ bằng foam / EPE", "code": "CABINET-B-05"}, {"en": "Hardware Bag", "vi": "Túi phụ kiện", "code": "CABINET-B-06"}, {"en": "Component Separation", "vi": "Phân tách các chi tiết", "code": "CABINET-B-07"}, {"en": "Packing Sequence", "vi": "Trình tự đóng gói", "code": "CABINET-B-08"}, {"en": "Desiccant bag", "vi": "Túi hút ẩm", "code": "CABINET-B-09"}], "C": [{"en": "Overall Length", "vi": "Chiều dài tổng thể", "code": "CABINET-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "CABINET-C-02"}, {"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "CABINET-C-03"}, {"en": "Panel Thickness", "vi": "Độ dày tấm", "code": "CABINET-C-04"}, {"en": "Door Gap", "vi": "Khe cửa", "code": "CABINET-C-05"}, {"en": "Drawer Gap", "vi": "Khe ngăn kéo", "code": "CABINET-C-06"}, {"en": "Door Alignment", "vi": "Độ thẳng hàng của cửa", "code": "CABINET-C-07"}, {"en": "Drawer Alignment", "vi": "Độ thẳng hàng của ngăn kéo", "code": "CABINET-C-08"}, {"en": "Surface Appearance", "vi": "Ngoại quan bề mặt", "code": "CABINET-C-09"}, {"en": "Color", "vi": "Màu sắc", "code": "CABINET-C-10"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "CABINET-C-11"}, {"en": "Edge Banding", "vi": "Dán cạnh", "code": "CABINET-C-12"}, {"en": "Scratch / Dent / Damage", "vi": "Trầy xước / móp / hư hỏng", "code": "CABINET-C-13"}, {"en": "Warpage", "vi": "Cong vênh", "code": "CABINET-C-14"}], "D": [{"en": "Material Type", "vi": "Loại vật liệu", "code": "CABINET-D-01"}, {"en": "Solid Wood", "vi": "Gỗ tự nhiên", "code": "CABINET-D-02"}, {"en": "MDF", "vi": "MDF", "code": "CABINET-D-03"}, {"en": "Particle Board", "vi": "Ván dăm", "code": "CABINET-D-04"}, {"en": "Plywood", "vi": "Ván ép", "code": "CABINET-D-05"}, {"en": "Veneer", "vi": "Veneer", "code": "CABINET-D-06"}, {"en": "Laminate", "vi": "Laminate", "code": "CABINET-D-07"}, {"en": "Edge Band Material", "vi": "Vật liệu dán cạnh", "code": "CABINET-D-08"}, {"en": "Real leather", "vi": "Da tự nhiên", "code": "CABINET-D-09"}, {"en": "Faux leather", "vi": "Da nhân tạo", "code": "CABINET-D-10"}, {"en": "Stone / Brick", "vi": "Đá / gạch", "code": "CABINET-D-11"}, {"en": "Concrete", "vi": "Xi măng", "code": "CABINET-D-12"}, {"en": "Plastic", "vi": "Nhựa", "code": "CABINET-D-13"}, {"en": "Material Thickness", "vi": "Độ dày vật liệu", "code": "CABINET-D-14"}, {"en": "Material Finish", "vi": "Hoàn thiện vật liệu", "code": "CABINET-D-15"}, {"en": "Other material", "vi": "Vật liệu khác", "code": "CABINET-D-16"}], "E": [{"en": "Panel Joint", "vi": "Mối nối tấm", "code": "CABINET-E-01"}, {"en": "Cam Lock Connection", "vi": "Liên kết cam lock", "code": "CABINET-E-02"}, {"en": "Dowel Connection", "vi": "Liên kết chốt", "code": "CABINET-E-03"}, {"en": "Back Panel Fixing", "vi": "Liên kết tấm lưng", "code": "CABINET-E-04"}, {"en": "Door Construction", "vi": "Kết cấu cửa", "code": "CABINET-E-05"}, {"en": "Drawer Construction", "vi": "Kết cấu ngăn kéo", "code": "CABINET-E-06"}, {"en": "Shelf Support", "vi": "Kết cấu đỡ kệ", "code": "CABINET-E-07"}, {"en": "Frame Squareness", "vi": "Độ vuông của khung", "code": "CABINET-E-08"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "CABINET-E-09"}, {"en": "Door Operation", "vi": "Hoạt động đóng mở cửa", "code": "CABINET-E-10"}, {"en": "Drawer Operation", "vi": "Hoạt động đóng mở ngăn kéo", "code": "CABINET-E-11"}], "F": [{"en": "Hinge", "vi": "Bản lề", "code": "CABINET-F-01"}, {"en": "Drawer Slide", "vi": "Ray ngăn kéo", "code": "CABINET-F-02"}, {"en": "Handle", "vi": "Tay nắm", "code": "CABINET-F-03"}, {"en": "Cam Lock", "vi": "Cam lock", "code": "CABINET-F-04"}, {"en": "Cam Screw", "vi": "Vít cam", "code": "CABINET-F-05"}, {"en": "Shelf Pin", "vi": "Chốt kệ", "code": "CABINET-F-06"}, {"en": "Screw / Bolt", "vi": "Vít / bu lông", "code": "CABINET-F-07"}, {"en": "Connector", "vi": "Chi tiết liên kết", "code": "CABINET-F-08"}, {"en": "Foot / Leg", "vi": "Chân / đế", "code": "CABINET-F-09"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "CABINET-F-10"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "CABINET-F-11"}, {"en": "Other Hardware", "vi": "Phụ kiện khác", "code": "CABINET-F-12"}, {"en": "Hardware function", "vi": "Khả năng hoạt động của phụ kiện", "code": "CABINET-F-13"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "CABINET-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "CABINET-G-02"}, {"en": "Assembly Sequence", "vi": "Trình tự lắp ráp", "code": "CABINET-G-03"}, {"en": "Door / Drawer Adjustment Instruction", "vi": "Hướng dẫn điều chỉnh cửa / ngăn kéo", "code": "CABINET-G-04"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "CABINET-G-05"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "CABINET-G-06"}, {"en": "Disclaimer", "vi": "Thư miễn trừ trách nhiệm", "code": "CABINET-G-07"}, {"en": "Compliance label", "vi": "Nhãn tuân thủ", "code": "CABINET-G-08"}]}}, "CHAIR": {"label": {"en": "Chair", "vi": "Ghế"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "CHAIR-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "CHAIR-A-02"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "CHAIR-A-03"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "CHAIR-A-04"}, {"en": "Quantity per Carton", "vi": "Số lượng sản phẩm trong thùng", "code": "CHAIR-A-05"}, {"en": "Barcode", "vi": "Mã vạch", "code": "CHAIR-A-06"}], "B": [{"en": "Surface Protection", "vi": "Bảo vệ bề mặt", "code": "CHAIR-B-01"}, {"en": "Foam Protection", "vi": "Mút xốp bảo vệ", "code": "CHAIR-B-02"}, {"en": "Leg Protection", "vi": "Bảo vệ chân", "code": "CHAIR-B-03"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "CHAIR-B-04"}, {"en": "Seat Protection", "vi": "Bảo vệ mặt ghế", "code": "CHAIR-B-05"}, {"en": "Hardware Packing", "vi": "Đóng gói phụ kiện", "code": "CHAIR-B-06"}, {"en": "Desiccant bag", "vi": "Túi hút ẩm", "code": "CHAIR-B-07"}], "C": [{"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "CHAIR-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "CHAIR-C-02"}, {"en": "Overall Depth", "vi": "Chiều sâu tổng thể", "code": "CHAIR-C-03"}, {"en": "Seat Height", "vi": "Chiều cao mặt ghế", "code": "CHAIR-C-04"}, {"en": "Seat Width", "vi": "Chiều rộng mặt ghế", "code": "CHAIR-C-05"}, {"en": "Seat Depth", "vi": "Chiều sâu mặt ghế", "code": "CHAIR-C-06"}, {"en": "Armrest Height", "vi": "Chiều cao tay vịn", "code": "CHAIR-C-07"}, {"en": "Backrest Height", "vi": "Chiều cao tựa lưng", "code": "CHAIR-C-08"}, {"en": "Surface Appearance", "vi": "Ngoại quan bề mặt", "code": "CHAIR-C-09"}, {"en": "Upholstery Appearance", "vi": "Ngoại quan bọc nệm", "code": "CHAIR-C-10"}, {"en": "Color", "vi": "Màu sắc", "code": "CHAIR-C-11"}, {"en": "Stitching", "vi": "Đường may", "code": "CHAIR-C-12"}, {"en": "Stability / Wobble", "vi": "Độ ổn định / rung lắc", "code": "CHAIR-C-13"}], "D": [{"en": "Frame Material", "vi": "Vật liệu khung", "code": "CHAIR-D-01"}, {"en": "Solid Wood", "vi": "Gỗ tự nhiên", "code": "CHAIR-D-02"}, {"en": "Metal", "vi": "Kim loại", "code": "CHAIR-D-03"}, {"en": "Plastic", "vi": "Nhựa", "code": "CHAIR-D-04"}, {"en": "Fabric", "vi": "Vải", "code": "CHAIR-D-05"}, {"en": "Foam", "vi": "Mút xốp", "code": "CHAIR-D-06"}, {"en": "Real leather", "vi": "Da tự nhiên", "code": "CHAIR-D-07"}, {"en": "Faux leather", "vi": "Da nhân tạo", "code": "CHAIR-D-08"}, {"en": "Stone / Brick", "vi": "Đá / gạch", "code": "CHAIR-D-09"}, {"en": "Concrete", "vi": "Xi măng", "code": "CHAIR-D-10"}, {"en": "Plastic", "vi": "Nhựa", "code": "CHAIR-D-11"}, {"en": "Foam Density", "vi": "Tỷ trọng mút", "code": "CHAIR-D-12"}, {"en": "Foam Thickness", "vi": "Độ dày mút", "code": "CHAIR-D-13"}, {"en": "Material Finish", "vi": "Hoàn thiện vật liệu", "code": "CHAIR-D-14"}, {"en": "Other material", "vi": "Vật liệu khác", "code": "CHAIR-D-15"}], "E": [{"en": "Frame Construction", "vi": "Kết cấu khung", "code": "CHAIR-E-01"}, {"en": "Joint Connection", "vi": "Mối nối", "code": "CHAIR-E-02"}, {"en": "Leg Connection", "vi": "Liên kết chân", "code": "CHAIR-E-03"}, {"en": "Backrest Connection", "vi": "Liên kết tựa lưng", "code": "CHAIR-E-04"}, {"en": "Armrest Connection", "vi": "Liên kết tay vịn", "code": "CHAIR-E-05"}, {"en": "Screw Fixing", "vi": "Liên kết bằng vít", "code": "CHAIR-E-06"}, {"en": "Welding Quality", "vi": "Chất lượng mối hàn", "code": "CHAIR-E-07"}, {"en": "Frame Alignment", "vi": "Độ thẳng hàng của khung", "code": "CHAIR-E-08"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "CHAIR-E-09"}, {"en": "Chair Wobble", "vi": "Tình trạng ghế bị cập kênh", "code": "CHAIR-E-10"}], "F": [{"en": "Screw", "vi": "Vít", "code": "CHAIR-F-01"}, {"en": "Bolt / Nut", "vi": "Bu lông / đai ốc", "code": "CHAIR-F-02"}, {"en": "Insert Nut", "vi": "Tán cấy", "code": "CHAIR-F-03"}, {"en": "Bracket", "vi": "Bát / pát", "code": "CHAIR-F-04"}, {"en": "Leg / Foot", "vi": "Chân / đế", "code": "CHAIR-F-05"}, {"en": "Glide / Foot Pad", "vi": "Nút chân / đệm chân", "code": "CHAIR-F-06"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "CHAIR-F-07"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "CHAIR-F-08"}, {"en": "Other Hardware", "vi": "Phụ kiện khác", "code": "CHAIR-F-09"}, {"en": "Hardware function", "vi": "Khả năng hoạt động của phụ kiện", "code": "CHAIR-F-10"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "CHAIR-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "CHAIR-G-02"}, {"en": "Assembly Sequence", "vi": "Trình tự lắp ráp", "code": "CHAIR-G-03"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "CHAIR-G-04"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "CHAIR-G-05"}, {"en": "Disclaimer", "vi": "Thư miễn trừ trách nhiệm", "code": "CHAIR-G-06"}, {"en": "Compliance label", "vi": "Nhãn tuân thủ", "code": "CHAIR-G-07"}]}}, "TABLE": {"label": {"en": "Table", "vi": "Bàn"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "TABLE-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "TABLE-A-02"}, {"en": "Carton Construction", "vi": "Kết cấu thùng carton", "code": "TABLE-A-03"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "TABLE-A-04"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "TABLE-A-05"}, {"en": "Quantity per Carton", "vi": "Số lượng sản phẩm trong thùng", "code": "TABLE-A-06"}, {"en": "Barcode", "vi": "Mã vạch", "code": "TABLE-A-07"}], "B": [{"en": "Tabletop Protection", "vi": "Bảo vệ mặt bàn", "code": "TABLE-B-01"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "TABLE-B-02"}, {"en": "Edge Protection", "vi": "Bảo vệ cạnh", "code": "TABLE-B-03"}, {"en": "Leg Protection", "vi": "Bảo vệ chân", "code": "TABLE-B-04"}, {"en": "Foam / EPE Protection", "vi": "Bảo vệ bằng foam / EPE", "code": "TABLE-B-05"}, {"en": "Hardware Packing", "vi": "Đóng gói phụ kiện", "code": "TABLE-B-06"}, {"en": "Component Separation", "vi": "Phân tách các chi tiết", "code": "TABLE-B-07"}, {"en": "Desiccant bag", "vi": "Túi hút ẩm", "code": "TABLE-B-08"}], "C": [{"en": "Overall Length", "vi": "Chiều dài tổng thể", "code": "TABLE-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "TABLE-C-02"}, {"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "TABLE-C-03"}, {"en": "Tabletop Thickness", "vi": "Độ dày mặt bàn", "code": "TABLE-C-04"}, {"en": "Leg Height", "vi": "Chiều cao chân", "code": "TABLE-C-05"}, {"en": "Leg Thickness", "vi": "Độ dày chân", "code": "TABLE-C-06"}, {"en": "Tabletop Flatness", "vi": "Độ phẳng mặt bàn", "code": "TABLE-C-07"}, {"en": "Edge Profile", "vi": "Biên dạng cạnh", "code": "TABLE-C-08"}, {"en": "Surface Appearance", "vi": "Ngoại quan bề mặt", "code": "TABLE-C-09"}, {"en": "Color", "vi": "Màu sắc", "code": "TABLE-C-10"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "TABLE-C-11"}, {"en": "Scratch / Dent / Damage", "vi": "Trầy xước / móp / hư hỏng", "code": "TABLE-C-12"}, {"en": "Stability / Wobble", "vi": "Độ ổn định / cập kênh", "code": "TABLE-C-13"}], "D": [{"en": "Solid Wood", "vi": "Gỗ tự nhiên", "code": "TABLE-D-01"}, {"en": "MDF / Particle Board", "vi": "MDF / ván dăm", "code": "TABLE-D-02"}, {"en": "Plywood", "vi": "Ván ép", "code": "TABLE-D-03"}, {"en": "Veneer", "vi": "Veneer", "code": "TABLE-D-04"}, {"en": "Laminate", "vi": "Laminate", "code": "TABLE-D-05"}, {"en": "Metal", "vi": "Kim loại", "code": "TABLE-D-06"}, {"en": "Glass", "vi": "Kính", "code": "TABLE-D-07"}, {"en": "Real leather", "vi": "Da tự nhiên", "code": "TABLE-D-08"}, {"en": "Faux leather", "vi": "Da nhân tạo", "code": "TABLE-D-09"}, {"en": "Stone / Brick", "vi": "Đá / gạch", "code": "TABLE-D-10"}, {"en": "Concrete", "vi": "Xi măng", "code": "TABLE-D-11"}, {"en": "Plastic", "vi": "Nhựa", "code": "TABLE-D-12"}, {"en": "Material Thickness", "vi": "Độ dày vật liệu", "code": "TABLE-D-13"}, {"en": "Material Finish", "vi": "Hoàn thiện vật liệu", "code": "TABLE-D-14"}, {"en": "Other material", "vi": "Vật liệu khác", "code": "TABLE-D-15"}], "E": [{"en": "Tabletop Connection", "vi": "Liên kết mặt bàn", "code": "TABLE-E-01"}, {"en": "Leg Connection", "vi": "Liên kết chân", "code": "TABLE-E-02"}, {"en": "Frame Connection", "vi": "Liên kết khung", "code": "TABLE-E-03"}, {"en": "Joint Tightness", "vi": "Độ chắc của mối nối", "code": "TABLE-E-04"}, {"en": "Frame Squareness", "vi": "Độ vuông của khung", "code": "TABLE-E-05"}, {"en": "Leg Alignment", "vi": "Độ thẳng hàng của chân", "code": "TABLE-E-06"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "TABLE-E-07"}, {"en": "Folding Mechanism", "vi": "Cơ cấu gấp", "code": "TABLE-E-08"}, {"en": "Extension Mechanism", "vi": "Cơ cấu mở rộng", "code": "TABLE-E-09"}, {"en": "Locking Mechanism", "vi": "Cơ cấu khóa", "code": "TABLE-E-10"}], "F": [{"en": "Screw / Bolt", "vi": "Vít / bu lông", "code": "TABLE-F-01"}, {"en": "Nut / Washer", "vi": "Đai ốc / vòng đệm", "code": "TABLE-F-02"}, {"en": "Bracket", "vi": "Bát / pát", "code": "TABLE-F-03"}, {"en": "Connector", "vi": "Chi tiết liên kết", "code": "TABLE-F-04"}, {"en": "Extension Hardware", "vi": "Phụ kiện mở rộng", "code": "TABLE-F-05"}, {"en": "Locking Hardware", "vi": "Phụ kiện khóa", "code": "TABLE-F-06"}, {"en": "Foot / Glide", "vi": "Chân / nút chân", "code": "TABLE-F-07"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "TABLE-F-08"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "TABLE-F-09"}, {"en": "Other Hardware", "vi": "Phụ kiện khác", "code": "TABLE-F-10"}, {"en": "Hardware function", "vi": "Khả năng hoạt động của phụ kiện", "code": "TABLE-F-11"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "TABLE-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "TABLE-G-02"}, {"en": "Assembly Sequence", "vi": "Trình tự lắp ráp", "code": "TABLE-G-03"}, {"en": "Function Instruction", "vi": "Hướng dẫn sử dụng chức năng", "code": "TABLE-G-04"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "TABLE-G-05"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "TABLE-G-06"}, {"en": "Disclaimer", "vi": "Thư miễn trừ trách nhiệm", "code": "TABLE-G-07"}, {"en": "Compliance label", "vi": "Nhãn tuân thủ", "code": "TABLE-G-08"}]}}, "SOFA": {"label": {"en": "Sofa / Upholstered Furniture", "vi": "Sofa / Nội Thất Bọc"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "SOFA-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "SOFA-A-02"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "SOFA-A-03"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "SOFA-A-04"}, {"en": "Quantity per Carton", "vi": "Số lượng sản phẩm trong thùng", "code": "SOFA-A-05"}], "B": [{"en": "PE Bag", "vi": "Túi PE", "code": "SOFA-B-01"}, {"en": "Fabric Protection", "vi": "Bảo vệ vải", "code": "SOFA-B-02"}, {"en": "Foam Protection", "vi": "Mút xốp bảo vệ", "code": "SOFA-B-03"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "SOFA-B-04"}, {"en": "Leg Protection", "vi": "Bảo vệ chân", "code": "SOFA-B-05"}, {"en": "Hardware Packing", "vi": "Đóng gói phụ kiện", "code": "SOFA-B-06"}, {"en": "Desiccant bag", "vi": "Túi hút ẩm", "code": "SOFA-B-07"}], "C": [{"en": "Overall Length", "vi": "Chiều dài tổng thể", "code": "SOFA-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "SOFA-C-02"}, {"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "SOFA-C-03"}, {"en": "Seat Height", "vi": "Chiều cao mặt ngồi", "code": "SOFA-C-04"}, {"en": "Seat Depth", "vi": "Chiều sâu mặt ngồi", "code": "SOFA-C-05"}, {"en": "Armrest Height", "vi": "Chiều cao tay vịn", "code": "SOFA-C-06"}, {"en": "Cushion Dimension", "vi": "Kích thước đệm", "code": "SOFA-C-07"}, {"en": "Upholstery Appearance", "vi": "Ngoại quan bọc nệm", "code": "SOFA-C-08"}, {"en": "Wrinkle", "vi": "Nếp nhăn", "code": "SOFA-C-09"}, {"en": "Stitching", "vi": "Đường may", "code": "SOFA-C-10"}, {"en": "Color", "vi": "Màu sắc", "code": "SOFA-C-11"}, {"en": "Surface Damage", "vi": "Hư hỏng bề mặt", "code": "SOFA-C-12"}, {"en": "Overall Appearance", "vi": "Ngoại quan tổng thể", "code": "SOFA-C-13"}], "D": [{"en": "Frame Material", "vi": "Vật liệu khung", "code": "SOFA-D-01"}, {"en": "Wood / Plywood", "vi": "Gỗ / ván ép", "code": "SOFA-D-02"}, {"en": "Metal", "vi": "Kim loại", "code": "SOFA-D-03"}, {"en": "Foam", "vi": "Mút xốp", "code": "SOFA-D-04"}, {"en": "Fabric", "vi": "Vải", "code": "SOFA-D-05"}, {"en": "Webbing", "vi": "Dây đai", "code": "SOFA-D-06"}, {"en": "Spring", "vi": "Lò xo", "code": "SOFA-D-07"}, {"en": "Real leather", "vi": "Da tự nhiên", "code": "SOFA-D-08"}, {"en": "Faux leather", "vi": "Da nhân tạo", "code": "SOFA-D-09"}, {"en": "Stone / Brick", "vi": "Đá / gạch", "code": "SOFA-D-10"}, {"en": "Concrete", "vi": "Xi măng", "code": "SOFA-D-11"}, {"en": "Plastic", "vi": "Nhựa", "code": "SOFA-D-12"}, {"en": "Foam Density", "vi": "Tỷ trọng mút", "code": "SOFA-D-13"}, {"en": "Foam Thickness", "vi": "Độ dày mút", "code": "SOFA-D-14"}, {"en": "Other material", "vi": "Vật liệu khác", "code": "SOFA-D-15"}], "E": [{"en": "Frame Construction", "vi": "Kết cấu khung", "code": "SOFA-E-01"}, {"en": "Joint Connection", "vi": "Mối nối", "code": "SOFA-E-02"}, {"en": "Seat Construction", "vi": "Kết cấu mặt ngồi", "code": "SOFA-E-03"}, {"en": "Backrest Construction", "vi": "Kết cấu tựa lưng", "code": "SOFA-E-04"}, {"en": "Armrest Construction", "vi": "Kết cấu tay vịn", "code": "SOFA-E-05"}, {"en": "Cushion Fit", "vi": "Độ khớp của đệm", "code": "SOFA-E-06"}, {"en": "Leg Connection", "vi": "Liên kết chân", "code": "SOFA-E-07"}, {"en": "Recliner Mechanism", "vi": "Cơ cấu ngả", "code": "SOFA-E-08"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "SOFA-E-09"}], "F": [{"en": "Leg / Foot", "vi": "Chân / đế", "code": "SOFA-F-01"}, {"en": "Screw / Bolt", "vi": "Vít / bu lông", "code": "SOFA-F-02"}, {"en": "Bracket", "vi": "Bát / pát", "code": "SOFA-F-03"}, {"en": "Recliner Mechanism", "vi": "Cơ cấu ngả", "code": "SOFA-F-04"}, {"en": "Connector", "vi": "Chi tiết liên kết", "code": "SOFA-F-05"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "SOFA-F-06"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "SOFA-F-07"}, {"en": "Other Hardware", "vi": "Phụ kiện khác", "code": "SOFA-F-08"}, {"en": "Hardware function", "vi": "Khả năng hoạt động của phụ kiện", "code": "SOFA-F-09"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "SOFA-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "SOFA-G-02"}, {"en": "Function Instruction", "vi": "Hướng dẫn sử dụng chức năng", "code": "SOFA-G-03"}, {"en": "Care Instruction", "vi": "Hướng dẫn bảo quản", "code": "SOFA-G-04"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "SOFA-G-05"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "SOFA-G-06"}, {"en": "Disclaimer", "vi": "Thư miễn trừ trách nhiệm", "code": "SOFA-G-07"}, {"en": "Compliance label", "vi": "Nhãn tuân thủ", "code": "SOFA-G-08"}]}}, "GLASS": {"label": {"en": "Glass / Mirror", "vi": "Kính / Gương"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "GLASS-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "GLASS-A-02"}, {"en": "Carton Strength", "vi": "Độ chắc chắn của thùng carton", "code": "GLASS-A-03"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "GLASS-A-04"}, {"en": "Fragile Marking", "vi": "Ký hiệu hàng dễ vỡ", "code": "GLASS-A-05"}], "B": [{"en": "Edge Protection", "vi": "Bảo vệ cạnh", "code": "GLASS-B-01"}, {"en": "Corner Protection", "vi": "Bảo vệ góc", "code": "GLASS-B-02"}, {"en": "Foam Protection", "vi": "Mút xốp bảo vệ", "code": "GLASS-B-03"}, {"en": "Surface Protection", "vi": "Bảo vệ bề mặt", "code": "GLASS-B-04"}, {"en": "Glass Separation", "vi": "Phân tách kính", "code": "GLASS-B-05"}, {"en": "Anti-Scratch Protection", "vi": "Bảo vệ chống trầy", "code": "GLASS-B-06"}, {"en": "Desiccant bag", "vi": "Túi hút ẩm", "code": "GLASS-B-07"}], "C": [{"en": "Overall Length", "vi": "Chiều dài tổng thể", "code": "GLASS-C-01"}, {"en": "Overall Width", "vi": "Chiều rộng tổng thể", "code": "GLASS-C-02"}, {"en": "Overall Height", "vi": "Chiều cao tổng thể", "code": "GLASS-C-03"}, {"en": "Glass Thickness", "vi": "Độ dày kính", "code": "GLASS-C-04"}, {"en": "Surface Condition", "vi": "Tình trạng bề mặt", "code": "GLASS-C-05"}, {"en": "Edge Condition", "vi": "Tình trạng cạnh", "code": "GLASS-C-06"}, {"en": "Reflection Quality", "vi": "Chất lượng phản chiếu", "code": "GLASS-C-07"}, {"en": "Scratch / Crack / Chip", "vi": "Trầy / nứt / mẻ", "code": "GLASS-C-08"}, {"en": "Frame Alignment", "vi": "Độ thẳng hàng của khung", "code": "GLASS-C-09"}], "D": [{"en": "Glass Type", "vi": "Loại kính", "code": "GLASS-D-01"}, {"en": "Mirror Type", "vi": "Loại gương", "code": "GLASS-D-02"}, {"en": "Frame Material", "vi": "Vật liệu khung", "code": "GLASS-D-03"}, {"en": "Backing Material", "vi": "Vật liệu mặt sau", "code": "GLASS-D-04"}, {"en": "Real leather", "vi": "Da tự nhiên", "code": "GLASS-D-05"}, {"en": "Faux leather", "vi": "Da nhân tạo", "code": "GLASS-D-06"}, {"en": "Stone / Brick", "vi": "Đá / gạch", "code": "GLASS-D-07"}, {"en": "Concrete", "vi": "Xi măng", "code": "GLASS-D-08"}, {"en": "Plastic", "vi": "Nhựa", "code": "GLASS-D-09"}, {"en": "Glass Thickness", "vi": "Độ dày kính", "code": "GLASS-D-10"}, {"en": "Material Finish", "vi": "Hoàn thiện vật liệu", "code": "GLASS-D-11"}, {"en": "Other material", "vi": "Vật liệu khác", "code": "GLASS-D-12"}], "E": [{"en": "Glass Fixing", "vi": "Liên kết kính", "code": "GLASS-E-01"}, {"en": "Frame Construction", "vi": "Kết cấu khung", "code": "GLASS-E-02"}, {"en": "Frame Joint", "vi": "Mối nối khung", "code": "GLASS-E-03"}, {"en": "Bracket Fixing", "vi": "Liên kết bát / pát", "code": "GLASS-E-04"}, {"en": "Structural Stability", "vi": "Độ ổn định kết cấu", "code": "GLASS-E-05"}], "F": [{"en": "Bracket", "vi": "Bát / pát", "code": "GLASS-F-01"}, {"en": "Hook", "vi": "Móc", "code": "GLASS-F-02"}, {"en": "Screw / Bolt", "vi": "Vít / bu lông", "code": "GLASS-F-03"}, {"en": "Wall Mount Hardware", "vi": "Phụ kiện treo tường", "code": "GLASS-F-04"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "GLASS-F-05"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "GLASS-F-06"}, {"en": "Other Hardware", "vi": "Phụ kiện khác", "code": "GLASS-F-07"}, {"en": "Hardware function", "vi": "Khả năng hoạt động của phụ kiện", "code": "GLASS-F-08"}], "G": [{"en": "Installation Manual", "vi": "Hướng dẫn lắp đặt", "code": "GLASS-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "GLASS-G-02"}, {"en": "Wall Mount Instruction", "vi": "Hướng dẫn treo tường", "code": "GLASS-G-03"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "GLASS-G-04"}, {"en": "Disclaimer", "vi": "Thư miễn trừ trách nhiệm", "code": "GLASS-G-05"}, {"en": "Compliance label", "vi": "Nhãn tuân thủ", "code": "GLASS-G-06"}]}}, "ACCESSORIES": {"label": {"en": "Accessories / Hardware Kit", "vi": "Phụ Kiện / Bộ Phụ Kiện"}, "groups": {"A": [{"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "ACCESSORIES-A-01"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "ACCESSORIES-A-02"}, {"en": "SKU / Part Number", "vi": "Mã SKU / mã linh kiện", "code": "ACCESSORIES-A-03"}, {"en": "Quantity per Carton", "vi": "Số lượng trong thùng", "code": "ACCESSORIES-A-04"}], "B": [{"en": "Individual Bag", "vi": "Túi riêng từng loại", "code": "ACCESSORIES-B-01"}, {"en": "Component Separation", "vi": "Phân tách các loại linh kiện", "code": "ACCESSORIES-B-02"}, {"en": "Protection", "vi": "Bảo vệ linh kiện", "code": "ACCESSORIES-B-03"}, {"en": "Hardware Label", "vi": "Nhãn phụ kiện", "code": "ACCESSORIES-B-04"}, {"en": "Packing Quantity", "vi": "Số lượng đóng gói", "code": "ACCESSORIES-B-05"}, {"en": "Desiccant bag", "vi": "Túi hút ẩm", "code": "ACCESSORIES-B-06"}], "C": [{"en": "Part Type", "vi": "Loại linh kiện", "code": "ACCESSORIES-C-01"}, {"en": "Part Dimension", "vi": "Kích thước linh kiện", "code": "ACCESSORIES-C-02"}, {"en": "Part Thickness", "vi": "Độ dày linh kiện", "code": "ACCESSORIES-C-03"}, {"en": "Appearance", "vi": "Ngoại quan", "code": "ACCESSORIES-C-04"}, {"en": "Color / Finish", "vi": "Màu sắc / hoàn thiện", "code": "ACCESSORIES-C-05"}, {"en": "Function", "vi": "Chức năng", "code": "ACCESSORIES-C-06"}, {"en": "Compatibility", "vi": "Khả năng tương thích", "code": "ACCESSORIES-C-07"}], "D": [{"en": "Material Type", "vi": "Loại vật liệu", "code": "ACCESSORIES-D-01"}, {"en": "Real leather", "vi": "Da tự nhiên", "code": "ACCESSORIES-D-02"}, {"en": "Faux leather", "vi": "Da nhân tạo", "code": "ACCESSORIES-D-03"}, {"en": "Stone / Brick", "vi": "Đá / gạch", "code": "ACCESSORIES-D-04"}, {"en": "Concrete", "vi": "Xi măng", "code": "ACCESSORIES-D-05"}, {"en": "Plastic", "vi": "Nhựa", "code": "ACCESSORIES-D-06"}, {"en": "Material Grade", "vi": "Cấp vật liệu", "code": "ACCESSORIES-D-07"}, {"en": "Thickness", "vi": "Độ dày", "code": "ACCESSORIES-D-08"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "ACCESSORIES-D-09"}, {"en": "Color / Plating", "vi": "Màu sắc / lớp mạ", "code": "ACCESSORIES-D-10"}, {"en": "Other material", "vi": "Vật liệu khác", "code": "ACCESSORIES-D-11"}], "E": [{"en": "Part Assembly", "vi": "Lắp ráp linh kiện", "code": "ACCESSORIES-E-01"}, {"en": "Connection", "vi": "Liên kết", "code": "ACCESSORIES-E-02"}, {"en": "Thread Condition", "vi": "Tình trạng ren", "code": "ACCESSORIES-E-03"}, {"en": "Fit Condition", "vi": "Độ khớp", "code": "ACCESSORIES-E-04"}, {"en": "Function", "vi": "Chức năng", "code": "ACCESSORIES-E-05"}], "F": [{"en": "Part Number", "vi": "Mã linh kiện", "code": "ACCESSORIES-F-01"}, {"en": "Hardware Type", "vi": "Loại phụ kiện", "code": "ACCESSORIES-F-02"}, {"en": "Hardware Size", "vi": "Kích thước phụ kiện", "code": "ACCESSORIES-F-03"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "ACCESSORIES-F-04"}, {"en": "Hardware Finish", "vi": "Bề mặt hoàn thiện", "code": "ACCESSORIES-F-05"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ", "code": "ACCESSORIES-F-06"}, {"en": "Compatibility", "vi": "Tính tương thích", "code": "ACCESSORIES-F-07"}, {"en": "Other Hardware", "vi": "Phụ kiện khác", "code": "ACCESSORIES-F-08"}, {"en": "Hardware function", "vi": "Khả năng hoạt động của phụ kiện", "code": "ACCESSORIES-F-09"}], "G": [{"en": "Installation Instruction", "vi": "Hướng dẫn lắp đặt", "code": "ACCESSORIES-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "ACCESSORIES-G-02"}, {"en": "Part Identification", "vi": "Nhận diện linh kiện", "code": "ACCESSORIES-G-03"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "ACCESSORIES-G-04"}, {"en": "Disclaimer", "vi": "Thư miễn trừ trách nhiệm", "code": "ACCESSORIES-G-05"}, {"en": "Compliance label", "vi": "Nhãn tuân thủ", "code": "ACCESSORIES-G-06"}]}}, "OTHER": {"label": {"en": "Other Furniture", "vi": "Nội Thất Khác"}, "groups": {"A": [{"en": "Carton Dimension", "vi": "Kích thước thùng carton", "code": "OTHER-A-01"}, {"en": "Carton Condition", "vi": "Tình trạng thùng carton", "code": "OTHER-A-02"}, {"en": "Carton Construction", "vi": "Kết cấu thùng carton", "code": "OTHER-A-03"}, {"en": "Carton Marking", "vi": "Thông tin in trên thùng", "code": "OTHER-A-04"}, {"en": "SKU / Model", "vi": "Mã SKU / Model", "code": "OTHER-A-05"}, {"en": "Quantity per Carton", "vi": "Số lượng trong thùng", "code": "OTHER-A-06"}], "B": [{"en": "Product Protection", "vi": "Bảo vệ sản phẩm", "code": "OTHER-B-01"}, {"en": "Surface Protection", "vi": "Bảo vệ bề mặt", "code": "OTHER-B-02"}, {"en": "Corner / Edge Protection", "vi": "Bảo vệ góc / cạnh", "code": "OTHER-B-03"}, {"en": "Component Separation", "vi": "Phân tách các chi tiết", "code": "OTHER-B-04"}, {"en": "Hardware Packing", "vi": "Đóng gói phụ kiện", "code": "OTHER-B-05"}, {"en": "Packing Sequence", "vi": "Trình tự đóng gói", "code": "OTHER-B-06"}, {"en": "Desiccant bag", "vi": "Túi hút ẩm", "code": "OTHER-B-07"}], "C": [{"en": "Overall Dimension", "vi": "Kích thước tổng thể", "code": "OTHER-C-01"}, {"en": "Key Dimension", "vi": "Kích thước quan trọng", "code": "OTHER-C-02"}, {"en": "Appearance", "vi": "Ngoại quan", "code": "OTHER-C-03"}, {"en": "Color", "vi": "Màu sắc", "code": "OTHER-C-04"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "OTHER-C-05"}, {"en": "Function", "vi": "Chức năng", "code": "OTHER-C-06"}, {"en": "Fit & Alignment", "vi": "Độ khớp và thẳng hàng", "code": "OTHER-C-07"}, {"en": "Stability", "vi": "Độ ổn định", "code": "OTHER-C-08"}], "D": [{"en": "Material Type", "vi": "Loại vật liệu", "code": "OTHER-D-01"}, {"en": "Real leather", "vi": "Da tự nhiên", "code": "OTHER-D-02"}, {"en": "Faux leather", "vi": "Da nhân tạo", "code": "OTHER-D-03"}, {"en": "Stone / Brick", "vi": "Đá / gạch", "code": "OTHER-D-04"}, {"en": "Concrete", "vi": "Xi măng", "code": "OTHER-D-05"}, {"en": "Plastic", "vi": "Nhựa", "code": "OTHER-D-06"}, {"en": "Material Grade", "vi": "Cấp vật liệu", "code": "OTHER-D-07"}, {"en": "Thickness / Density", "vi": "Độ dày / tỷ trọng", "code": "OTHER-D-08"}, {"en": "Color", "vi": "Màu sắc", "code": "OTHER-D-09"}, {"en": "Surface Finish", "vi": "Hoàn thiện bề mặt", "code": "OTHER-D-10"}, {"en": "Other material", "vi": "Vật liệu khác", "code": "OTHER-D-11"}], "E": [{"en": "Frame / Structure", "vi": "Khung / kết cấu", "code": "OTHER-E-01"}, {"en": "Joint Connection", "vi": "Mối nối", "code": "OTHER-E-02"}, {"en": "Fixing Method", "vi": "Phương pháp liên kết", "code": "OTHER-E-03"}, {"en": "Assembly", "vi": "Lắp ráp", "code": "OTHER-E-04"}, {"en": "Alignment", "vi": "Độ thẳng hàng", "code": "OTHER-E-05"}, {"en": "Stability", "vi": "Độ ổn định", "code": "OTHER-E-06"}], "F": [{"en": "Hardware Type", "vi": "Loại phụ kiện", "code": "OTHER-F-01"}, {"en": "Hardware Size", "vi": "Kích thước phụ kiện", "code": "OTHER-F-02"}, {"en": "Hardware Quantity", "vi": "Số lượng phụ kiện", "code": "OTHER-F-03"}, {"en": "Hardware Finish", "vi": "Bề mặt hoàn thiện", "code": "OTHER-F-04"}, {"en": "Hardware Completeness", "vi": "Tính đầy đủ của phụ kiện", "code": "OTHER-F-05"}, {"en": "Function / Compatibility", "vi": "Chức năng / tính tương thích", "code": "OTHER-F-06"}, {"en": "Other Hardware", "vi": "Phụ kiện khác", "code": "OTHER-F-07"}, {"en": "Hardware function", "vi": "Khả năng hoạt động của phụ kiện", "code": "OTHER-F-08"}], "G": [{"en": "Assembly Manual", "vi": "Hướng dẫn lắp ráp", "code": "OTHER-G-01"}, {"en": "Hardware List", "vi": "Danh sách phụ kiện", "code": "OTHER-G-02"}, {"en": "Installation Instruction", "vi": "Hướng dẫn lắp đặt", "code": "OTHER-G-03"}, {"en": "Function Instruction", "vi": "Hướng dẫn sử dụng", "code": "OTHER-G-04"}, {"en": "Warning Instruction", "vi": "Hướng dẫn cảnh báo", "code": "OTHER-G-05"}, {"en": "Correct Manual Version", "vi": "Đúng phiên bản hướng dẫn", "code": "OTHER-G-06"}, {"en": "Disclaimer", "vi": "Thư miễn trừ trách nhiệm", "code": "OTHER-G-07"}, {"en": "Compliance label", "vi": "Nhãn tuân thủ", "code": "OTHER-G-08"}]}}}}</script>
 <script>
   const DATA = JSON.parse(document.getElementById('checklist-data').textContent);
 </script>
@@ -974,7 +1050,7 @@ function initSetupScreen() {
   const sel = $('#f-category');
   sel.innerHTML = CAT_ORDER.map(k => {
     const c = CATEGORIES[k];
-    return `<option value="${k}">${c.label.en} / ${c.label.vi}</option>`;
+    return `<option value="${k}">${c.label.en} # ${c.label.vi}</option>`;
   }).join('');
   $('#f-date').value = todayStr();
   initFactorySelect();
@@ -1085,15 +1161,26 @@ function renderProductList() {
   recalcOrderQtyFromProducts();
 }
 
-// Order Quantity defaults to the live sum of the Product List's Qty column. Ticking
-// "Enter manually" unlocks the field for free typing and stops this auto-sum from
-// overwriting it, until the box is unticked again.
+// Order Quantity defaults to the live sum of the Product List's Qty column. "Enter manually"
+// is only meant to hold a placeholder total before the Product List has real numbers in it —
+// as soon as the list has a nonzero sum, that sum is the source of truth and overwrites
+// whatever was typed manually (and switches the field back out of manual mode), so a stale
+// hand-typed total can never silently disagree with the actual product list.
 function recalcOrderQtyFromProducts() {
-  const manualBox = $('#f-orderqty-manual');
-  if (manualBox && manualBox.checked) return;
   const el = $('#f-orderqty');
   if (!el) return;
   const sum = productsDraft.reduce((s, p) => s + (parseInt(p.qty, 10) || 0), 0);
+  const manualBox = $('#f-orderqty-manual');
+  if (sum > 0) {
+    el.value = String(sum);
+    if (manualBox && manualBox.checked) {
+      manualBox.checked = false;
+      el.readOnly = true;
+    }
+    return;
+  }
+  // no products yet (sum is 0) — leave a manually-entered placeholder value alone
+  if (manualBox && manualBox.checked) return;
   el.value = String(sum);
 }
 
@@ -1224,7 +1311,7 @@ function editSetup() {
   renderProductList();
   if (report.orderQtyManual) $('#f-orderqty').value = report.orderQty || '';
   const btn = $('#setup-primary-btn');
-  btn.innerHTML = `<span class="en">Save changes</span><span class="sep"> # </span><span class="vi">Lưu thay đổi</span> →`;
+  btn.innerHTML = `<span class="en">Save changes</span><span class="sep"> # </span><span class="vi">Lưu thay đổi</span>`;
   btn.setAttribute('onclick', 'applySetupEdits()');
   showView('setup');
 }
@@ -1273,7 +1360,11 @@ function buildEmptyGroups(category) {
 function addCarton() {
   const c = {
     id: uid(),
-    cartonNo: String(cartons.length + 1),
+    // Carton numbering is per-SKU (carton #1, #2, #3... of THAT SKU), not a running count
+    // across the whole report — a brand-new carton has no SKU linked yet, so it always
+    // starts at 1. The "+1 off the last one" accumulation only happens once the auditor
+    // picks/types a SKU that turns out to already have cartons (handleSkuDuplicateCheck()).
+    cartonNo: '1',
     linkedCode: '',
     sku: '',
     qtyInspected: '1',   // "Products per carton" — default 1, see pcsMulti
@@ -1294,6 +1385,12 @@ function toggleSkipGroup(gid) {
   c.skippedGroups[gid] = !c.skippedGroups[gid];
   renderGroups(c);
   renderVerdictBox(c);
+  // renderGroups() collapses the group just skipped and auto-opens the next pending one,
+  // which reflows the page and can leave the viewport scrolled to wherever that next group
+  // happens to land — on a phone this reads as "jumping" away from where the auditor tapped.
+  // Re-anchor the view on the group just acted on so the layout shift doesn't move it off-screen.
+  const headEl = document.querySelector(`.grp[data-group="${gid}"] .grp-head`);
+  if (headEl) headEl.scrollIntoView({ block: 'nearest' });
 }
 
 function getCarton(id) { return cartons.find(c => c.id === id); }
@@ -1399,7 +1496,7 @@ function renderCartonList() {
 
   const wrap = $('#carton-cards');
   if (cartons.length === 0) {
-    wrap.innerHTML = `<div class="empty-hint"><span class="en">No cartons audited yet. Tap "+ Add Carton" to start.</span><span class="sep"> # </span><span class="vi">Chưa có carton nào. Nhấn "+ Thêm Carton" để bắt đầu.</span></div>`;
+    wrap.innerHTML = `<div class="empty-hint"><span class="en">No cartons audited yet. Tap "+ Add Carton" to start.</span><span class="sep"> # </span><span class="vi">Chưa có thùng nào. Nhấn "+ Thêm Thùng" để bắt đầu.</span></div>`;
   } else {
     wrap.innerHTML = cartons.map(c => {
       const s = cartonStats(c);
@@ -1479,19 +1576,97 @@ function openCarton(id) {
   showView('audit');
 }
 
-function onSkuSelect(code) {
+async function onSkuSelect(code) {
   const c = getCarton(activeCartonId);
   if (!c) return;
   if (!code) {
     c.linkedCode = '';
     $('#ca-sku').value = '';
-  } else {
-    c.linkedCode = code;
-    c.sku = code;
-    $('#ca-sku').value = code;
+    syncSkuFieldVisibility(c);
+    updateSkuQtyInfo(c);
+    return;
   }
+  if (code === c.linkedCode) return; // re-picked the same code — nothing changed
+  const ok = await handleSkuDuplicateCheck(c, code);
+  if (!ok) { $('#ca-sku-select').value = c.linkedCode || ''; return; }
+  c.linkedCode = code;
+  c.sku = code;
+  $('#ca-sku').value = code;
   syncSkuFieldVisibility(c);
   updateSkuQtyInfo(c);
+}
+
+// Manual SKU/Model text entry runs the same duplicate check as the dropdown (onSkuSelect) —
+// typing a code that's already linked to another carton should prompt the same confirmation,
+// not silently accept it. QR scanning keeps its own separate duplicate guard (unchanged).
+async function onSkuManualChange() {
+  const c = getCarton(activeCartonId);
+  if (!c) return;
+  const typed = $('#ca-sku').value.trim();
+  if (!typed || typed === c.sku) { syncCartonMeta(); return; }
+  const ok = await handleSkuDuplicateCheck(c, typed);
+  if (!ok) return; // handleSkuDuplicateCheck already reset the SKU field + carton number
+  c.sku = typed;
+  syncCartonMeta();
+}
+
+// Shared by onSkuSelect() (dropdown) and onSkuManualChange() (free-typed SKU/Model): when the
+// auditor picks a product code that's already linked to ANOTHER carton in this report, confirm
+// whether this is genuinely the next carton of that same SKU (normal — most SKUs span several
+// cartons) or an accidental re-selection of an already-audited carton.
+async function handleSkuDuplicateCheck(c, code) {
+  const matches = cartons.filter(cc => cc.id !== c.id && (cc.linkedCode || cc.sku) === code);
+  if (!matches.length) return true;
+  const lastNo = matches.reduce((max, cc) => {
+    const n = parseInt(cc.cartonNo, 10);
+    return (!isNaN(n) && n > max) ? n : max;
+  }, 0);
+  const detail = bi('Already audited on Carton #' + (lastNo || '?'), 'Đã kiểm tra ở thùng số ' + (lastNo || '?'));
+  const confirmed = await confirmDupSkuCarton(detail);
+  if (confirmed) {
+    // "Confirm new carton" — auto-advance the carton number past the last one used for this
+    // SKU, capped at the number of cartons this SKU's order quantity actually needs so the
+    // auditor can't number past the end of the order.
+    const nextNo = lastNo + 1;
+    const product = (report.products || []).find(p => p.code === code);
+    let maxCartons = Infinity;
+    if (product && product.qty) {
+      const orderQtyPcs = parseInt(product.qty, 10) || 0;
+      const pcsPerCarton = pcsPerCartonFor(matches) || 1;
+      if (orderQtyPcs > 0) maxCartons = Math.ceil(orderQtyPcs / pcsPerCarton);
+    }
+    const finalNo = Math.min(nextNo, maxCartons);
+    c.cartonNo = String(finalNo);
+    $('#ca-cartonno').value = c.cartonNo;
+    return true;
+  }
+  // "Skip this carton" — this was an accidental re-pick of an already-audited carton; clear
+  // the SKU selection and reset the carton number so the auditor can start fresh (same as a
+  // brand-new carton: type/select a SKU, or scan its QR).
+  c.linkedCode = '';
+  c.sku = '';
+  c.cartonNo = '1';
+  $('#ca-cartonno').value = '1';
+  $('#ca-sku').value = '';
+  $('#ca-sku-select').value = '';
+  syncSkuFieldVisibility(c);
+  updateSkuQtyInfo(c);
+  return false;
+}
+
+// Custom in-page confirm modal (native confirm() gets silently suppressed in some mobile
+// in-app webviews — same reasoning as confirmDeleteCarton()).
+function confirmDupSkuCarton(detailHtml) {
+  return new Promise(resolve => {
+    const modal = $('#oca-dupsku-confirm-modal');
+    $('#oca-dupsku-confirm-detail').innerHTML = detailHtml;
+    modal.style.display = 'flex';
+    const btnYes = $('#oca-dupsku-confirm-newcarton');
+    const btnNo = $('#oca-dupsku-confirm-skip');
+    function cleanup() { modal.style.display = 'none'; btnYes.onclick = null; btnNo.onclick = null; }
+    btnYes.onclick = () => { cleanup(); resolve(true); };
+    btnNo.onclick = () => { cleanup(); resolve(false); };
+  });
 }
 
 function updateSkuQtyInfo(c) {
@@ -1719,9 +1894,11 @@ function renderGroups(c) {
       </div>
     </div>`;
   }).join('');
-  // open first group with pending items, or first group
-  const firstPending = GROUPS.find(g => !(c.skippedGroups && c.skippedGroups[g.id]) && c.groups[g.id].some(i => !i.status));
-  toggleGroup((firstPending || GROUPS[0]).id, true);
+  // All groups render collapsed — on a freshly opened carton and after Skip alike. Auto-
+  // expanding a group used to shift the page layout (the newly-opened content pushes
+  // everything below it down/up), which on mobile reads as the screen "jumping" away from
+  // the header the auditor just tapped. Leaving every group closed and letting the auditor
+  // open whichever one they want keeps the scroll position exactly where they left it.
 }
 
 function toggleGroup(gid, forceOpen) {
@@ -1936,7 +2113,7 @@ function renderVerdictBox(c) {
     </div>
     <div class="vb-suggest"><span class="en">Suggested</span><span class="sep"> # </span><span class="vi">Gợi ý</span>: <b class="suggest-${suggestion.toLowerCase()}">${suggestion}</b></div>
     <div class="vb-final">
-      <label><span class="en">Final Verdict</span><span class="sep"> # </span><span class="vi">Kết luận cuối</span> *</label>
+      <label><span class="en">Final Verdict</span><span class="sep"> # </span><span class="vi">Kết luận cuối cùng</span> *</label>
       <div class="verdict-group">
         <button class="v-btn v-pass ${c.verdict==='PASS'?'active':''}" onclick="setVerdict('PASS')">PASS</button>
         <button class="v-btn v-cond ${c.verdict==='CONDITIONAL'?'active':''}" onclick="setVerdict('CONDITIONAL')">CONDITIONAL</button>
@@ -1975,8 +2152,8 @@ function finishCarton() {
   const c = getCarton(activeCartonId);
   const partialGroups = findPartiallyTouchedGroups(c);
   if (partialGroups.length) {
-    alert('Nhóm sau đã bắt đầu kiểm nhưng chưa tick hết toàn bộ mục (OK/NG/N-A) — hoàn tất hết hoặc dùng nút Skip:\n' + partialGroups.join(', ') +
-      '\n\nThe following group(s) were started but not every item was ticked (OK/NG/N/A) yet — finish them, or use the Skip button:\n' + partialGroups.join(', '));
+    alert('Chưa hoàn thành tất cả checklist trong nhóm: ' + partialGroups.join(', ') + ' - Xác nhận tất cả hoặc bỏ qua nhóm này.' +
+      '\n\nYou haven\'t completed the full checklist in group(s): ' + partialGroups.join(', ') + ' - confirm all items or skip this group.');
     return;
   }
   const badNg = findIncompleteNg(c);
@@ -1986,7 +2163,7 @@ function finishCarton() {
     return;
   }
   if (!c.verdict) {
-    alert('Vui lòng chọn Final Verdict trước khi hoàn tất carton. / Please select a Final Verdict before finishing this carton.');
+    alert('Vui lòng chọn Kết luận cuối cùng trước khi hoàn tất thùng. / Please select a Final Verdict before finishing this carton.');
     return;
   }
   renderCartonList();
@@ -1994,7 +2171,7 @@ function finishCarton() {
 
 /* ------------------------------ Report / print ------------------------------ */
 function goToReport() {
-  if (cartons.length === 0) { alert('Chưa có carton nào để xuất báo cáo. / No cartons to report yet.'); return; }
+  if (cartons.length === 0) { alert('Chưa có thùng nào để xuất báo cáo. / No cartons to report yet.'); return; }
   if (report.qualityMode === QUALITY_MODES.AQL) {
     const short = computeSkuAudit().filter(r => r.insufficientSample && r.audited > 0);
     if (short.length) {
@@ -2087,7 +2264,10 @@ function overallVerdict() {
   return 'PASS';
 }
 
-const LEGEND_HTML = `<div class="legend-line">
+// report-legend: scoped class for when this sits in the printed report, between a SKU banner
+// and its first carton banner (see renderReport()'s flow+= below) — once per SKU, not once per
+// carton, since it's the same three-way legend regardless of which carton you're reading.
+const LEGEND_HTML = `<div class="legend-line report-legend">
   <span class="en">OK</span> = <span class="vi">Đạt</span> &nbsp;·&nbsp;
   <span class="en">NG</span> = <span class="vi">Không đạt</span> &nbsp;·&nbsp;
   <span class="en">N/A</span> = <span class="vi">Không áp dụng</span>
@@ -2106,26 +2286,26 @@ function buildReportPages() {
 
   // ---- Cover page ----
   const resultHead = isAql
-    ? `<tr><th>SKU</th><th>Product</th><th>Order Qty</th><th>PCS/thùng</th><th>Lot (thùng)</th><th>n (yêu cầu)</th><th>Audited</th><th>Critical</th><th>Major</th><th>Minor</th><th>Verdict</th></tr>`
-    : `<tr><th>SKU</th><th>Product</th><th>Order Qty</th><th>Audited (thùng)</th><th>Critical</th><th>Major</th><th>Minor</th><th>Verdict</th></tr>`;
+    ? `<tr><th class="col-sku">SKU</th><th class="col-product">Product</th><th class="col-num">Order Qty</th><th class="col-num">PCS/Carton</th><th class="col-num">Lot (Cartons)</th><th class="col-num">n (Required)</th><th class="col-num">Audited</th><th class="col-num">Critical</th><th class="col-num">Major</th><th class="col-num">Minor</th><th class="col-num">Verdict</th></tr>`
+    : `<tr><th class="col-sku">SKU</th><th class="col-product">Product</th><th class="col-num">Order Qty</th><th class="col-num">Audited (Cartons)</th><th class="col-num">Critical</th><th class="col-num">Major</th><th class="col-num">Minor</th><th class="col-num">Verdict</th></tr>`;
   const resultRows = skuRows.map(r => {
-    const shortFlag = (r.insufficientSample && r.audited > 0) ? ' <span class="grp-skip-note">(thiếu mẫu)</span>' : '';
+    const shortFlag = (r.insufficientSample && r.audited > 0) ? ' <span class="grp-skip-note">(insufficient sample)</span>' : '';
     if (isAql) {
       return `<tr>
-        <td>${escapeHtml(r.code || r.name || '—')}</td><td>${escapeHtml(r.name||'—')}</td>
-        <td>${r.lotQtyPcs || '—'}</td><td>${r.pcsPerCarton}</td><td>${r.lotCartons}</td>
-        <td>${r.sampleN}</td><td>${r.audited}${shortFlag}</td>
-        <td>${r.crit}</td>
-        <td>${r.maj} <span class="grp-skip-note">(${r.majAcRe?('Ac'+r.majAcRe.ac+'/Re'+r.majAcRe.re):'—'})</span></td>
-        <td>${r.min} <span class="grp-skip-note">(${r.minAcRe?('Ac'+r.minAcRe.ac+'/Re'+r.minAcRe.re):'—'})</span></td>
-        <td class="vcell v-${r.verdict.toLowerCase()}">${r.verdict}</td>
+        <td class="col-sku">${escapeHtml(r.code || r.name || '—')}</td><td class="col-product">${escapeHtml(r.name||'—')}</td>
+        <td class="col-num">${r.lotQtyPcs || '—'}</td><td class="col-num">${r.pcsPerCarton}</td><td class="col-num">${r.lotCartons}</td>
+        <td class="col-num">${r.sampleN}</td><td class="col-num">${r.audited}${shortFlag}</td>
+        <td class="col-num">${r.crit}</td>
+        <td class="col-num">${r.maj} <span class="grp-skip-note">(${r.majAcRe?('Ac'+r.majAcRe.ac+'/Re'+r.majAcRe.re):'—'})</span></td>
+        <td class="col-num">${r.min} <span class="grp-skip-note">(${r.minAcRe?('Ac'+r.minAcRe.ac+'/Re'+r.minAcRe.re):'—'})</span></td>
+        <td class="col-num vcell v-${r.verdict.toLowerCase()}">${r.verdict}</td>
       </tr>`;
     }
     return `<tr>
-      <td>${escapeHtml(r.code || r.name || '—')}</td><td>${escapeHtml(r.name||'—')}</td>
-      <td>${r.lotQtyPcs || '—'}</td><td>${r.audited}</td>
-      <td>${r.crit}</td><td>${r.maj}</td><td>${r.min}</td>
-      <td class="vcell v-${r.verdict.toLowerCase()}">${r.verdict}</td>
+      <td class="col-sku">${escapeHtml(r.code || r.name || '—')}</td><td class="col-product">${escapeHtml(r.name||'—')}</td>
+      <td class="col-num">${r.lotQtyPcs || '—'}</td><td class="col-num">${r.audited}</td>
+      <td class="col-num">${r.crit}</td><td class="col-num">${r.maj}</td><td class="col-num">${r.min}</td>
+      <td class="col-num vcell v-${r.verdict.toLowerCase()}">${r.verdict}</td>
     </tr>`;
   }).join('') || `<tr><td colspan="${isAql?11:8}" style="text-align:center;color:var(--vi);">—</td></tr>`;
 
@@ -2139,16 +2319,16 @@ function buildReportPages() {
       </div>
       <div class="report-title">OCA REPORT</div>
       <div class="cover-body">
-        <table class="meta-table upper">
-          <tr><td class="mt-label">${biBreak('Client','Khách hàng')}</td><td>${escapeHtml(report.buyer||'—')}</td>
-              <td class="mt-label">${biBreak('PO No.','Số PO')}</td><td>${escapeHtml(report.poNo||'—')}</td></tr>
-          <tr><td class="mt-label">${biBreak('Factory / Line','Nhà máy / Chuyền')}</td><td>${escapeHtml(report.factory||'—')}</td>
-              <td class="mt-label">${biBreak('Order Qty','SL đơn hàng')}</td><td>${escapeHtml(report.orderQty||'—')}</td></tr>
-          <tr><td class="mt-label">${biBreak('Category','Nhóm sản phẩm')}</td><td>${bi(CATEGORIES[report.category].label.en, CATEGORIES[report.category].label.vi)}</td>
-              <td class="mt-label">${biBreak('Date','Ngày')}</td><td>${escapeHtml(report.date||'—')}</td></tr>
-          <tr><td class="mt-label">${biBreak('Auditor','Người kiểm tra')}</td><td>${escapeHtml(report.auditorName||'—')}</td>
-              <td class="mt-label">${biBreak('Dept.','Bộ phận')}</td><td>${escapeHtml(report.dept||'—')}</td></tr>
-          <tr><td class="mt-label">${biBreak('Quality Mode','Mức đánh giá')}</td><td colspan="3">${modeLabel}</td></tr>
+        <table class="meta-table upper meta-table-1col">
+          <tr><td class="mt-label">${bi('Client','Khách hàng')}</td><td>${escapeHtml(report.buyer||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('Factory / Line','Nhà máy / Chuyền')}</td><td>${escapeHtml(report.factory||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('PO No.','Số PO')}</td><td>${escapeHtml(report.poNo||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('Category','Nhóm sản phẩm')}</td><td>${bi(CATEGORIES[report.category].label.en, CATEGORIES[report.category].label.vi)}</td></tr>
+          <tr><td class="mt-label">${bi('Order Qty','SL đơn hàng')}</td><td>${escapeHtml(report.orderQty||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('Date','Ngày')}</td><td>${escapeHtml(report.date||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('Auditor','Người kiểm tra')}</td><td>${escapeHtml(report.auditorName||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('Dept.','Bộ phận')}</td><td>${escapeHtml(report.dept||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('Quality Mode','Mức đánh giá')}</td><td>${modeLabel}</td></tr>
         </table>
         <div class="overall-verdict ov-${ov.toLowerCase()}">
           ${bi('Overall Result','Kết Quả Chung')} : ${ov}
@@ -2163,15 +2343,15 @@ function buildReportPages() {
         <div class="rpt-section-title">${bi('PRODUCT LIST','Danh Sách Sản Phẩm')}</div>
         <div class="table-scroll">
           <table class="carton-summary-table order-list-table upper">
-            <thead><tr><th>Code</th><th>Product Name</th><th>Order Qty</th>${isAql?'<th>Min for AQL</th>':''}<th>${bi('Status','Trạng Thái')}</th></tr></thead>
+            <thead><tr><th class="col-sku">SKU</th><th class="col-product">Product Name</th><th class="col-num">Order Qty</th>${isAql?'<th class="col-num">Min for AQL</th>':''}<th class="col-num">Status</th></tr></thead>
             <tbody>
               ${(report.products||[]).map(p => {
                 const isDone = auditedProductCodes.has(p.code);
                 const qtyNum = parseInt(p.qty, 10) || 0;
-                const minCell = isAql ? `<td>${qtyNum>0 ? aqlSampleCodeForLot(qtyNum)+' / n='+AQL_CODE_TO_N[aqlSampleCodeForLot(qtyNum)] : '—'}</td>` : '';
+                const minCell = isAql ? `<td class="col-num">${qtyNum>0 ? aqlSampleCodeForLot(qtyNum)+' / n='+AQL_CODE_TO_N[aqlSampleCodeForLot(qtyNum)] : '—'}</td>` : '';
                 return `<tr>
-                <td>${escapeHtml(p.code)}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.qty||'—')}</td>${minCell}
-                <td class="plist-status ${isDone ? 'status-done' : 'status-waiting'}">${isDone ? 'Done' : 'Waiting'}</td>
+                <td class="col-sku">${escapeHtml(p.code)}</td><td class="col-product">${escapeHtml(p.name)}</td><td class="col-num">${escapeHtml(p.qty||'—')}</td>${minCell}
+                <td class="col-num plist-status ${isDone ? 'status-done' : 'status-waiting'}">${isDone ? 'Done' : 'Waiting'}</td>
               </tr>`;
               }).join('') || `<tr><td colspan="${isAql?5:4}" style="text-align:center;color:var(--vi);">—</td></tr>`}
             </tbody>
@@ -2184,7 +2364,6 @@ function buildReportPages() {
   // instead of summed for the whole lot) — each SKU block starts with a summary banner,
   // then lists that SKU's cartons in full checklist detail same as before. ----
   let flow = '<div class="flow-content">';
-  let cIdxGlobal = 0;
   skuRows.forEach((row, skuIdx) => {
     if (!row.cartons.length) return; // Product List entries with zero cartons audited yet
     const skuAqlBits = isAql
@@ -2195,7 +2374,8 @@ function buildReportPages() {
         <span class="cb-label">SKU <b class="cb-bold">${escapeHtml(row.code || row.name)}</b>${row.name && row.code ? ' — '+escapeHtml(row.name) : ''}</span>
         <span class="cb-detail">${skuAqlBits} &nbsp;·&nbsp; Critical:<b class="cb-bold">${row.crit}</b> Major:<b class="cb-bold">${row.maj}</b> Minor:<b class="cb-bold">${row.min}</b></span>
         <span class="cd-verdict v-${row.verdict.toLowerCase()}">${row.verdict}</span>
-      </div>`;
+      </div>
+      ${LEGEND_HTML}`;
     row.cartons.forEach((c) => {
       let bodyRows = '';
       GROUPS.forEach(g => {
@@ -2221,14 +2401,15 @@ function buildReportPages() {
         });
       });
       const multiTag = c.pcsMulti && c.qtyInspected && c.qtyInspected !== '1' ? ' ('+escapeHtml(c.qtyInspected)+' pcs/thùng)' : '';
+      // No forced page-break class here any more — applyCartonPageBreaks() decides breaks
+      // right before printing, based on actual remaining space on the page (see there).
       flow += `
-        <div class="carton-section${cIdxGlobal > 0 ? ' carton-break' : ''}">
+        <div class="carton-section">
           <div class="carton-banner v-${(c.verdict||'pending').toLowerCase()}">
             <span class="cb-label">Thùng <b class="cb-bold">#${escapeHtml(c.cartonNo)}</b></span>
             <span class="cb-detail">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${c.sku? '· SKU: <b class="cb-bold">'+escapeHtml(c.sku)+'</b>'+multiTag:''}</span>
             <span class="cd-verdict v-${(c.verdict||'pending').toLowerCase()}">${c.verdict||'PENDING'}</span>
           </div>
-          ${LEGEND_HTML}
           <div class="check-table-wrap table-scroll">
             <table class="check-table">
               <colgroup><col class="col-code"><col class="col-item"><col class="col-result"><col class="col-note"></colgroup>
@@ -2237,7 +2418,6 @@ function buildReportPages() {
             </table>
           </div>
         </div>`;
-      cIdxGlobal++;
     });
   });
 
@@ -2246,17 +2426,17 @@ function buildReportPages() {
       <div class="sign-col">
         <div class="sign-name">${auditorUpper || '—'}</div>
         <div class="sign-line"></div>
-        <div class="sign-label">${bi('QC Auditor','Người kiểm tra')}</div>
+        <div class="sign-label">${biBreak('QC Auditor','Người kiểm tra')}</div>
       </div>
       <div class="sign-col">
         <div class="sign-name">&nbsp;</div>
         <div class="sign-line"></div>
-        <div class="sign-label">${bi('QA Manager','Trưởng phòng QA')}</div>
+        <div class="sign-label">${biBreak('QA Manager','Trưởng phòng QA')}</div>
       </div>
       <div class="sign-col">
         <div class="sign-name">&nbsp;</div>
         <div class="sign-line"></div>
-        <div class="sign-label">${bi('Client / Customer','Khách hàng')}</div>
+        <div class="sign-label">${biBreak('Client / Customer','Khách hàng')}</div>
       </div>
     </div>
   </div>`; // close flow-content
@@ -2290,6 +2470,45 @@ function buildAppState() {
   return { report, cartons, cartonSeq };
 }
 
+// ---- Demo import/export (testing convenience) ----
+// Reuses the exact same buildAppState()/restoreAppState() pair the real Save/Resume feature
+// uses, so a demo file is just a plain JSON dump of {report, cartons, cartonSeq} — this also
+// means it's generic enough to later double as a general import/export format for other
+// files/tools, not just throwaway test data.
+function exportDemoData() {
+  if (!report) { alert('Chưa có audit nào để xuất. / No audit to export yet.'); return; }
+  const state = buildAppState();
+  const json = JSON.stringify(state, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `oca_demo_${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function importDemoData(inputEl) {
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const state = JSON.parse(reader.result);
+      if (!state || !state.report) { alert('File demo không hợp lệ. / Invalid demo file.'); return; }
+      restoreAppState(state);
+      showView('list');
+    } catch (e) {
+      alert('Không đọc được file demo. / Could not read demo file.');
+    } finally {
+      inputEl.value = ''; // allow re-importing the same file again later
+    }
+  };
+  reader.readAsText(file);
+}
+
 function restoreAppState(state) {
   report = state.report;
   cartons = state.cartons || [];
@@ -2317,30 +2536,168 @@ function restoreAppState(state) {
   renderCartonList();
 }
 
-function loadProgress(inputEl) {
-  const file = inputEl.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const payload = JSON.parse(e.target.result);
-      restoreAppState(payload);
-    } catch (err) {
-      alert('File không hợp lệ. / Invalid file.');
-    }
-  };
-  reader.readAsText(file);
-  inputEl.value = '';
-}
-
 // Chrome's "Save as PDF" dialog defaults its filename to document.title, so setting it right
 // before printing gives the exported PDF the same YYMMDD_OCA Report_00X name as the saved
 // file, without needing any extra UI. Restored afterwards so the on-screen title is unaffected.
 function printReport() {
+  applyCartonPageBreaks();
   const prevTitle = document.title;
   document.title = reportFilename();
   window.print();
   setTimeout(() => { document.title = prevTitle; }, 1000);
+}
+
+// Decides, right before printing, which SKU banners / carton sections should force a page
+// break — replaces the old "every carton starts a fresh page" rule, which wasted most of a
+// page whenever a carton happened to land near the top. A SKU's banner and its first carton
+// are measured and broken as a single unit, so the banner can never end up stranded alone at
+// the bottom of a page with its checklist pushed to the next one.
+//
+// A block only starts on the current page if its "head chunk" — banner + legend line + table
+// header + first body row, i.e. everything that would read as "just a title" if left stranded
+// — fully fits in what's left of the page (headChunkHeight() below), on top of a flat floor
+// percentage as a backstop. An earlier version only checked the flat percentage (20% of the
+// page) against the FULL remaining carton height, which let through a near-miss: the banner
+// alone "fit" by that math, but Chrome's own page-break-after:avoid on the banner then refused
+// to actually break right after it and pushed the whole banner down to the next page anyway —
+// stranding a tall blank gap above it on the page before (the bug reported against the first
+// version of this function). Checking the real head-chunk height against the real remaining
+// space, plus a slack margin for measurement rounding, closes that gap.
+//
+// Heights are measured on an off-screen CLONE sized to the real print content width (A4 minus
+// the @page margins), not the on-screen flow-content width — the two differ, so text wraps
+// differently, and measuring on-screen heights would give the wrong answer.
+function applyCartonPageBreaks() {
+  const flow = document.querySelector('#report-pages .flow-content');
+  if (!flow) return;
+
+  const mmToPx = 96 / 25.4;
+  const pageContentWidthPx = 190 * mmToPx;   // 210mm page − 10mm margin each side
+  const pageContentHeightPx = 277 * mmToPx;  // 297mm page − 10mm margin each side
+  const BREAK_THRESHOLD = 0.28;        // flat floor — never start a block with less than this left
+  const HEAD_CHUNK_SLACK_PX = 24;      // extra safety margin on top of the measured head-chunk height
+
+  const clone = flow.cloneNode(true);
+  clone.querySelectorAll('.carton-section').forEach(el => el.classList.remove('carton-break'));
+  clone.querySelectorAll('.sku-banner').forEach(el => el.classList.remove('sku-page-break'));
+  clone.querySelectorAll('.sign-block').forEach(el => el.classList.remove('sign-block-page-break'));
+  clone.style.cssText = `position:absolute; left:-9999px; top:0; visibility:hidden; `
+    + `width:${pageContentWidthPx}px; max-width:none; margin:0; padding:16px 28px 40px 28px; box-shadow:none;`;
+  document.body.appendChild(clone);
+
+  const liveBlocks = flow.querySelectorAll('.sku-banner, .carton-section');
+  const cloneBlocks = clone.querySelectorAll('.sku-banner, .carton-section');
+
+  if (!cloneBlocks.length) { document.body.removeChild(clone); return; }
+
+  // The part of a fresh carton-section that would look like "just a title" if stranded alone:
+  // its own banner, the checklist table's header row, and its very first body row. (The OK/
+  // NG/N-A legend line is no longer inside here — it now sits once between a SKU banner and
+  // its first carton, see the sku-banner branch below, which accounts for it separately.)
+  function headChunkHeight(cartonSectionEl) {
+    let h = 0;
+    const banner = cartonSectionEl.querySelector('.carton-banner');
+    if (banner) h += banner.offsetHeight;
+    const thead = cartonSectionEl.querySelector('.check-table thead');
+    if (thead) h += thead.offsetHeight;
+    const firstRow = cartonSectionEl.querySelector('.check-table tbody tr');
+    if (firstRow) h += firstRow.offsetHeight;
+    return h;
+  }
+
+  // A checklist table can be much taller than one page — Chrome then paginates it on its own,
+  // row by row (each <tr> is page-break-inside:avoid, and the <thead> repeats on every page it
+  // lands on). Treating the whole carton-section as one flat height (old behavior) ignores the
+  // space Chrome ends up wasting whenever a row doesn't quite fit and gets pushed whole to the
+  // next page — over many rows that drifts a long way from reality, which is what let the
+  // signature block get forced onto a fresh page even when the previous one still had plenty of
+  // room left. packCartonSection() replays that same row-by-row placement so currentUsed tracks
+  // the real printed position instead of a naive sum.
+  function packCartonSection(cartonSectionEl, startUsed) {
+    let used = startUsed;
+    const banner = cartonSectionEl.querySelector('.carton-banner');
+    if (banner) used += banner.offsetHeight;
+    const theadEl = cartonSectionEl.querySelector('.check-table thead');
+    const theadH = theadEl ? theadEl.offsetHeight : 0;
+    used += theadH;
+    const rows = Array.from(cartonSectionEl.querySelectorAll('.check-table tbody tr'));
+    for (let idx = 0; idx < rows.length; idx++) {
+      let unitH = rows[idx].offsetHeight;
+      // a group header row must not be left stranded alone at the bottom of a page — bundle
+      // it with the row right after it so the pair is placed (or pushed) together.
+      if (rows[idx].classList.contains('grp-row') && rows[idx + 1]) {
+        unitH += rows[idx + 1].offsetHeight;
+        idx += 1;
+      }
+      const remaining = pageContentHeightPx - used;
+      if (unitH <= remaining) {
+        used += unitH;
+      } else {
+        // doesn't fit: the remainder of the current page goes to waste, and the table's
+        // header repeats at the top of the fresh page before this row.
+        used = (theadH + unitH) % pageContentHeightPx;
+      }
+    }
+    return used % pageContentHeightPx;
+  }
+
+  // Starting position = wherever the first SKU banner naturally lands after the AQL/result
+  // summary tables and Product List above it (approximated via modulo — good enough since
+  // that preamble content isn't itself being broken by this function).
+  let currentUsed = cloneBlocks[0].offsetTop % pageContentHeightPx;
+  let isFirstBanner = true;
+  let i = 0;
+  while (i < cloneBlocks.length) {
+    const el = cloneBlocks[i];
+    if (el.classList.contains('sku-banner')) {
+      const bannerH = el.offsetHeight;
+      // the legend line is a plain sibling right after the sku-banner (not matched by the
+      // .sku-banner, .carton-section selector cloneBlocks was built from), so it's read off
+      // the DOM directly rather than via cloneBlocks indexing.
+      const legendEl = el.nextElementSibling && el.nextElementSibling.classList.contains('legend-line') ? el.nextElementSibling : null;
+      const legendH = legendEl ? legendEl.offsetHeight : 0;
+      const nextIsFirstCarton = (i + 1 < cloneBlocks.length) && cloneBlocks[i+1].classList.contains('carton-section');
+      const cartonEl = nextIsFirstCarton ? cloneBlocks[i+1] : null;
+      const headH = bannerH + legendH + (cartonEl ? headChunkHeight(cartonEl) : 0) + HEAD_CHUNK_SLACK_PX;
+      const remaining = pageContentHeightPx - currentUsed;
+      const minNeeded = Math.max(BREAK_THRESHOLD * pageContentHeightPx, headH);
+      // never force a break before the very first SKU — it already sits right after the
+      // Product List; breaking there would waste that whole page for nothing.
+      const forceBreak = !isFirstBanner && remaining < minNeeded;
+      liveBlocks[i].classList.toggle('sku-page-break', forceBreak);
+      if (nextIsFirstCarton) liveBlocks[i+1].classList.remove('carton-break');
+      currentUsed = (forceBreak ? 0 : currentUsed) + bannerH + legendH;
+      currentUsed %= pageContentHeightPx;
+      if (cartonEl) currentUsed = packCartonSection(cartonEl, currentUsed);
+      isFirstBanner = false;
+      i += nextIsFirstCarton ? 2 : 1;
+    } else {
+      // a carton-section that is not the first carton of its SKU
+      const headH = headChunkHeight(el) + HEAD_CHUNK_SLACK_PX;
+      const remaining = pageContentHeightPx - currentUsed;
+      const minNeeded = Math.max(BREAK_THRESHOLD * pageContentHeightPx, headH);
+      const forceBreak = remaining < minNeeded;
+      liveBlocks[i].classList.toggle('carton-break', forceBreak);
+      currentUsed = forceBreak ? 0 : currentUsed;
+      currentUsed = packCartonSection(el, currentUsed);
+      i += 1;
+    }
+  }
+
+  // Signature block: Chrome's flexbox break-inside:avoid is unreliable in print (a known
+  // Chromium quirk) — the block could still get torn between the name/line row and the label
+  // row below it. Rather than fight that, measure it the same way as everything above and
+  // force it onto a fresh page whenever it wouldn't fully fit in what's left, so it can never
+  // end up split across two pages.
+  const cloneSign = clone.querySelector('.sign-block');
+  const liveSign = flow.querySelector('.sign-block');
+  if (cloneSign && liveSign) {
+    const signH = cloneSign.offsetHeight;
+    const remaining = pageContentHeightPx - currentUsed;
+    liveSign.classList.toggle('sign-block-page-break', signH > remaining);
+  }
+
+  document.body.removeChild(clone);
 }
 
 function escapeHtml(str) {
