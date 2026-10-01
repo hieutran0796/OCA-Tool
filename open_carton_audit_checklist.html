@@ -169,6 +169,11 @@ h2.section-title{
 }
 h2.section-title .vi{ text-transform:uppercase; font-size:13px; }
 
+/* Clear dividers between the Order Info page's clusters (Audit Setup / Product List /
+   Split Report) so they read as distinct groups rather than one long running form. */
+#view-setup h2.section-title:not(:first-child){ border-top:1px solid var(--border); padding-top:18px; }
+#view-setup .split-entry-row{ border-top:1px solid var(--border); padding-top:16px; margin-top:18px; }
+
 /* ---------------- Form elements ---------------- */
 .field{ margin-bottom:16px; }
 .field label{ display:block; font-size:12px; font-weight:600; color:var(--brown); margin-bottom:4px; }
@@ -266,10 +271,16 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
   border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:10px; background:#fafafa;
 }
 .split-row-excluded{ opacity:0.5; }
-.split-row-check{ display:flex; align-items:baseline; gap:8px; margin-bottom:10px; cursor:pointer; }
-.split-row-check input{ flex:none; }
+.split-row-check{ display:flex; align-items:flex-start; gap:8px; margin-bottom:10px; cursor:pointer; }
+.split-row-check input{ flex:none; margin-top:3px; }
+.split-row-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
 .split-row-sku{ font-weight:700; color:var(--brown); }
-.split-row-sub{ font-size:12px; color:var(--vi); }
+/* Clamp a long product name to 3 lines (with an ellipsis) instead of letting it run on —
+   keeps every row a predictable, scannable height even for long real-world product names. */
+.split-row-sub{
+  font-size:12px; color:var(--vi); display:-webkit-box; -webkit-line-clamp:3;
+  -webkit-box-orient:vertical; overflow:hidden;
+}
 .split-row-fields{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
 .split-row-fields .field{ margin:0; }
 @media (max-width:520px){ .split-row-fields{ grid-template-columns:1fr 1fr; } .split-row-fields .field:nth-child(3){ grid-column:1/-1; } }
@@ -280,7 +291,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 }
 .child-mode-banner b{ color:var(--brown); }
 
-#child-reports-wrap{ margin-top:10px; padding-bottom:24px; }
+#hub-list{ margin-top:4px; padding-bottom:4px; }
 .child-report-row{
   display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
   border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:10px; background:#fafafa;
@@ -330,16 +341,16 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 }
 .actionbar .btn{ flex:1; min-height:48px; }
 
-/* The carton-list action bar has 4 buttons (Save / Sync / Add Carton / Report) whose bilingual
+/* The carton-list action bar has 3 buttons (Save / Add Carton / Report) whose bilingual
    labels are too long to fit evenly on a phone-width screen. Below the breakpoint, wrap it
    onto two rows instead: the primary "+ Add Carton" action gets its own full-width row on top
-   (it's the one tapped most), and the three secondary actions share the row underneath.
+   (it's the one tapped most), and the two secondary actions share the row underneath.
    Scoped to #actionbar-list specifically (not every .actionbar) so the 1- and 2-button bars
    elsewhere keep their single-row layout. */
 @media (max-width:480px){
   #actionbar-list{ flex-wrap:wrap; }
   #actionbar-list .btn-primary{ flex:1 1 100%; order:-1; }
-  #actionbar-list .btn-outline{ flex:1 1 calc(33.333% - 7px); font-size:12px; padding:10px 4px; }
+  #actionbar-list .btn-outline{ flex:1 1 calc(50% - 5px); font-size:12px; padding:10px 4px; }
   /* two rows of buttons now sit taller in the fixed bar — give the scrolling content below
      enough bottom padding so the last carton card isn't hidden underneath it. */
   #app{ padding-bottom:150px; }
@@ -732,9 +743,96 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 @keyframes ocaFadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
 @media print{ .modal-overlay, #toast{ display:none !important; } }
 
+/* ---------------- Icon system (replaces emoji button glyphs) ----------------
+   Size scales with the button's own importance tier, which already exists via the .btn
+   classes: a plain .btn (secondary action) gets a medium icon, .btn-primary (the one
+   call-to-action on a screen) gets a slightly larger one, .btn-sm (compact/list-row
+   actions) gets a smaller one — so no new tier classes are needed, just icon sizing keyed
+   to the tier classes already in use. Every icon inherits its color from the button's own
+   text color (stroke="currentColor" via the shared <defs>), so .btn-primary (dark bg) shows
+   a white icon and .btn-outline/.btn-ghost (white/transparent bg) show a colored icon
+   automatically — the same "dark bg + white icon" / "white bg + colored icon" rule the
+   button styles already use for their text. */
+.oci{ width:17px; height:17px; vertical-align:-4px; margin-right:6px; flex:none; stroke:currentColor; fill:none; }
+.btn-primary .oci{ width:19px; height:19px; }
+.btn-sm .oci{ width:15px; height:15px; margin-right:5px; vertical-align:-3px; }
+.step-gear .oci, .child-gear-btn .oci{ margin-right:0; }
+
+/* Red always marks a destructive/irreversible action, at every size — never conveyed by
+   size alone. Applied on top of the existing .btn-outline/.btn-primary/.btn-ghost shells. */
+.btn-danger.btn-outline{ color:#c0392b; border-color:#c0392b; }
+.btn-danger.btn-ghost{ color:#c0392b; }
+.btn-danger.btn-primary{ background:#c0392b; border-color:#c0392b; color:#fff; }
+
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="ic-save" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="1.5"/>
+      <path d="M8 4v5h7V4"/>
+      <rect x="7" y="13" width="10" height="6"/>
+    </g>
+    <g id="ic-import" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 15V4"/><path d="M7 9l5-5 5 5"/>
+      <path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>
+    </g>
+    <g id="ic-export" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 4v11"/><path d="M7 10l5 5 5-5"/>
+      <path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>
+    </g>
+    <g id="ic-trash" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 7h14"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+      <path d="M7 7l1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13"/>
+      <path d="M10 11v6"/><path d="M14 11v6"/>
+    </g>
+    <g id="ic-cloud" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 18a4 4 0 0 1-1-7.9 5 5 0 0 1 9.8-1.6A4.5 4.5 0 0 1 17 18H7Z"/>
+      <path d="M12 11v6"/><path d="M9.5 13.5 12 11l2.5 2.5"/>
+    </g>
+    <g id="ic-merge" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="4" width="11" height="8" rx="1.3"/>
+      <rect x="9" y="12" width="11" height="8" rx="1.3"/>
+    </g>
+    <g id="ic-print" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="9" width="14" height="7" rx="1"/><path d="M7.5 9V4.5h9V9"/>
+      <rect x="8" y="15.5" width="8" height="4.5"/>
+    </g>
+    <g id="ic-plus" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>
+    </g>
+    <g id="ic-back" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/>
+    </g>
+    <g id="ic-check" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 13l4 4L19 7"/>
+    </g>
+    <g id="ic-x" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 6l12 12M18 6L6 18"/>
+    </g>
+    <g id="ic-gear" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2v3M12 19v3M22 12h-3M5 12H2M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12M19.07 19.07l-2.12-2.12M7.05 7.05 4.93 4.93"/>
+    </g>
+    <g id="ic-arrow-right" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
+    </g>
+    <g id="ic-play" fill="none" stroke-width="1.8" stroke-linejoin="round">
+      <path d="M7 5l12 7-12 7V5Z"/>
+    </g>
+    <g id="ic-undo" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 14 4 9l5-5"/><path d="M4 9h10a7 7 0 0 1 0 14H9"/>
+    </g>
+    <g id="ic-camera" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/>
+    </g>
+    <g id="ic-split" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="17" cy="12" r="2.2"/>
+      <path d="M6 8.2V18"/><path d="M6 8.2c0 4 4 3.8 9 3.8"/>
+    </g>
+  </defs>
+</svg>
 <div id="app">
   <div class="topbar">
     <div class="topbar-brand">
@@ -745,10 +843,10 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
   </div>
   <div class="child-mode-banner" id="child-mode-banner" style="display:none;">
     <span><span class="en">Working on</span><span class="sep"> # </span><span class="vi">Đang làm</span>: <b id="child-mode-label"></b></span>
-    <button type="button" class="btn btn-sm btn-outline" onclick="backToMaster()">← <span class="en">Back to Order</span><span class="sep"> # </span><span class="vi">Về Tổng</span></button>
+    <button type="button" class="btn btn-sm btn-outline" onclick="backToHub()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back to Order Hub</span><span class="sep"> # </span><span class="vi">Về Trung Tâm</span></button>
   </div>
   <div class="stepbar">
-    <div class="step" data-step="setup">1. Setup <button type="button" class="step-gear" onclick="event.stopPropagation(); editSetup()" title="Edit setup info / Sửa lại thông tin thiết lập">⚙</button></div>
+    <div class="step" data-step="setup">1. Setup <button type="button" class="step-gear" onclick="event.stopPropagation(); editSetup()" title="Edit setup info / Sửa lại thông tin thiết lập"><svg class="oci" viewBox="0 0 24 24" style="margin:0;width:15px;height:15px;"><use href="#ic-gear"/></svg></button></div>
     <div class="step" data-step="list">2. Cartons</div>
     <div class="step" data-step="audit">3. Checklist</div>
     <div class="step" data-step="report">4. Report</div>
@@ -824,38 +922,43 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
         <tbody id="product-list-body"></tbody>
       </table>
     </div>
-    <button class="btn btn-sm btn-outline" onclick="addProductRow()" style="margin-top:8px;"><span class="en">+ Add Row</span><span class="sep"> # </span><span class="vi">Thêm dòng</span></button>
+    <button class="btn btn-sm btn-outline" onclick="addProductRow()" style="margin-top:8px;"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-plus"/></svg><span class="en">Add Row</span><span class="sep"> # </span><span class="vi">Thêm dòng</span></button>
 
     <div class="field" style="margin-top:16px;">
       <label><span class="en">Paste from Excel / Clipboard</span><span class="sep"> # </span><span class="vi">Dán từ Excel / Clipboard</span></label>
       <textarea id="paste-area" class="paste-area" placeholder="Code[TAB]Name[TAB]Qty — one row per line / mỗi dòng 1 sản phẩm"></textarea>
-      <button class="btn btn-sm btn-outline" onclick="parsePaste()" style="margin-top:8px;"><span class="en">Import</span><span class="sep"> # </span><span class="vi">Nhập</span></button>
+      <button class="btn btn-sm btn-outline" onclick="parsePaste()" style="margin-top:8px;"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-import"/></svg><span class="en">Import</span><span class="sep"> # </span><span class="vi">Nhập</span></button>
     </div>
 
     <div class="dev-tools-row">
       <input type="file" id="demo-import-input" accept="application/json" style="display:none" onchange="importDemoData(this)">
-      <button class="btn btn-sm btn-ghost" type="button" onclick="document.getElementById('demo-import-input').click()"><span class="en">Import data</span><span class="sep"> # </span><span class="vi">Nhập dữ liệu</span></button>
-      <button class="btn btn-sm btn-ghost" type="button" onclick="exportDemoData()"><span class="en">Export data</span><span class="sep"> # </span><span class="vi">Xuất dữ liệu</span></button>
+      <button class="btn btn-sm btn-ghost" type="button" onclick="document.getElementById('demo-import-input').click()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-import"/></svg><span class="en">Import data</span><span class="sep"> # </span><span class="vi">Nhập dữ liệu</span></button>
+      <button class="btn btn-sm btn-ghost" type="button" onclick="exportDemoData()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-export"/></svg><span class="en">Export data</span><span class="sep"> # </span><span class="vi">Xuất dữ liệu</span></button>
     </div>
 
     <div class="split-entry-row">
-      <button class="btn btn-sm btn-outline" type="button" onclick="openSplitModal()">⇄ <span class="en">Split by Product</span><span class="sep"> # </span><span class="vi">Tách Theo Sản Phẩm</span></button>
-    </div>
-
-    <!-- Shown instead of the Start Audit bar once the order has been split (see renderChildList()) -->
-    <div id="child-reports-wrap" style="display:none;">
-      <h2 class="section-title" style="margin-top:20px;"><span class="en">Child Reports</span><span class="sep"> # </span><span class="vi">Báo Cáo Con</span></h2>
-      <div id="child-reports-list"></div>
-      <div class="child-master-actions">
-        <button class="btn btn-outline cma-save" type="button" onclick="exportMasterFile()">💾 <span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
-        <button class="btn btn-outline cma-sync" type="button" onclick="syncToGoogle()">☁️ <span class="en">Sync</span><span class="sep"> # </span><span class="vi">Đồng bộ lên máy chủ</span></button>
-        <button class="btn btn-primary cma-merge" type="button" onclick="mergeReports()">📑 <span class="en">Merge Reports</span><span class="sep"> # </span><span class="vi">Gộp Báo Cáo</span></button>
-        <button class="btn btn-outline cma-undo" type="button" onclick="undoSplit()">↺ <span class="en">Undo split</span><span class="sep"> # </span><span class="vi">Huỷ tách báo cáo</span></button>
-      </div>
+      <button class="btn btn-sm btn-outline" type="button" onclick="openSplitModal()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-split"/></svg><span class="en">Split Report</span><span class="sep"> # </span><span class="vi">Tách báo cáo</span></button>
     </div>
   </div>
   <div class="actionbar" id="actionbar-setup">
-    <button class="btn btn-primary" id="setup-primary-btn" onclick="startAudit()"><span class="en">Start Audit</span><span class="sep"> # </span><span class="vi">Bắt đầu</span> →</button>
+    <button class="btn btn-primary" id="setup-primary-btn" onclick="startAudit()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-play"/></svg><span class="en">Start Audit</span><span class="sep"> # </span><span class="vi">Bắt đầu</span></button>
+  </div>
+
+  <!-- ============ VIEW: ORDER HUB — always the landing screen after Order Info is saved, whether
+       the order has 1 product or was split into several. Entering any report from here always
+       drops into the exact same 4-step flow (Cartons → Checklist → Report). ============ -->
+  <div class="view" id="view-hub">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+      <h2 class="section-title" style="margin:0;"><span class="en">Order Hub</span><span class="sep"> # </span><span class="vi">Trung Tâm Đơn Hàng</span></h2>
+      <button class="btn btn-sm btn-ghost" type="button" onclick="goToOrderInfo()" title="Edit shared Order Info / Sửa thông tin chung của đơn"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-gear"/></svg><span class="en">Order Info</span><span class="sep"> # </span><span class="vi">Thông tin đơn</span></button>
+    </div>
+    <div id="hub-list"></div>
+    <div class="child-master-actions" id="hub-master-actions" style="display:none;">
+      <button class="btn btn-outline cma-save" type="button" onclick="exportMasterFile()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-save"/></svg><span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
+      <button class="btn btn-outline cma-sync" type="button" onclick="syncToGoogle()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-cloud"/></svg><span class="en">Sync</span><span class="sep"> # </span><span class="vi">Đồng bộ lên máy chủ</span></button>
+      <button class="btn btn-primary cma-merge" type="button" onclick="mergeReports()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-merge"/></svg><span class="en">Merge Reports</span><span class="sep"> # </span><span class="vi">Gộp Báo Cáo</span></button>
+      <button class="btn btn-outline btn-danger cma-undo" type="button" onclick="undoSplit()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-undo"/></svg><span class="en">Undo split</span><span class="sep"> # </span><span class="vi">Huỷ tách báo cáo</span></button>
+    </div>
   </div>
 
   <!-- ============ VIEW: CARTON LIST ============ -->
@@ -865,10 +968,9 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <div id="carton-cards"></div>
   </div>
   <div class="actionbar" id="actionbar-list" style="display:none;">
-    <button class="btn btn-outline btn-wrap-vi" onclick="saveReportFile()">💾 <span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
-    <button class="btn btn-outline btn-wrap-vi" type="button" onclick="syncToGoogle()">☁️ <span class="en">Sync</span><span class="sep"> # </span><span class="vi">Đồng bộ lên máy chủ</span></button>
-    <button class="btn btn-primary btn-wrap-vi" onclick="addCarton()"><span class="en">+ Add Carton</span><span class="sep"> # </span><span class="vi">Thêm thùng mới</span></button>
-    <button class="btn btn-outline btn-wrap-vi" onclick="goToReport()"><span class="en">Report</span><span class="sep"> # </span><span class="vi">Xuất báo cáo</span> →</button>
+    <button class="btn btn-outline btn-wrap-vi" onclick="saveReportFile()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-save"/></svg><span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
+    <button class="btn btn-primary btn-wrap-vi" onclick="addCarton()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-plus"/></svg><span class="en">Add Carton</span><span class="sep"> # </span><span class="vi">Thêm thùng mới</span></button>
+    <button class="btn btn-outline btn-wrap-vi" onclick="goToReport()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-export"/></svg><span class="en">Report</span><span class="sep"> # </span><span class="vi">Xuất báo cáo</span></button>
   </div>
 
   <!-- ============ VIEW: CARTON AUDIT ============ -->
@@ -893,7 +995,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
           <select id="ca-sku-select" onchange="onSkuSelect(this.value)"></select>
         </div>
         <input id="ca-sku" type="text" onchange="onSkuManualChange()" placeholder="SKU / Model" style="margin-top:8px;">
-        <label class="btn btn-sm btn-outline photo-input-label sku-scan-btn" style="margin-top:8px;">📷 Scan QR
+        <label class="btn btn-sm btn-outline photo-input-label sku-scan-btn" style="margin-top:8px;"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-camera"/></svg>Scan QR
           <input type="file" accept="image/*" capture="environment" onchange="scanQr(this)">
         </label>
         <div id="ca-sku-qtyinfo" class="sku-qty-info"></div>
@@ -909,16 +1011,17 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <div id="verdict-box"></div>
   </div>
   <div class="actionbar" id="actionbar-audit" style="display:none;">
-    <button class="btn btn-outline" onclick="syncCartonMeta(); renderCartonList();">← <span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
-    <button class="btn btn-primary" onclick="finishCarton()"><span class="en">Done</span><span class="sep"> # </span><span class="vi">Xong</span></button>
+    <button class="btn btn-outline" onclick="syncCartonMeta(); renderCartonList();"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
+    <button class="btn btn-primary" onclick="finishCarton()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-check"/></svg><span class="en">Done</span><span class="sep"> # </span><span class="vi">Xong</span></button>
   </div>
 
   <!-- ============ VIEW: REPORT ============ -->
   <div class="view" id="view-report">
     <div class="report-toolbar">
-      <button class="btn btn-outline" onclick="reportBack()">← <span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
-      <button class="btn btn-outline" onclick="saveReportFile()">💾 <span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
-      <button class="btn btn-primary" onclick="printReport()">🖨 <span class="en">Print</span><span class="sep"> # </span><span class="vi">In - Xuất PDF</span></button>
+      <button class="btn btn-outline" onclick="reportBack()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
+      <button class="btn btn-outline" onclick="saveReportFile()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-save"/></svg><span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
+      <button class="btn btn-outline" type="button" onclick="syncToGoogle()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-cloud"/></svg><span class="en">Sync</span><span class="sep"> # </span><span class="vi">Đồng bộ lên máy chủ</span></button>
+      <button class="btn btn-primary" onclick="printReport()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-print"/></svg><span class="en">Print</span><span class="sep"> # </span><span class="vi">In - Xuất PDF</span></button>
     </div>
     <div id="report-pages"></div>
   </div>
@@ -1011,14 +1114,14 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 <!-- ══ SPLIT BY PRODUCT MODAL — one row per Product List item, tick which to split out ══ -->
 <div class="modal-overlay" id="oca-split-modal" style="display:none">
   <div class="modal-box modal-box-wide">
-    <div class="modal-subtitle"><span class="en">Split by Product</span><span class="sep"> # </span><span class="vi">Tách Theo Sản Phẩm</span></div>
+    <div class="modal-subtitle"><span class="en">Split Report</span><span class="sep"> # </span><span class="vi">Tách báo cáo</span></div>
     <div class="modal-question" style="margin-bottom:10px;">
-      <span class="en">Each ticked product below becomes its own child report, inside this same file. Client, PO, Date etc. carry over as-is from Setup.</span><br>
-      <span class="vi">Mỗi sản phẩm được tích sẽ tách thành 1 báo cáo con, nằm chung trong file này. Khách hàng, PO, Ngày... giữ nguyên theo Setup.</span>
+      <span class="en">Each ticked product becomes its own report.</span><br>
+      <span class="vi">Mỗi sản phẩm được tích sẽ thành 1 báo cáo riêng.</span>
     </div>
     <div id="split-modal-rows" class="split-modal-rows"></div>
     <div class="modal-btns">
-      <button class="btn btn-primary" onclick="createChildReports()">✓ <span class="en">Create Child Reports</span><span class="sep"> # </span><span class="vi">Tạo Báo Cáo Con</span></button>
+      <button class="btn btn-primary" onclick="createChildReports()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-check"/></svg><span class="en">Split Report</span><span class="sep"> # </span><span class="vi">Tách báo cáo</span></button>
       <button class="btn btn-outline" onclick="closeSplitModal()">✕ <span class="en">Cancel</span><span class="sep"> # </span><span class="vi">Huỷ</span></button>
     </div>
   </div>
@@ -4472,7 +4575,6 @@ function initSetupScreen() {
   onQualityModeChange();
   productsDraft = [];
   renderProductList();
-  renderChildList();
 }
 
 /* ---- Quality evaluation mode: Non-AQL (simplified, fixed thresholds) vs AQL (ANSI Z1.4) ---- */
@@ -4704,10 +4806,12 @@ function startAudit() {
   const products = productsDraft.filter(p => p.code || p.name);
   report = { buyer, poNo, factory, auditorName: auditor, dept, date, orderQty, orderQtyManual, reportNo, category, qualityMode, products };
   cartons = [];
+  cartonSeq = 0;
   activeCartonId = null;
+  activeChildId = null;
   scheduleAutoSave();
-  renderCartonList();
-  showView('list');
+  renderHub();
+  showView('hub');
 }
 
 // Gear icon on the "1. Setup" step — lets the auditor jump back to fix a typo/detail in
@@ -4833,16 +4937,18 @@ function renderSplitModalRows() {
     <div class="split-row ${row.include ? '' : 'split-row-excluded'}">
       <label class="split-row-check">
         <input type="checkbox" ${row.include ? 'checked' : ''} onchange="toggleSplitRowInclude(${i})">
-        <span class="split-row-sku">${escapeHtml(row.code || row.name || '—')}</span>
-        <span class="split-row-sub">${escapeHtml(row.name && row.code ? row.name : '')}${row.qty ? ' · SL ' + escapeHtml(row.qty) : ''}</span>
+        <span class="split-row-text">
+          <span class="split-row-sku">${escapeHtml(row.code || row.name || '—')}</span>
+          <span class="split-row-sub">${escapeHtml(row.name && row.code ? row.name : '')}${row.qty ? ' · SL ' + escapeHtml(row.qty) : ''}</span>
+        </span>
       </label>
       <div class="split-row-fields">
         <div class="field">
-          <label><span class="en">Category</span><span class="sep"> # </span><span class="vi">Nhóm SP</span></label>
+          <label>${biBreak('Category','Nhóm SP')}</label>
           <select onchange="updateSplitRow(${i},'category',this.value)">${catOpts}</select>
         </div>
         <div class="field">
-          <label><span class="en">Auditor / QC</span><span class="sep"> # </span><span class="vi">Tên QC</span></label>
+          <label>${biBreak('Auditor / QC','Tên QC')}</label>
           <input type="text" value="${escapeHtml(row.auditor)}" oninput="updateSplitRow(${i},'auditor',this.value)">
         </div>
         <div class="field">
@@ -4900,9 +5006,9 @@ function createChildReports() {
   report = null; cartons = []; cartonSeq = 0;
 
   closeSplitModal();
-  renderChildList();
-  renderChildModeBanner();
+  renderHub();
   scheduleAutoSave();
+  showView('hub');
   toast(`✅ Đã tạo ${orderChildren.length} báo cáo con.\nCreated ${orderChildren.length} child report(s).`);
 }
 
@@ -4941,59 +5047,114 @@ function enterChild(id, targetView) {
   cartonSeq = child.cartonSeq;
   activeCartonId = null;
   _mergedReportActive = false;
-  renderChildModeBanner();
   scheduleAutoSave();
   if (targetView === 'report') { goToReport(); }
   else { renderCartonList(); showView('list'); }
 }
 
-function backToMaster() {
-  saveActiveChildBack();
-  activeChildId = null; // clears the "Working on <child>" banner and un-suppresses the master actionbar
-  renderChildList();
-  renderChildModeBanner();
-  showView('setup');
+// Enters the 4-step flow for the single, un-split report of this order — the exact same
+// entry point enterChild() gives a child report, just operating on `report`/`cartons`
+// directly since there is no pointer-swap to do (they're already the live objects).
+function enterMain(targetView) {
+  activeChildId = null;
+  activeCartonId = null;
+  _mergedReportActive = false;
+  scheduleAutoSave();
+  if (targetView === 'report') { goToReport(); }
+  else { renderCartonList(); showView('list'); }
 }
+
+// Leaves whatever report is currently open (child or the single main report) and returns to
+// the Order Hub — the one consistent "back out" action for every report, replacing the old
+// child-only "Back to Order" which only existed for split orders.
+function backToHub() {
+  saveActiveChildBack();
+  activeChildId = null;
+  renderHub();
+  showView('hub');
+}
+
+// Kept as an alias: existing call sites (e.g. the merged-report view's own back action)
+// still refer to this name.
+function backToMaster() { backToHub(); }
 
 function renderChildModeBanner() {
-  const el = $('#child-mode-banner');
-  if (!el) return;
+  const label = $('#child-mode-label');
+  if (!label) return;
   const child = activeChildId ? orderChildren.find(c => c.id === activeChildId) : null;
   if (child) {
-    el.style.display = 'flex';
-    $('#child-mode-label').textContent = `${child.label}${child.report.auditorName ? ' — ' + child.report.auditorName : ''}`;
+    label.textContent = `${child.label}${child.report.auditorName ? ' — ' + child.report.auditorName : ''}`;
+  } else if (report) {
+    label.textContent = `${CATEGORIES[report.category] ? CATEGORIES[report.category].label.en : ''}${report.auditorName ? ' — ' + report.auditorName : ''}`;
   } else {
-    el.style.display = 'none';
+    label.textContent = '';
   }
 }
 
-function renderChildList() {
-  const wrap = $('#child-reports-wrap');
-  const listEl = $('#child-reports-list');
-  const bar = $('#actionbar-setup');
-  if (!wrap || !listEl) return;
-  const onSetupView = document.getElementById('view-setup').classList.contains('active');
-  if (!orderChildren.length) {
-    wrap.style.display = 'none';
-    if (bar) bar.style.display = onSetupView ? 'flex' : 'none'; // restore the normal Start Audit bar
+// Renders the Order Hub: one card per child report once the order has been split, or a
+// single card standing in for the whole (un-split) order's own report — same card shape,
+// same 3 actions (edit info / enter cartons / export), so the auditor always lands on the
+// same kind of screen no matter how the order was set up.
+function renderHub() {
+  const listEl = $('#hub-list');
+  const masterActions = $('#hub-master-actions');
+  if (!listEl) return;
+  if (orderChildren.length) {
+    if (masterActions) masterActions.style.display = 'flex';
+    listEl.innerHTML = orderChildren.map(c => `
+      <div class="child-report-row">
+        <div class="child-report-info">
+          <b>${escapeHtml(c.label)}</b>
+          <span class="child-report-sub">${CATEGORIES[c.report.category].label.en} · ${escapeHtml(c.report.auditorName||'—')} · ${c.cartons.length} carton(s)</span>
+        </div>
+        <div class="child-report-btns">
+          <button class="btn btn-sm btn-ghost child-gear-btn" type="button" onclick="editChildSetup('${c.id}')" title="Edit info / Sửa thông tin"><svg class="oci" viewBox="0 0 24 24" style="margin:0;"><use href="#ic-gear"/></svg></button>
+          ${c.cartons.length === 0
+            ? `<button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}')"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-play"/></svg><span class="en">Start Audit</span><span class="sep"> # </span><span class="vi">Bắt Đầu Kiểm Tra</span></button>`
+            : `<button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}')"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-plus"/></svg><span class="en">Cartons</span><span class="sep"> # </span><span class="vi">Thùng</span></button>`}
+          <button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}','report')"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-export"/></svg><span class="en">Export</span><span class="sep"> # </span><span class="vi">Xuất báo cáo</span></button>
+        </div>
+      </div>`).join('');
     return;
   }
-  wrap.style.display = 'block';
-  if (bar) bar.style.display = 'none'; // whole-order Start Audit is replaced by the child list below
-  listEl.innerHTML = orderChildren.map(c => `
+  if (masterActions) masterActions.style.display = 'none';
+  if (!report) { listEl.innerHTML = ''; return; }
+  listEl.innerHTML = `
     <div class="child-report-row">
       <div class="child-report-info">
-        <b>${escapeHtml(c.label)}</b>
-        <span class="child-report-sub">${CATEGORIES[c.report.category].label.en} · ${escapeHtml(c.report.auditorName||'—')} · ${c.cartons.length} carton(s)</span>
+        <b>${escapeHtml(report.poNo || report.buyer || '—')}</b>
+        <span class="child-report-sub">${CATEGORIES[report.category] ? CATEGORIES[report.category].label.en : ''} · ${escapeHtml(report.auditorName||'—')} · ${cartons.length} carton(s)</span>
       </div>
       <div class="child-report-btns">
-        <button class="btn btn-sm btn-ghost child-gear-btn" type="button" onclick="editChildSetup('${c.id}')" title="Edit info / Sửa thông tin">⚙</button>
-        ${c.cartons.length === 0
-          ? `<button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}')">▶ <span class="en">Start Audit</span><span class="sep"> # </span><span class="vi">Bắt Đầu Kiểm Tra</span></button>`
-          : `<button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}')">+ <span class="en">Cartons</span><span class="sep"> # </span><span class="vi">Thùng</span></button>`}
-        <button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}','report')">⇩ <span class="en">Export</span><span class="sep"> # </span><span class="vi">Xuất báo cáo</span></button>
+        <button class="btn btn-sm btn-ghost child-gear-btn" type="button" onclick="editSetup()" title="Edit info / Sửa thông tin"><svg class="oci" viewBox="0 0 24 24" style="margin:0;"><use href="#ic-gear"/></svg></button>
+        ${cartons.length === 0
+          ? `<button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterMain('list')"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-play"/></svg><span class="en">Start Audit</span><span class="sep"> # </span><span class="vi">Bắt Đầu Kiểm Tra</span></button>`
+          : `<button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterMain('list')"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-plus"/></svg><span class="en">Cartons</span><span class="sep"> # </span><span class="vi">Thùng</span></button>`}
+        <button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterMain('report')"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-export"/></svg><span class="en">Export</span><span class="sep"> # </span><span class="vi">Xuất báo cáo</span></button>
       </div>
-    </div>`).join('');
+    </div>`;
+}
+
+// Back-compat alias for any remaining reference to the old name.
+function renderChildList() { renderHub(); }
+
+// The Hub's "Order Info" button — lets the auditor see/edit the shared Client/PO/Factory/
+// Dept/Date/Quality-mode fields (and, for an un-split order, the Product List) without
+// losing their place. For the single-report case this just reuses editSetup()'s existing
+// "populate form + swap to Save changes" behaviour. For a split order there is no single
+// `report` to populate from (each child already holds its own copy of the shared fields
+// taken at split time — editing them here was already cosmetic-only even before the Hub
+// existed), so the primary button is swapped for a plain "Back to Hub" instead of the
+// destructive "Start Audit" (which would silently create an orphan extra report).
+function goToOrderInfo() {
+  if (orderChildren.length) {
+    const btn = $('#setup-primary-btn');
+    btn.innerHTML = `<svg class="oci" viewBox="0 0 24 24"><use href="#ic-check"/></svg><span class="en">Back to Hub</span><span class="sep"> # </span><span class="vi">Về Trung Tâm</span>`;
+    btn.setAttribute('onclick', "renderHub(); showView('hub');");
+    showView('setup');
+  } else {
+    editSetup();
+  }
 }
 
 // Gear icon on each Child Report row — lets the admin fix a typo in that child's own
@@ -5018,9 +5179,8 @@ function undoSplit() {
   if (!confirm('Huỷ tách báo cáo? Các báo cáo con và dữ liệu đã nhập trong đó sẽ bị xoá.\n\nUndo split? All child reports and their data will be deleted.')) return;
   orderChildren = []; activeChildId = null; masterInfo = null;
   report = null; cartons = []; cartonSeq = 0;
-  renderChildList();
-  renderChildModeBanner();
   scheduleAutoSave();
+  showView('setup'); // nothing left to show in the Hub — back to Order Info to start over
 }
 
 // Exports the WHOLE order (masterInfo + every child's report/cartons) as one self-contained
@@ -5456,7 +5616,7 @@ function renderCartonList() {
         </div>
         <div class="cc-actions">
           <button class="btn btn-sm btn-primary" onclick="openCarton('${c.id}')">Open / Mở</button>
-          <button class="btn btn-sm btn-outline" onclick="removeCarton('${c.id}')">Delete / Xóa</button>
+          <button class="btn btn-sm btn-outline btn-danger" onclick="removeCarton('${c.id}')"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-trash"/></svg>Delete / Xóa</button>
         </div>
       </div>`;
     }).join('');
@@ -6605,8 +6765,7 @@ function restoreAppState(state) {
     $('#f-date').value = masterInfo.date||todayStr();
     $('#f-qualitymode').value = masterInfo.qualityMode || QUALITY_MODES.NONAQL;
     onQualityModeChange();
-    renderChildList();
-    renderChildModeBanner();
+    renderHub();
     return;
   }
 
@@ -7023,7 +7182,7 @@ function resumeFromSavedState() {
   const state = window._pendingResumeState;
   if (!state) return;
   restoreAppState(state);
-  showView(state.multiReport ? 'setup' : 'list');
+  showView(state.multiReport ? 'hub' : 'list');
 }
 
 function startFreshFromResume() {
@@ -7071,11 +7230,17 @@ document.addEventListener('DOMContentLoaded', () => {
     ['setup','list','audit','report'].forEach(v=>{
       const bar = document.getElementById('actionbar-'+v);
       if (!bar) return;
-      // The whole-order "Start Audit" bar is replaced by the child-reports list once the
-      // order has been split into child reports (see renderChildList()) — never show it then.
-      const show = (v===name) && !(v==='setup' && typeof orderChildren !== 'undefined' && orderChildren.length && typeof activeChildId !== 'undefined' && !activeChildId);
-      bar.style.display = show ? 'flex' : 'none';
+      bar.style.display = (v===name) ? 'flex' : 'none';
     });
+    // The "Back to Order Hub" banner appears whenever we're inside the 4-step working flow
+    // (Cartons/Checklist/Report), regardless of whether this is a child report or the single
+    // implicit report of an un-split order — Setup and the Hub itself never show it.
+    const banner = document.getElementById('child-mode-banner');
+    if (banner) {
+      const inFlow = (name === 'list' || name === 'audit' || name === 'report');
+      banner.style.display = inFlow ? 'flex' : 'none';
+      if (inFlow && typeof renderChildModeBanner === 'function') renderChildModeBanner();
+    }
   };
 </script>
 
