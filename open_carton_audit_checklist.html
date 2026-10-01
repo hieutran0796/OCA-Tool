@@ -5232,19 +5232,25 @@ async function syncToGoogle() {
 
   toast('☁️ Đang đồng bộ... / Syncing...');
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
+    // mode:'no-cors' is required here, not optional: Apps Script's ContentService (the only
+    // way doPost can return a body) has no API to set Access-Control-Allow-Origin, so ANY
+    // normal cross-origin fetch() — even with completely correct code and a correctly
+    // deployed script — throws "Failed to fetch" trying to read the response. This is a
+    // long-standing Apps Script platform limitation, confirmed by testing directly against
+    // this exact deployment (GET and POST both failed under the default 'cors' mode; the
+    // same POST succeeded under 'no-cors'). The trade-off: the response becomes "opaque" —
+    // we can no longer read back {ok, created, updated} or a server-side rejection reason —
+    // so "no exception thrown" is the only success signal fetch() can give us anymore. The
+    // server-side auditor allowlist in Code.gs (saveOcaRows()) still fully applies; we just
+    // can't surface its result in this toast the way the old code tried to.
+    await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      // text/plain avoids a CORS preflight against Apps Script (it doesn't answer OPTIONS).
+      mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'oca_save', rows }),
     });
-    const data = await res.json();
-    if (data && data.ok) {
-      const skipNote = blocked.length ? `\n(Bỏ qua ${blocked.length} dòng tên Auditor chưa được cấp quyền.)` : '';
-      toast(`✅ Đã đồng bộ ${rows.length} dòng lên Google.\nSynced ${rows.length} row(s) to Google.${skipNote}`);
-    } else {
-      toast('⚠️ Đồng bộ thất bại: ' + (data && data.error || 'unknown error'));
-    }
+    const skipNote = blocked.length ? `\n(Bỏ qua ${blocked.length} dòng tên Auditor chưa được cấp quyền.)` : '';
+    toast(`☁️ Đã gửi ${rows.length} dòng lên Google (kiểm tra lại trong Sheet "OCA QC Index" để chắc chắn).\nSent ${rows.length} row(s) to Google (check the "OCA QC Index" Sheet to confirm).${skipNote}`);
   } catch (e) {
     // Offline, blocked network, wrong URL, etc. — never throws up into the caller; the
     // local file is already safe regardless of whether this succeeds.
