@@ -257,18 +257,71 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .dev-tools-row:hover, .dev-tools-row:focus-within{ opacity:1; }
 .dev-tools-row .btn{ font-size:11px; padding:5px 10px; min-height:auto; }
 
-/* ---------------- Split into Multiple Reports (admin batch-generation screen) ---------------- */
+/* ---------------- Split by Product (modal) + Child Reports (hub screen) ---------------- */
 .split-entry-row{ margin-top:14px; }
-.split-hint{ font-size:12.5px; color:var(--vi); line-height:1.5; margin-bottom:4px; }
-.split-part{
-  border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px; background:#fafafa;
+.modal-box-wide{ max-width:560px; text-align:left; }
+.modal-box-wide .modal-subtitle{ text-align:center; }
+.split-modal-rows{ max-height:50vh; overflow-y:auto; margin-bottom:16px; }
+.split-row{
+  border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:10px; background:#fafafa;
 }
-.split-part-head{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-.split-part-label{
-  font-weight:700; font-size:15px; border:1px solid var(--border); border-radius:6px;
-  padding:6px 10px; width:90px; flex:none;
+.split-row-excluded{ opacity:0.5; }
+.split-row-check{ display:flex; align-items:baseline; gap:8px; margin-bottom:10px; cursor:pointer; }
+.split-row-check input{ flex:none; }
+.split-row-sku{ font-weight:700; color:var(--brown); }
+.split-row-sub{ font-size:12px; color:var(--vi); }
+.split-row-fields{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.split-row-fields .field{ margin:0; }
+@media (max-width:520px){ .split-row-fields{ grid-template-columns:1fr 1fr; } .split-row-fields .field:nth-child(3){ grid-column:1/-1; } }
+
+.child-mode-banner{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:var(--beige); border-bottom:1px solid var(--border); padding:8px 16px; font-size:12.5px;
 }
-.split-part-head .thumb-del{ margin-left:auto; }
+.child-mode-banner b{ color:var(--brown); }
+
+#child-reports-wrap{ margin-top:10px; padding-bottom:24px; }
+.child-report-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:10px; background:#fafafa;
+}
+.child-report-info{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.child-report-sub{ font-size:12px; color:var(--vi); }
+.child-report-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+.child-gear-btn{ padding:8px 10px; min-width:36px; flex:none; }
+/* Start Audit / Cartons / Export on each child row — light green so the "go do something"
+   actions stand out a bit from the neutral gear/edit icon next to them. Reuses the existing
+   --ok/--ok-bg pair (same green already used for "pass/OK" elsewhere) rather than a new color. */
+.btn-start-green{ background:var(--ok-bg); border-color:var(--ok); color:var(--ok); }
+.btn-start-green .en{ color:var(--ok); }
+.btn-start-green:hover{ filter:brightness(0.97); }
+
+/* child-master-actions = the Save/Sync/Merge/Undo group under the Child Reports list.
+   Mobile: Save full-width on top, then Merge (the primary action) full-width below it, then
+   Sync + Undo share a row underneath, in the same visual format as Save (not the old
+   recessive btn-ghost look). Desktop (≥640px): all 4 sit in one row, left to right. */
+.child-master-actions{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+.child-master-actions .btn{ flex:1 1 calc(50% - 5px); }
+.child-master-actions .cma-save{ order:1; flex-basis:100%; }
+.child-master-actions .cma-merge{ order:2; flex-basis:100%; }
+.child-master-actions .cma-sync{ order:3; }
+.child-master-actions .cma-undo{ order:4; }
+@media (min-width:640px){
+  .child-master-actions .cma-save,
+  .child-master-actions .cma-sync,
+  .child-master-actions .cma-merge,
+  .child-master-actions .cma-undo{ flex:1 1 0; }
+}
+@media (max-width:480px){
+  .child-report-row{ flex-direction:column; align-items:stretch; }
+  .child-report-btns{ width:100%; }
+  .child-report-btns .btn:not(.child-gear-btn){ flex:1 1 0; min-width:0; padding-left:8px; padding-right:8px; }
+}
+
+.merged-section-header{
+  font-size:12.5px; color:var(--brown); background:var(--beige); border:1px solid var(--border);
+  border-radius:6px; padding:8px 12px; margin:18px 0 10px;
+}
 
 .actionbar{
   position:fixed; bottom:0; left:0; right:0; background:#fff;
@@ -277,19 +330,30 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 }
 .actionbar .btn{ flex:1; min-height:48px; }
 
-/* The carton-list action bar has 3 buttons (Save / Add Carton / Report) whose bilingual
-   labels are too long to fit evenly on a phone-width screen — the 3rd button gets clipped
-   off the right edge. Below the breakpoint, wrap it onto two rows instead: the primary
-   "+ Add Carton" action gets its own full-width row on top (it's the one tapped most), and
-   the two secondary actions share the row underneath. Scoped to #actionbar-list specifically
-   (not every .actionbar) so the 1- and 2-button bars elsewhere keep their single-row layout. */
+/* The carton-list action bar has 4 buttons (Save / Sync / Add Carton / Report) whose bilingual
+   labels are too long to fit evenly on a phone-width screen. Below the breakpoint, wrap it
+   onto two rows instead: the primary "+ Add Carton" action gets its own full-width row on top
+   (it's the one tapped most), and the three secondary actions share the row underneath.
+   Scoped to #actionbar-list specifically (not every .actionbar) so the 1- and 2-button bars
+   elsewhere keep their single-row layout. */
 @media (max-width:480px){
   #actionbar-list{ flex-wrap:wrap; }
   #actionbar-list .btn-primary{ flex:1 1 100%; order:-1; }
-  #actionbar-list .btn-outline{ flex:1 1 calc(50% - 5px); font-size:13px; padding:12px 8px; }
+  #actionbar-list .btn-outline{ flex:1 1 calc(33.333% - 7px); font-size:12px; padding:10px 4px; }
   /* two rows of buttons now sit taller in the fixed bar — give the scrolling content below
      enough bottom padding so the last carton card isn't hidden underneath it. */
   #app{ padding-bottom:150px; }
+}
+
+/* Generic "stack the Vietnamese half onto its own line" trick for bilingual buttons that get
+   too cramped on a phone — only kicks in under the same phone-width breakpoint as the bars
+   above; at normal width there's room for icon + EN # VI on one line, so leave those alone.
+   flex-basis:100% on .vi forces it onto a fresh line inside the button's flex box; the " # "
+   separator is redundant once the two halves are stacked, so it's hidden here. */
+@media (max-width:480px){
+  .btn-wrap-vi{ flex-wrap:wrap; row-gap:2px; }
+  .btn-wrap-vi .sep{ display:none; }
+  .btn-wrap-vi .vi{ flex-basis:100%; text-align:center; }
 }
 
 /* ---------------- Summary bar (carton list) ---------------- */
@@ -679,6 +743,10 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     </div>
     <div class="topbar-contact">For copyright &amp; technical support, please contact<br><span class="topbar-contact-vi">Bản quyền &amp; hỗ trợ kỹ thuật vui lòng liên hệ</span>: <a href="mailto:Hieu.tran@boka.ltd">Hieu.tran@boka.ltd</a></div>
   </div>
+  <div class="child-mode-banner" id="child-mode-banner" style="display:none;">
+    <span><span class="en">Working on</span><span class="sep"> # </span><span class="vi">Đang làm</span>: <b id="child-mode-label"></b></span>
+    <button type="button" class="btn btn-sm btn-outline" onclick="backToMaster()">← <span class="en">Back to Order</span><span class="sep"> # </span><span class="vi">Về Tổng</span></button>
+  </div>
   <div class="stepbar">
     <div class="step" data-step="setup">1. Setup <button type="button" class="step-gear" onclick="event.stopPropagation(); editSetup()" title="Edit setup info / Sửa lại thông tin thiết lập">⚙</button></div>
     <div class="step" data-step="list">2. Cartons</div>
@@ -771,63 +839,23 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     </div>
 
     <div class="split-entry-row">
-      <button class="btn btn-sm btn-outline" type="button" onclick="openSplitScreen()">⇄ <span class="en">Split into Multiple Reports</span><span class="sep"> # </span><span class="vi">Tách Thành Nhiều Báo Cáo</span></button>
+      <button class="btn btn-sm btn-outline" type="button" onclick="openSplitModal()">⇄ <span class="en">Split by Product</span><span class="sep"> # </span><span class="vi">Tách Theo Sản Phẩm</span></button>
+    </div>
+
+    <!-- Shown instead of the Start Audit bar once the order has been split (see renderChildList()) -->
+    <div id="child-reports-wrap" style="display:none;">
+      <h2 class="section-title" style="margin-top:20px;"><span class="en">Child Reports</span><span class="sep"> # </span><span class="vi">Báo Cáo Con</span></h2>
+      <div id="child-reports-list"></div>
+      <div class="child-master-actions">
+        <button class="btn btn-outline cma-save" type="button" onclick="exportMasterFile()">💾 <span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
+        <button class="btn btn-outline cma-sync" type="button" onclick="syncToGoogle()">☁️ <span class="en">Sync</span><span class="sep"> # </span><span class="vi">Đồng bộ lên máy chủ</span></button>
+        <button class="btn btn-primary cma-merge" type="button" onclick="mergeReports()">📑 <span class="en">Merge Reports</span><span class="sep"> # </span><span class="vi">Gộp Báo Cáo</span></button>
+        <button class="btn btn-outline cma-undo" type="button" onclick="undoSplit()">↺ <span class="en">Undo split</span><span class="sep"> # </span><span class="vi">Huỷ tách báo cáo</span></button>
+      </div>
     </div>
   </div>
   <div class="actionbar" id="actionbar-setup">
     <button class="btn btn-primary" id="setup-primary-btn" onclick="startAudit()"><span class="en">Start Audit</span><span class="sep"> # </span><span class="vi">Bắt đầu</span> →</button>
-  </div>
-
-  <!-- ============ VIEW: SPLIT REPORTS ============ -->
-  <div class="view" id="view-split">
-    <h2 class="section-title"><span class="en">Split into Multiple Reports</span><span class="sep"> # </span><span class="vi">Tách Thành Nhiều Báo Cáo</span></h2>
-    <div class="split-hint">
-      <span class="en">Fill in the shared info once, add one block per product/QC below, then generate a ready-to-open report file for each.</span><br>
-      <span class="vi">Nhập thông tin chung 1 lần, thêm từng khối cho mỗi sản phẩm/QC bên dưới, rồi tạo file báo cáo sẵn dùng cho từng người.</span>
-    </div>
-
-    <h2 class="section-title" style="margin-top:20px; font-size:16px;"><span class="en">Shared Info</span><span class="sep"> # </span><span class="vi">Thông Tin Chung</span></h2>
-    <div class="form-grid">
-      <div class="field">
-        <label><span class="en">Client</span><span class="sep"> # </span><span class="vi">Khách hàng</span> *</label>
-        <input id="sp-buyer" type="text" placeholder="e.g. Arhaus">
-      </div>
-      <div class="field">
-        <label><span class="en">PO Number</span><span class="sep"> # </span><span class="vi">Số PO</span> *</label>
-        <input id="sp-po" type="text" placeholder="PO-xxxxx">
-      </div>
-      <div class="field">
-        <label><span class="en">Batch ID</span><span class="sep"> # </span><span class="vi">Mã lô</span></label>
-        <input id="sp-batchid" type="text" placeholder="e.g. PI023">
-      </div>
-      <div class="field">
-        <label><span class="en">Factory / Line</span><span class="sep"> # </span><span class="vi">Nhà máy / Chuyền</span></label>
-        <input id="sp-factory" type="text">
-      </div>
-      <div class="field">
-        <label><span class="en">Dept.</span><span class="sep"> # </span><span class="vi">Bộ phận</span></label>
-        <input id="sp-dept" type="text">
-      </div>
-      <div class="field">
-        <label><span class="en">Date</span><span class="sep"> # </span><span class="vi">Ngày</span></label>
-        <input id="sp-date" type="text" placeholder="DD-MMM-YYYY">
-      </div>
-      <div class="field" style="grid-column:1/-1;">
-        <label><span class="en">Quality Evaluation Mode</span><span class="sep"> # </span><span class="vi">Mức đánh giá chất lượng</span></label>
-        <select id="sp-qualitymode">
-          <option value="NONAQL">Non-AQL — tỉ lệ lỗi đơn giản / simplified defect rate</option>
-          <option value="AQL">AQL — ANSI/ASQ Z1.4 sampling</option>
-        </select>
-      </div>
-    </div>
-
-    <h2 class="section-title" style="margin-top:20px; font-size:16px;"><span class="en">Report Parts</span><span class="sep"> # </span><span class="vi">Các Báo Cáo Con</span></h2>
-    <div id="split-parts"></div>
-    <button class="btn btn-sm btn-outline" onclick="addSplitPart()" style="margin-top:8px;"><span class="en">+ Add Part</span><span class="sep"> # </span><span class="vi">Thêm báo cáo con</span></button>
-  </div>
-  <div class="actionbar" id="actionbar-split" style="display:none;">
-    <button class="btn btn-outline" onclick="showView('setup')">← <span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
-    <button class="btn btn-primary" onclick="generateSplitReports()">⇩ <span class="en">Generate Files</span><span class="sep"> # </span><span class="vi">Tạo File</span></button>
   </div>
 
   <!-- ============ VIEW: CARTON LIST ============ -->
@@ -837,9 +865,10 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <div id="carton-cards"></div>
   </div>
   <div class="actionbar" id="actionbar-list" style="display:none;">
-    <button class="btn btn-outline" onclick="saveReportFile()">💾 <span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
-    <button class="btn btn-primary" onclick="addCarton()"><span class="en">+ Add Carton</span><span class="sep"> # </span><span class="vi">Thêm thùng mới</span></button>
-    <button class="btn btn-outline" onclick="goToReport()"><span class="en">Report</span><span class="sep"> # </span><span class="vi">Xuất báo cáo</span> →</button>
+    <button class="btn btn-outline btn-wrap-vi" onclick="saveReportFile()">💾 <span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
+    <button class="btn btn-outline btn-wrap-vi" type="button" onclick="syncToGoogle()">☁️ <span class="en">Sync</span><span class="sep"> # </span><span class="vi">Đồng bộ lên máy chủ</span></button>
+    <button class="btn btn-primary btn-wrap-vi" onclick="addCarton()"><span class="en">+ Add Carton</span><span class="sep"> # </span><span class="vi">Thêm thùng mới</span></button>
+    <button class="btn btn-outline btn-wrap-vi" onclick="goToReport()"><span class="en">Report</span><span class="sep"> # </span><span class="vi">Xuất báo cáo</span> →</button>
   </div>
 
   <!-- ============ VIEW: CARTON AUDIT ============ -->
@@ -887,7 +916,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
   <!-- ============ VIEW: REPORT ============ -->
   <div class="view" id="view-report">
     <div class="report-toolbar">
-      <button class="btn btn-outline" onclick="renderCartonList()">← <span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
+      <button class="btn btn-outline" onclick="reportBack()">← <span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
       <button class="btn btn-outline" onclick="saveReportFile()">💾 <span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
       <button class="btn btn-primary" onclick="printReport()">🖨 <span class="en">Print</span><span class="sep"> # </span><span class="vi">In - Xuất PDF</span></button>
     </div>
@@ -975,6 +1004,22 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <div class="modal-btns">
       <button id="oca-dupcarton-confirm-overwrite" class="btn btn-primary">✓ <span class="en">Overwrite</span><span class="sep"> # </span><span class="vi">Ghi đè</span></button>
       <button id="oca-dupcarton-confirm-cancel" class="btn btn-outline">↺ <span class="en">Cancel</span><span class="sep"> # </span><span class="vi">Huỷ</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SPLIT BY PRODUCT MODAL — one row per Product List item, tick which to split out ══ -->
+<div class="modal-overlay" id="oca-split-modal" style="display:none">
+  <div class="modal-box modal-box-wide">
+    <div class="modal-subtitle"><span class="en">Split by Product</span><span class="sep"> # </span><span class="vi">Tách Theo Sản Phẩm</span></div>
+    <div class="modal-question" style="margin-bottom:10px;">
+      <span class="en">Each ticked product below becomes its own child report, inside this same file. Client, PO, Date etc. carry over as-is from Setup.</span><br>
+      <span class="vi">Mỗi sản phẩm được tích sẽ tách thành 1 báo cáo con, nằm chung trong file này. Khách hàng, PO, Ngày... giữ nguyên theo Setup.</span>
+    </div>
+    <div id="split-modal-rows" class="split-modal-rows"></div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="createChildReports()">✓ <span class="en">Create Child Reports</span><span class="sep"> # </span><span class="vi">Tạo Báo Cáo Con</span></button>
+      <button class="btn btn-outline" onclick="closeSplitModal()">✕ <span class="en">Cancel</span><span class="sep"> # </span><span class="vi">Huỷ</span></button>
     </div>
   </div>
 </div>
@@ -4234,6 +4279,34 @@ const FACTORY_OPTIONS = ["FITTING", "UPHOLSTERY", "PACKING", "WAREHOUSE"];
 // Dept. / Bộ phận — same select-with-manual-fallback pattern as Factory/Line above.
 const DEPT_OPTIONS = ["QA", "QC", "CLIENT"];
 
+// ====================== Google Sync (optional, offline-safe) ======================
+// Reuses the SAME Google Apps Script deployment already serving the Boka Quality Report
+// tool (Code.gs) — this is just a different `action` on that one Web App URL, writing to
+// its own Drive folder + its own index Sheet (kept separate from the Quality Report's).
+// Paste the deployed Web App URL below once; leave it blank to keep the app 100% offline
+// with the Sync button simply disabled (never required for normal use — local Save/Export
+// always works with or without this).
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx7R8Vs8hbXajB4vBfe0fnOzFN0Nj-IuVDFqy-ItuUfTWZSVRvBNccxJGHxeZYvrJ8/exec';
+
+// Per-auditor allowlist: the Auditor field IS the credential — no separate password/popup.
+// Only a row whose `auditor` name matches one of these (case/space-insensitive) gets synced;
+// everything else still works as a completely normal local report, it just never leaves the
+// device. Admin-maintained: generate/edit this list with the separate "OCA Admin Setup" page
+// (outputs a ready-to-paste snippet for here AND for Code.gs — both must stay in sync, since
+// Code.gs re-checks the same list server-side as the real gate, not just this client-side one).
+const ALLOWED_AUDITORS = [
+  'HIEU TRAN',
+  'HUU NGUYEN',
+  'QUYNH NGUYEN',
+  'CUONG VY',
+  'QUANG TA',
+];
+function isAuditorAllowed(name) {
+  const n = (name || '').trim().toLowerCase();
+  if (!n) return false;
+  return ALLOWED_AUDITORS.some(a => a.trim().toLowerCase() === n);
+}
+
 /* ====================== AQL (ANSI/ASQ Z1.4 / ISO 2859-1) reference data ======================
    General Inspection Level II, single sampling, normal inspection. Used only in "AQL" quality
    mode (see QUALITY_MODES) — "Non-AQL" mode never touches this table. Source: ANSI/ASQ Z1.4
@@ -4328,6 +4401,19 @@ function reportFilename() {
   const yy = String(d.getFullYear()).slice(-2);
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
+  const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]/g, '_');
+  // Combined (merged) report — distinct name, keyed off the whole order's PO, not any
+  // one child's Report No.
+  if (typeof _mergedReportActive !== 'undefined' && _mergedReportActive) {
+    const po = clean(masterInfo && masterInfo.poNo).toUpperCase();
+    return `${yy}${mm}${dd}_OCA Report_COMBINED_${po}`;
+  }
+  // A child report (split by product) — requested convention: YYMMDD_OCA Report[No]_[PO]_[SKU]
+  if (report && report.partLabel) {
+    const po = clean(report.poNo).toUpperCase();
+    const sku = clean(report.partLabel);
+    return `${yy}${mm}${dd}_OCA Report${report.reportNo || '1'}_${po}_${sku}`;
+  }
   const num = String((report && report.reportNo) || 1).padStart(3, '0');
   return `${yy}${mm}${dd}_OCA Report_${num}`;
 }
@@ -4386,6 +4472,7 @@ function initSetupScreen() {
   onQualityModeChange();
   productsDraft = [];
   renderProductList();
+  renderChildList();
 }
 
 /* ---- Quality evaluation mode: Non-AQL (simplified, fixed thresholds) vs AQL (ANSI Z1.4) ---- */
@@ -4681,224 +4768,494 @@ function applySetupEdits() {
   showView('list');
 }
 
-/* ------------------------- Split into Multiple Reports -------------------------
-   Lets an admin pre-fill N "report shells" in one pass — one per product/QC — when a
-   single PI/PO needs to be split across several auditors (e.g. PI023: SKU A → QC 1,
-   SKU B → QC 2, SKU C → QC 3). Shared fields (Client, PO, Date...) are entered once;
-   each "part" only needs its own Category, Auditor and Product List. Generating produces
-   one ready-to-open .html file per part (same embedded-state mechanism as Save), each
-   tagged with a common `batchId` (defaults to the PO No.) plus its own `partLabel`, so the
-   finished reports can still be told apart as belonging to the same batch even though each
-   auditor works on their own file independently — no live sync between them. */
-let splitParts = [];
-let splitPartSeq = 0;
+/* ------------------------- Split by Product -------------------------
+   Lets an admin pre-fill one "report shell" per product row, straight from the Product
+   List already filled in on Setup — no separate shared-info form, no second product
+   table. One PI/PO can cover several products (e.g. PI023: SKU A, SKU B, SKU C), each
+   handed to a different QC on its own device; this just peels each row off into its own
+   ready-to-open .html file (same embedded-state mechanism as Save). Every split file
+   inherits the shared Setup fields (Client, PO, Date, Factory, Dept, Quality Mode)
+   as-is; only Category, Auditor and Report No. are editable per row, since one PI can
+   span multiple product categories (checked with the user: the Product List here is the
+   whole order's list, the category split only becomes relevant once it's broken apart
+   like this). Defaults to one file per product row — no "combine several SKUs into one
+   file" option — matching how most QC inspection tools (e.g. Qarma) scope one inspection
+   to one SKU by default and only merge SKUs together as an explicit opt-in. */
+let splitRows = [];
 
-function openSplitScreen() {
-  // Default the shared fields from whatever's already on the normal Setup screen, if any.
-  $('#sp-buyer').value = $('#f-buyer').value || '';
-  $('#sp-po').value = $('#f-po').value || '';
-  $('#sp-batchid').value = $('#f-po').value || '';
-  $('#sp-factory').value = $('#f-factory').value || '';
-  $('#sp-dept').value = $('#f-dept').value || '';
-  $('#sp-date').value = $('#f-date').value || todayStr();
-  $('#sp-qualitymode').value = $('#f-qualitymode').value || QUALITY_MODES.NONAQL;
-  if (splitParts.length === 0) {
-    addSplitPart();
-    addSplitPart();
-    return; // addSplitPart() already calls renderSplitParts()+showView via the 2nd call below
+function openSplitModal() {
+  const buyer = $('#f-buyer').value.trim();
+  const poNo = $('#f-po').value.trim();
+  const category = $('#f-category').value;
+  const auditor = $('#f-auditor').value.trim();
+  const missingEn = [], missingVi = [];
+  if (!buyer) { missingEn.push('Client'); missingVi.push('Khách hàng'); }
+  if (!poNo) { missingEn.push('PO Number'); missingVi.push('Số PO'); }
+  if (!category) { missingEn.push('Category'); missingVi.push('Nhóm sản phẩm'); }
+  if (!auditor) { missingEn.push('Auditor Name'); missingVi.push('Người kiểm tra'); }
+  if (missingEn.length) {
+    alert('Vui lòng nhập đầy đủ ở Setup trước khi tách: ' + missingVi.join(', ') +
+      '\n\nPlease fill in these Setup fields first: ' + missingEn.join(', '));
+    return;
   }
-  renderSplitParts();
-  showView('split');
-}
-
-function addSplitPart() {
-  const letter = String.fromCharCode(65 + splitParts.length); // A, B, C...
-  splitParts.push({ id: ++splitPartSeq, label: letter, category: CAT_ORDER[0], auditor: '', reportNo: String(splitParts.length + 1), products: [] });
-  renderSplitParts();
-  showView('split');
-}
-
-function removeSplitPart(i) {
-  splitParts.splice(i, 1);
-  renderSplitParts();
-}
-
-function updateSplitPart(i, field, val) {
-  if (splitParts[i]) splitParts[i][field] = val;
-}
-
-function addSplitProductRow(i) {
-  splitParts[i].products.push({code:'', name:'', qty:''});
-  renderSplitParts();
-}
-
-function updateSplitProduct(i, j, field, val) {
-  if (splitParts[i] && splitParts[i].products[j]) splitParts[i].products[j][field] = val;
-}
-
-function removeSplitProduct(i, j) {
-  splitParts[i].products.splice(j, 1);
-  renderSplitParts();
-}
-
-// Same paste parsing as the main Product List's parsePaste() — tab-separated (Excel) or
-// comma/semicolon-separated, Code/Name/Qty per line — scoped to one part's own textarea.
-function parseSplitPaste(i) {
-  const ta = $('#split-paste-' + i);
-  if (!ta || !ta.value.trim()) return;
-  const lines = ta.value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  lines.forEach(line => {
-    const parts = line.split('\t').length > 1 ? line.split('\t') : line.split(/,|;/);
-    const code = (parts[0]||'').trim();
-    const name = (parts[1]||'').trim();
-    const qty = (parts[2]||'').trim().replace(/[^0-9]/g, '');
-    if (code || name) splitParts[i].products.push({code, name, qty});
-  });
-  renderSplitParts();
-}
-
-function renderSplitProductRows(i) {
-  const part = splitParts[i];
-  if (!part.products.length) {
-    return `<tr class="empty-row"><td colspan="4"><span class="en">No products yet.</span><span class="sep"> # </span><span class="vi">Chưa có sản phẩm.</span></td></tr>`;
+  const products = productsDraft.filter(p => p.code || p.name);
+  if (!products.length) {
+    alert('Chưa có sản phẩm nào trong Danh Sách Sản Phẩm. / No products in the Product List yet.');
+    return;
   }
-  return part.products.map((p, j) => `
-    <tr>
-      <td><input type="text" value="${escapeHtml(p.code)}" oninput="updateSplitProduct(${i},${j},'code',this.value)" placeholder="Code"></td>
-      <td><input type="text" value="${escapeHtml(p.name)}" oninput="updateSplitProduct(${i},${j},'name',this.value)" placeholder="Product name"></td>
-      <td><input type="text" value="${escapeHtml(p.qty)}" inputmode="numeric" pattern="[0-9]*" oninput="digitsOnly(this); updateSplitProduct(${i},${j},'qty',this.value)" placeholder="Qty"></td>
-      <td><button class="thumb-del pl-del" onclick="removeSplitProduct(${i},${j})">×</button></td>
-    </tr>`).join('');
+  splitRows = products.map((p, i) => ({
+    code: p.code, name: p.name, qty: p.qty,
+    category, auditor, reportNo: String(i + 1), include: true
+  }));
+  renderSplitModalRows();
+  $('#oca-split-modal').style.display = 'flex';
 }
 
-function renderSplitParts() {
-  const wrap = $('#split-parts');
+function closeSplitModal() {
+  $('#oca-split-modal').style.display = 'none';
+}
+
+function updateSplitRow(i, field, val) {
+  if (splitRows[i]) splitRows[i][field] = val;
+}
+
+function toggleSplitRowInclude(i) {
+  if (splitRows[i]) splitRows[i].include = !splitRows[i].include;
+  renderSplitModalRows();
+}
+
+function renderSplitModalRows() {
+  const wrap = $('#split-modal-rows');
   if (!wrap) return;
-  wrap.innerHTML = splitParts.map((part, i) => {
-    const catOpts = CAT_ORDER.map(k => `<option value="${k}" ${k===part.category?'selected':''}>${CATEGORIES[k].label.en} # ${CATEGORIES[k].label.vi}</option>`).join('');
+  wrap.innerHTML = splitRows.map((row, i) => {
+    const catOpts = CAT_ORDER.map(k => `<option value="${k}" ${k===row.category?'selected':''}>${CATEGORIES[k].label.en} # ${CATEGORIES[k].label.vi}</option>`).join('');
     return `
-    <div class="split-part">
-      <div class="split-part-head">
-        <input class="split-part-label" type="text" value="${escapeHtml(part.label)}" oninput="updateSplitPart(${i},'label',this.value)" placeholder="A, B, C...">
-        ${splitParts.length > 1 ? `<button class="thumb-del" onclick="removeSplitPart(${i})">×</button>` : ''}
-      </div>
-      <div class="form-grid">
+    <div class="split-row ${row.include ? '' : 'split-row-excluded'}">
+      <label class="split-row-check">
+        <input type="checkbox" ${row.include ? 'checked' : ''} onchange="toggleSplitRowInclude(${i})">
+        <span class="split-row-sku">${escapeHtml(row.code || row.name || '—')}</span>
+        <span class="split-row-sub">${escapeHtml(row.name && row.code ? row.name : '')}${row.qty ? ' · SL ' + escapeHtml(row.qty) : ''}</span>
+      </label>
+      <div class="split-row-fields">
         <div class="field">
-          <label><span class="en">Category</span><span class="sep"> # </span><span class="vi">Nhóm sản phẩm</span> *</label>
-          <select onchange="updateSplitPart(${i},'category',this.value)">${catOpts}</select>
+          <label><span class="en">Category</span><span class="sep"> # </span><span class="vi">Nhóm SP</span></label>
+          <select onchange="updateSplitRow(${i},'category',this.value)">${catOpts}</select>
         </div>
         <div class="field">
-          <label><span class="en">Auditor / QC Name</span><span class="sep"> # </span><span class="vi">Tên QC</span> *</label>
-          <input type="text" value="${escapeHtml(part.auditor)}" oninput="updateSplitPart(${i},'auditor',this.value)">
+          <label><span class="en">Auditor / QC</span><span class="sep"> # </span><span class="vi">Tên QC</span></label>
+          <input type="text" value="${escapeHtml(row.auditor)}" oninput="updateSplitRow(${i},'auditor',this.value)">
         </div>
         <div class="field">
           <label><span class="en">Report No.</span><span class="sep"> # </span><span class="vi">Số báo cáo</span></label>
-          <input type="text" inputmode="numeric" pattern="[0-9]*" value="${escapeHtml(part.reportNo)}" oninput="digitsOnly(this); updateSplitPart(${i},'reportNo',this.value)">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" value="${escapeHtml(row.reportNo)}" oninput="digitsOnly(this); updateSplitRow(${i},'reportNo',this.value)">
         </div>
-      </div>
-      <div class="product-table-wrap">
-        <table class="product-table">
-          <colgroup><col style="width:16%"><col style="width:52%"><col style="width:22%"><col style="width:10%"></colgroup>
-          <thead><tr>
-            <th><span class="en">Code</span><span class="sep"> # </span><span class="vi">Mã</span></th>
-            <th><span class="en">Product Name</span><span class="sep"> # </span><span class="vi">Tên sản phẩm</span></th>
-            <th><span class="en">Qty</span><span class="sep"> # </span><span class="vi">SL</span></th>
-            <th></th>
-          </tr></thead>
-          <tbody>${renderSplitProductRows(i)}</tbody>
-        </table>
-      </div>
-      <button class="btn btn-sm btn-outline" onclick="addSplitProductRow(${i})" style="margin-top:8px;"><span class="en">+ Add Row</span><span class="sep"> # </span><span class="vi">Thêm dòng</span></button>
-      <div class="field" style="margin-top:12px;">
-        <label><span class="en">Paste from Excel / Clipboard</span><span class="sep"> # </span><span class="vi">Dán từ Excel / Clipboard</span></label>
-        <textarea id="split-paste-${i}" class="paste-area" placeholder="Code[TAB]Name[TAB]Qty — one row per line / mỗi dòng 1 sản phẩm"></textarea>
-        <button class="btn btn-sm btn-outline" onclick="parseSplitPaste(${i})" style="margin-top:8px;"><span class="en">Import</span><span class="sep"> # </span><span class="vi">Nhập</span></button>
       </div>
     </div>`;
   }).join('');
 }
 
-function getSplitShared() {
-  return {
-    buyer: $('#sp-buyer').value.trim(),
-    poNo: $('#sp-po').value.trim(),
-    batchId: $('#sp-batchid').value.trim(),
-    factory: $('#sp-factory').value.trim(),
-    dept: $('#sp-dept').value.trim(),
-    date: $('#sp-date').value.trim(),
-    qualityMode: $('#sp-qualitymode').value || QUALITY_MODES.NONAQL
-  };
+// Turns the ticked product rows into child reports that live INSIDE this same session/file
+// (no downloads) — each with its own Category/Auditor/cartons, sharing the Setup fields
+// (Client, PO, Factory, Dept, Date, Quality Mode) as `masterInfo`. Once created, the Setup
+// screen's own "Start Audit" (whole-order, single-report) flow is hidden and replaced by
+// the child-reports list — see renderChildList().
+function createChildReports() {
+  const buyer = $('#f-buyer').value.trim();
+  const poNo = $('#f-po').value.trim();
+  const factory = $('#f-factory').value.trim();
+  const dept = $('#f-dept').value.trim();
+  const date = $('#f-date').value.trim() || todayStr();
+  const qualityMode = $('#f-qualitymode').value || QUALITY_MODES.NONAQL;
+
+  const included = splitRows.filter(r => r.include);
+  if (!included.length) {
+    alert('Chưa chọn sản phẩm nào để tách. / No products selected to split.');
+    return;
+  }
+  const rowErrors = [];
+  included.forEach(row => {
+    const tag = row.code || row.name;
+    if (!row.category) rowErrors.push(`${tag}: Category`);
+    if (!row.auditor || !row.auditor.trim()) rowErrors.push(`${tag}: Auditor / QC`);
+  });
+  if (rowErrors.length) {
+    alert('Thiếu thông tin ở các dòng sau / Missing info on these rows:\n' + rowErrors.join('\n'));
+    return;
+  }
+
+  masterInfo = { buyer, poNo, factory, dept, date, qualityMode };
+  orderChildren = included.map((row, i) => ({
+    id: 'ch' + (++childSeq),
+    label: row.code || row.name || ('#' + (i + 1)),
+    report: {
+      buyer, poNo, factory, auditorName: row.auditor.trim(), dept, date,
+      orderQty: String(parseInt(row.qty, 10) || 0), orderQtyManual: false,
+      reportNo: row.reportNo || '1', category: row.category, qualityMode,
+      products: [{code: row.code, name: row.name, qty: row.qty}],
+      batchId: poNo, partLabel: row.code || row.name
+    },
+    cartons: [], cartonSeq: 0
+  }));
+  activeChildId = null;
+  report = null; cartons = []; cartonSeq = 0;
+
+  closeSplitModal();
+  renderChildList();
+  renderChildModeBanner();
+  scheduleAutoSave();
+  toast(`✅ Đã tạo ${orderChildren.length} báo cáo con.\nCreated ${orderChildren.length} child report(s).`);
 }
 
-// Validates shared + per-part fields and, if all good, returns an array of
-// {filename, state} ready to snapshot/download — one per part. Returns null (after
-// alerting) if something required is missing, so the caller just bails out.
-function buildSplitReportsData() {
-  const shared = getSplitShared();
-  const missingEn = [], missingVi = [];
-  if (!shared.buyer) { missingEn.push('Client'); missingVi.push('Khách hàng'); }
-  if (!shared.poNo) { missingEn.push('PO Number'); missingVi.push('Số PO'); }
-  if (missingEn.length) {
-    alert('Vui lòng nhập đầy đủ: ' + missingVi.join(', ') + '\n\nPlease fill in the required fields: ' + missingEn.join(', '));
-    return null;
-  }
-  if (!splitParts.length) {
-    alert('Chưa có báo cáo con nào. / No report parts added yet.');
-    return null;
-  }
-  const partErrors = [];
-  splitParts.forEach((part, i) => {
-    const tag = part.label || ('#' + (i+1));
-    if (!part.category) partErrors.push(`${tag}: Category`);
-    if (!part.auditor || !part.auditor.trim()) partErrors.push(`${tag}: Auditor / QC Name`);
-  });
-  if (partErrors.length) {
-    alert('Thiếu thông tin ở các báo cáo con / Missing info in these report parts:\n' + partErrors.join('\n'));
-    return null;
-  }
+/* ------------------------- Child Reports (multi-report order) -------------------------
+   Data model once an order has been split: `masterInfo` holds the shared fields (Client,
+   PO, Factory, Dept, Date, Quality Mode); `orderChildren` holds one entry per child, each
+   with its OWN `report`/`cartons`/`cartonSeq` — same shapes the rest of the app already
+   knows how to work with. Only one child is "active" at a time (`activeChildId`): entering
+   a child simply points the existing globals (`report`, `cartons`, `cartonSeq`) at that
+   child's own data, so every existing screen/function (carton list, checklist, report,
+   print, autosave...) keeps working completely unchanged — no need to touch any of that
+   logic. `report`/`cartons` are the SAME object/array references as `child.report`/
+   `child.cartons`, so edits while a child is active are already reflected in it; only the
+   primitive `cartonSeq` needs writing back explicitly before switching away. */
+let orderChildren = [];
+let activeChildId = null;
+let masterInfo = null;
+let childSeq = 0;
+let _mergedReportActive = false; // true only while the combined "Gộp báo cáo" view is showing
 
-  const batchId = shared.batchId || shared.poNo;
-  const usedNames = {};
-  return splitParts.map((part, i) => {
-    const products = part.products.filter(p => p.code || p.name);
-    const orderQty = products.reduce((s,p) => s + (parseInt(p.qty,10)||0), 0);
-    const partLabel = part.label || String.fromCharCode(65+i);
-    const rpt = {
-      buyer: shared.buyer, poNo: shared.poNo, factory: shared.factory,
-      auditorName: part.auditor.trim(), dept: shared.dept, date: shared.date || todayStr(),
-      orderQty: String(orderQty), orderQtyManual: false,
-      reportNo: part.reportNo || String(i+1),
-      category: part.category, qualityMode: shared.qualityMode,
-      products, batchId, partLabel
-    };
-    const state = { report: rpt, cartons: [], cartonSeq: 0 };
-    const base = `${batchId} - ${partLabel} - OCA Report`.replace(/[\\/:*?"<>|]/g, '_').trim();
-    let fname = base, n = 1;
-    while (usedNames[fname]) fname = `${base} (${++n})`;
-    usedNames[fname] = true;
-    return { filename: fname + '.html', state };
-  });
+function saveActiveChildBack() {
+  if (!activeChildId) return;
+  const child = orderChildren.find(c => c.id === activeChildId);
+  if (!child) return;
+  syncCartonMeta(); // no-ops if no carton is open; otherwise flushes the Audit form into `cartons`
+  child.cartonSeq = cartonSeq;
 }
 
-function downloadSplitFile(item) {
-  const html = snapshotHtmlWithState(item.state);
+function enterChild(id, targetView) {
+  saveActiveChildBack();
+  const child = orderChildren.find(c => c.id === id);
+  if (!child) return;
+  activeChildId = id;
+  report = child.report;
+  cartons = child.cartons;
+  cartonSeq = child.cartonSeq;
+  activeCartonId = null;
+  _mergedReportActive = false;
+  renderChildModeBanner();
+  scheduleAutoSave();
+  if (targetView === 'report') { goToReport(); }
+  else { renderCartonList(); showView('list'); }
+}
+
+function backToMaster() {
+  saveActiveChildBack();
+  activeChildId = null; // clears the "Working on <child>" banner and un-suppresses the master actionbar
+  renderChildList();
+  renderChildModeBanner();
+  showView('setup');
+}
+
+function renderChildModeBanner() {
+  const el = $('#child-mode-banner');
+  if (!el) return;
+  const child = activeChildId ? orderChildren.find(c => c.id === activeChildId) : null;
+  if (child) {
+    el.style.display = 'flex';
+    $('#child-mode-label').textContent = `${child.label}${child.report.auditorName ? ' — ' + child.report.auditorName : ''}`;
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function renderChildList() {
+  const wrap = $('#child-reports-wrap');
+  const listEl = $('#child-reports-list');
+  const bar = $('#actionbar-setup');
+  if (!wrap || !listEl) return;
+  const onSetupView = document.getElementById('view-setup').classList.contains('active');
+  if (!orderChildren.length) {
+    wrap.style.display = 'none';
+    if (bar) bar.style.display = onSetupView ? 'flex' : 'none'; // restore the normal Start Audit bar
+    return;
+  }
+  wrap.style.display = 'block';
+  if (bar) bar.style.display = 'none'; // whole-order Start Audit is replaced by the child list below
+  listEl.innerHTML = orderChildren.map(c => `
+    <div class="child-report-row">
+      <div class="child-report-info">
+        <b>${escapeHtml(c.label)}</b>
+        <span class="child-report-sub">${CATEGORIES[c.report.category].label.en} · ${escapeHtml(c.report.auditorName||'—')} · ${c.cartons.length} carton(s)</span>
+      </div>
+      <div class="child-report-btns">
+        <button class="btn btn-sm btn-ghost child-gear-btn" type="button" onclick="editChildSetup('${c.id}')" title="Edit info / Sửa thông tin">⚙</button>
+        ${c.cartons.length === 0
+          ? `<button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}')">▶ <span class="en">Start Audit</span><span class="sep"> # </span><span class="vi">Bắt Đầu Kiểm Tra</span></button>`
+          : `<button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}')">+ <span class="en">Cartons</span><span class="sep"> # </span><span class="vi">Thùng</span></button>`}
+        <button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}','report')">⇩ <span class="en">Export</span><span class="sep"> # </span><span class="vi">Xuất báo cáo</span></button>
+      </div>
+    </div>`).join('');
+}
+
+// Gear icon on each Child Report row — lets the admin fix a typo in that child's own
+// Category/Auditor/Report No. (or any shared Setup field) without first tapping into its
+// Cartons screen. Makes `id` the active child, then reuses editSetup()'s existing form
+// population + "Save changes" button swap (same one the in-child gear icon on the stepbar
+// uses — see the step-gear button in body.html).
+function editChildSetup(id) {
+  saveActiveChildBack();
+  const child = orderChildren.find(c => c.id === id);
+  if (!child) return;
+  activeChildId = id;
+  report = child.report;
+  cartons = child.cartons;
+  cartonSeq = child.cartonSeq;
+  activeCartonId = null;
+  renderChildModeBanner();
+  editSetup();
+}
+
+function undoSplit() {
+  if (!confirm('Huỷ tách báo cáo? Các báo cáo con và dữ liệu đã nhập trong đó sẽ bị xoá.\n\nUndo split? All child reports and their data will be deleted.')) return;
+  orderChildren = []; activeChildId = null; masterInfo = null;
+  report = null; cartons = []; cartonSeq = 0;
+  renderChildList();
+  renderChildModeBanner();
+  scheduleAutoSave();
+}
+
+// Exports the WHOLE order (masterInfo + every child's report/cartons) as one self-contained
+// .html snapshot — same embedded-state mechanism as the normal Save button, just scoped to
+// the whole package instead of one report. Re-opening it offers to Resume the whole order.
+function exportMasterFile() {
+  saveActiveChildBack();
+  const state = buildAppState();
+  const html = snapshotHtmlWithState(state);
   const blob = new Blob([html], {type:'text/html'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = item.filename;
+  const d = new Date();
+  const yy = String(d.getFullYear()).slice(-2), mm = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
+  const po = String((masterInfo && masterInfo.poNo) || '').trim().replace(/[\\/:*?"<>|]/g, '_').toUpperCase();
+  a.download = `${yy}${mm}${dd}_OCA Report_${po}_MASTER.html`;
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function generateSplitReports() {
-  const items = buildSplitReportsData();
-  if (!items) return;
-  // Staggered so the browser doesn't treat near-simultaneous downloads as a popup flood.
-  items.forEach((item, idx) => setTimeout(() => downloadSplitFile(item), idx * 300));
-  toast(`✅ Đang tạo ${items.length} file báo cáo...\nGenerating ${items.length} report file(s)...`);
+// Builds ONE combined printable report out of every child that has at least one carton
+// audited: a single shared cover (order-level info + an overview table of all children),
+// each child's own checklist content back-to-back (own cover/sign-block stripped out), and
+// one shared sign-off block at the very end. Reuses buildReportPages() per child rather
+// than re-deriving the checklist markup, then keeps only its flow content.
+function mergeReports() {
+  if (!orderChildren.length) { alert('Chưa có báo cáo con nào. / No child reports yet.'); return; }
+  saveActiveChildBack();
+  const saved = { report, cartons, cartonSeq, activeChildId };
+
+  const childSummaries = [];
+  const auditors = new Set();
+  let flowInner = '';
+
+  orderChildren.forEach(child => {
+    if (!child.cartons.length) return; // nothing audited yet in this child — leave it out
+    report = child.report; cartons = child.cartons; cartonSeq = child.cartonSeq; activeCartonId = null;
+    if (report.auditorName) auditors.add(report.auditorName);
+
+    const skuRows = computeSkuAudit();
+    const ov = overallVerdict();
+    const tally = skuRows.reduce((s,r) => ({crit:s.crit+r.crit, maj:s.maj+r.maj, min:s.min+r.min, audited:s.audited+r.audited}), {crit:0,maj:0,min:0,audited:0});
+    const summary = {
+      label: report.partLabel || (report.products[0] && report.products[0].code) || '—',
+      categoryEn: CATEGORIES[report.category].label.en,
+      auditor: report.auditorName || '—', orderQty: report.orderQty || '—', verdict: ov, ...tally
+    };
+    childSummaries.push(summary);
+
+    buildReportPages(); // side effect: writes this child's cover+flow into #report-pages
+    const container = document.createElement('div');
+    container.innerHTML = $('#report-pages').innerHTML;
+    const flowEl = container.querySelector('.flow-content');
+    if (flowEl) {
+      const signBlock = flowEl.querySelector('.sign-block');
+      if (signBlock) signBlock.remove();
+      const header = `<div class="merged-section-header"${childSummaries.length>1?' style="page-break-before:always;"':''}>
+        ${bi('Product / SKU','Sản phẩm / SKU')}: <b>${escapeHtml(summary.label)}</b>
+        &nbsp;·&nbsp; ${bi('Category','Nhóm SP')}: ${escapeHtml(summary.categoryEn)}
+        &nbsp;·&nbsp; ${bi('Auditor','Người kiểm tra')}: ${escapeHtml(summary.auditor)}
+      </div>`;
+      flowInner += header + flowEl.innerHTML;
+    }
+  });
+
+  report = saved.report; cartons = saved.cartons; cartonSeq = saved.cartonSeq; activeChildId = saved.activeChildId;
+
+  if (!childSummaries.length) {
+    alert('Chưa có thùng nào được kiểm ở báo cáo con nào. / No cartons audited in any child report yet.');
+    return;
+  }
+
+  const verdictRank = {PASS:0, CONDITIONAL:1, FAIL:2};
+  const combinedVerdict = childSummaries.reduce((worst,c) => verdictRank[c.verdict] > verdictRank[worst] ? c.verdict : worst, 'PASS');
+  const mi = masterInfo || {};
+
+  const cover = `
+    <div class="page cover-page">
+      <div class="pg-header">
+        <div class="boka-logo">Boka</div>
+        <div class="pg-hdr-mid">${bi('OPEN CARTON AUDIT REPORT (COMBINED)', 'BÁO CÁO KIỂM TRA KHUI THÙNG (TỔNG HỢP)')}</div>
+        <div class="pg-hdr-right upper"></div>
+      </div>
+      <div class="report-title">OCA REPORT</div>
+      <div class="cover-body">
+        <table class="meta-table upper meta-table-1col">
+          <tr><td class="mt-label">${bi('Client','Khách hàng')}</td><td>${escapeHtml(mi.buyer||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('Factory / Line','Nhà máy / Chuyền')}</td><td>${escapeHtml(mi.factory||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('PO No.','Số PO')}</td><td>${escapeHtml(mi.poNo||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('Date','Ngày')}</td><td>${escapeHtml(mi.date||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('Dept.','Bộ phận')}</td><td>${escapeHtml(mi.dept||'—')}</td></tr>
+        </table>
+        <div class="overall-verdict ov-${combinedVerdict.toLowerCase()}">
+          ${bi('Overall Result','Kết Quả Chung')} : ${combinedVerdict}
+        </div>
+        <div class="rpt-section-title">${bi('CHILD REPORTS OVERVIEW','Tổng Quan Các Báo Cáo Con')}</div>
+        <div class="table-scroll">
+          <table class="carton-summary-table upper">
+            <thead><tr><th class="col-sku">SKU</th><th>Category</th><th>Auditor</th><th class="col-num">Order Qty</th><th class="col-num">Audited</th><th class="col-num">Critical</th><th class="col-num">Major</th><th class="col-num">Minor</th><th class="col-num">Verdict</th></tr></thead>
+            <tbody>
+              ${childSummaries.map(c => `<tr>
+                <td class="col-sku">${escapeHtml(c.label)}</td><td>${escapeHtml(c.categoryEn)}</td><td>${escapeHtml(c.auditor)}</td>
+                <td class="col-num">${escapeHtml(c.orderQty)}</td><td class="col-num">${c.audited}</td>
+                <td class="col-num">${c.crit}</td><td class="col-num">${c.maj}</td><td class="col-num">${c.min}</td>
+                <td class="col-num vcell v-${c.verdict.toLowerCase()}">${c.verdict}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+
+  const auditorsLine = escapeHtml(Array.from(auditors).join(', ').toUpperCase()) || '—';
+  const signBlock = `
+    <div class="sign-block">
+      <div class="sign-col">
+        <div class="sign-name">${auditorsLine}</div>
+        <div class="sign-line"></div>
+        <div class="sign-label">${biBreak('QC Auditor','Người kiểm tra')}</div>
+      </div>
+      <div class="sign-col">
+        <div class="sign-name">&nbsp;</div>
+        <div class="sign-line"></div>
+        <div class="sign-label">${biBreak('QA Manager','Trưởng phòng QA')}</div>
+      </div>
+      <div class="sign-col">
+        <div class="sign-name">&nbsp;</div>
+        <div class="sign-line"></div>
+        <div class="sign-label">${biBreak('Client / Customer','Khách hàng')}</div>
+      </div>
+    </div>`;
+
+  $('#report-pages').innerHTML = cover + `<div class="flow-content">${flowInner}${signBlock}</div>`;
+  _mergedReportActive = true;
+  showView('report');
+}
+
+/* ------------------------- Google Sync (optional, offline-safe) -------------------------
+   Builds one summary row per SKU (works for both a plain single report and a split
+   multi-report order — reuses computeSkuAudit() exactly as mergeReports() does, via the
+   same save-swap-restore dance over the report/cartons/cartonSeq globals) and POSTs them
+   to the shared Apps Script backend (see APPS_SCRIPT_URL above). This is a pure ADD-ON:
+   it never replaces or blocks the local Save/Export file, which remains the source of
+   truth on this device. If APPS_SCRIPT_URL is blank, offline, or the request fails, the
+   rest of the app is completely unaffected — only a toast reports the outcome. */
+function buildSyncRows() {
+  if (orderChildren.length) {
+    saveActiveChildBack();
+    const saved = { report, cartons, cartonSeq, activeChildId };
+    const rows = [];
+    orderChildren.forEach(child => {
+      if (!child.cartons.length) return; // nothing audited yet — skip, not synced as empty
+      report = child.report; cartons = child.cartons; cartonSeq = child.cartonSeq;
+      rows.push(...skuRowsToSyncRows(computeSkuAudit(), masterInfo, child.report));
+    });
+    report = saved.report; cartons = saved.cartons; cartonSeq = saved.cartonSeq; activeChildId = saved.activeChildId;
+    return rows;
+  }
+  if (!report) return [];
+  return skuRowsToSyncRows(computeSkuAudit(), report, report);
+}
+
+// `master` supplies the order-level fields (buyer/po/factory/dept/date/qualityMode) — for a
+// plain report that's just `report` itself; for a child it's `masterInfo`. `childReport`
+// supplies the per-SKU fields (auditorName/category/reportNo/orderQty) specific to that SKU.
+function skuRowsToSyncRows(skuRows, master, childReport) {
+  const now = new Date().toISOString();
+  return skuRows.map(r => ({
+    syncId: [master.poNo, childReport.category, r.code || r.name].filter(Boolean).join('|'),
+    buyer: master.buyer || '', poNo: master.poNo || '', factory: master.factory || '',
+    dept: master.dept || '', date: master.date || '', qualityMode: master.qualityMode || '',
+    auditor: childReport.auditorName || '', category: childReport.category || '',
+    skuCode: r.code || '', skuName: r.name || '', lotQtyPcs: r.lotQtyPcs || 0,
+    sampleSize: r.sampleN || '', audited: r.audited || 0,
+    ok: r.ok || 0, ng: r.ng || 0, na: r.na || 0, crit: r.crit || 0, maj: r.maj || 0, min: r.min || 0,
+    verdict: r.verdict || '', syncedAt: now,
+  }));
+}
+
+async function syncToGoogle() {
+  if (!APPS_SCRIPT_URL) {
+    alert('Chưa cấu hình Google Sync (APPS_SCRIPT_URL trống). / Google Sync not configured yet.');
+    return;
+  }
+  const allRows = buildSyncRows();
+  if (!allRows.length) {
+    alert('Chưa có SKU nào đã audit để đồng bộ. / No audited SKU to sync yet.');
+    return;
+  }
+
+  // The Auditor name typed on each row IS the credential — no separate password/popup.
+  // Rows whose auditor isn't on ALLOWED_AUDITORS never leave the device; they stay as a
+  // completely normal local report. This is a client-side convenience filter only — the
+  // real gate is Code.gs re-checking the same list server-side (see oca_save).
+  const rows = allRows.filter(r => isAuditorAllowed(r.auditor));
+  const blocked = allRows.filter(r => !isAuditorAllowed(r.auditor));
+
+  if (!rows.length) {
+    const names = [...new Set(blocked.map(r => r.auditor || '(trống/empty)'))].join(', ');
+    alert(
+      `Tên Auditor "${names}" chưa được cấp quyền đồng bộ. Báo cáo vẫn lưu/in bình thường, chỉ không lên Google.\n` +
+      `Auditor name "${names}" is not authorized to sync. The report still saves/prints normally, it just won't be uploaded.`
+    );
+    return;
+  }
+
+  toast('☁️ Đang đồng bộ... / Syncing...');
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      // text/plain avoids a CORS preflight against Apps Script (it doesn't answer OPTIONS).
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'oca_save', rows }),
+    });
+    const data = await res.json();
+    if (data && data.ok) {
+      const skipNote = blocked.length ? `\n(Bỏ qua ${blocked.length} dòng tên Auditor chưa được cấp quyền.)` : '';
+      toast(`✅ Đã đồng bộ ${rows.length} dòng lên Google.\nSynced ${rows.length} row(s) to Google.${skipNote}`);
+    } else {
+      toast('⚠️ Đồng bộ thất bại: ' + (data && data.error || 'unknown error'));
+    }
+  } catch (e) {
+    // Offline, blocked network, wrong URL, etc. — never throws up into the caller; the
+    // local file is already safe regardless of whether this succeeds.
+    toast('⚠️ Không thể đồng bộ (offline hoặc sai URL). / Could not sync (offline or bad URL).');
+  }
+}
+
+function reportBack() {
+  if (_mergedReportActive) { backToMaster(); return; }
+  renderCartonList();
+  showView('list');
 }
 
 /* ------------------------------ Carton model ----------------------------- */
@@ -5173,6 +5530,7 @@ async function onSkuManualChange() {
   if (!c) return;
   const typed = $('#ca-sku').value.trim();
   if (!typed || typed === c.sku) { syncCartonMeta(); return; }
+  if (!checkSkuMatchesReport(typed)) { $('#ca-sku').value = c.sku || ''; return; }
   const ok = await handleSkuDuplicateCheck(c, typed);
   if (!ok) return; // handleSkuDuplicateCheck already reset the SKU field + carton number
   c.sku = typed;
@@ -5406,12 +5764,28 @@ function scanQr(inputEl) {
   });
 }
 
+// Child reports (split by product) are scoped to exactly ONE SKU — report.partLabel is only
+// ever set on a child's report object (see createChildReports()). Scanning/typing a code that
+// doesn't match that one assigned SKU almost always means the QC grabbed the wrong carton (or
+// is on the wrong child report entirely), so it's blocked outright rather than silently folded
+// in — unlike the whole-order Setup/Product-List flow, which is expected to span many SKUs and
+// keeps auto-adding unseen codes as before.
+function checkSkuMatchesReport(code) {
+  if (!report || !report.partLabel) return true; // not a child (single-SKU) report — no restriction
+  const assigned = (report.products && report.products[0] && report.products[0].code) || '';
+  if (!assigned) return true; // child has no code to compare against (name-only row) — nothing to enforce
+  if (String(code).trim().toUpperCase() === assigned.trim().toUpperCase()) return true;
+  alert(`Mã quét/nhập (${code}) không khớp với SKU của báo cáo con này (${assigned}). Mỗi báo cáo con chỉ áp dụng cho đúng 1 SKU — vui lòng kiểm tra lại thùng hàng hoặc báo cáo đang mở.\n\nScanned/typed code (${code}) does not match this child report's assigned SKU (${assigned}). Each child report is scoped to exactly one SKU — please check the carton or which report you have open.`);
+  return false;
+}
+
 function onQrDecoded(text) {
   const parsed = parseQrString(text);
   if (!parsed.code) {
     alert('Mã QR không chứa dữ liệu hợp lệ. / QR code did not contain valid data.');
     return;
   }
+  if (!checkSkuMatchesReport(parsed.code)) return;
   // Duplicate guard: same product code AND same carton sequence number ("xx" in "xx/yy")
   // already used on a DIFFERENT carton in this report means this exact carton was already
   // audited — block it before touching anything. Same code with a different sequence number
@@ -5786,6 +6160,7 @@ function finishCarton() {
 
 /* ------------------------------ Report / print ------------------------------ */
 function goToReport() {
+  _mergedReportActive = false; // entering a single (child or whole-order) report, not the merged view
   if (cartons.length === 0) { alert('Chưa có thùng nào để xuất báo cáo. / No cartons to report yet.'); return; }
   if (report.qualityMode === QUALITY_MODES.AQL) {
     const short = computeSkuAudit().filter(r => r.insufficientSample && r.audited > 0);
@@ -6096,6 +6471,10 @@ function snapshotHtmlWithState(state) {
 
 function buildAppState() {
   syncCartonMeta();
+  if (orderChildren.length) {
+    saveActiveChildBack();
+    return { multiReport: true, masterInfo, orderChildren, activeChildId };
+  }
   return { report, cartons, cartonSeq };
 }
 
@@ -6114,7 +6493,7 @@ function scheduleAutoSave() {
   clearTimeout(_autoSaveTimer);
   _autoSaveTimer = setTimeout(() => {
     try {
-      if (!report) { localStorage.removeItem(AUTOSAVE_KEY); return; }
+      if (!report && !orderChildren.length) { localStorage.removeItem(AUTOSAVE_KEY); return; }
       const state = buildAppState();
       state.autoSavedAt = Date.now();
       localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(state));
@@ -6135,7 +6514,7 @@ function readAutoSave() {
     const raw = localStorage.getItem(AUTOSAVE_KEY);
     if (!raw) return null;
     const state = JSON.parse(raw);
-    return (state && state.report) ? state : null;
+    return (state && (state.report || state.multiReport)) ? state : null;
   } catch (e) { return null; }
 }
 
@@ -6192,17 +6571,42 @@ function importDemoData(inputEl) {
 // Save-file resume) was catching as a generic "could not read file" error. Patch any carton
 // missing a now-current group with a freshly-built empty one (unanswered, not deleted data)
 // so older files keep loading instead of failing outright.
-function normalizeCartonGroups(c) {
-  const empty = buildEmptyGroups(report.category);
+function normalizeCartonGroups(c, category) {
+  const empty = buildEmptyGroups(category || (report && report.category));
   GROUPS.forEach(g => {
     if (!c.groups[g.id]) c.groups[g.id] = empty[g.id] || [];
   });
 }
 
 function restoreAppState(state) {
+  if (state.multiReport) {
+    masterInfo = state.masterInfo || {};
+    orderChildren = state.orderChildren || [];
+    orderChildren.forEach(ch => {
+      ch.cartons = ch.cartons || [];
+      ch.cartons.forEach(c => normalizeCartonGroups(c, ch.report.category));
+      ch.cartonSeq = ch.cartonSeq || ch.cartons.length;
+      childSeq = Math.max(childSeq, parseInt(String(ch.id||'').replace('ch',''),10) || 0);
+    });
+    activeChildId = null;
+    report = null; cartons = []; cartonSeq = 0;
+    $('#f-buyer').value = masterInfo.buyer||'';
+    $('#f-po').value = masterInfo.poNo||'';
+    initFactorySelect();
+    setFactoryValue(masterInfo.factory||'');
+    initDeptSelect();
+    setDeptValue(masterInfo.dept||'');
+    $('#f-date').value = masterInfo.date||todayStr();
+    $('#f-qualitymode').value = masterInfo.qualityMode || QUALITY_MODES.NONAQL;
+    onQualityModeChange();
+    renderChildList();
+    renderChildModeBanner();
+    return;
+  }
+
   report = state.report;
   cartons = state.cartons || [];
-  cartons.forEach(normalizeCartonGroups);
+  cartons.forEach(c => normalizeCartonGroups(c));
   cartonSeq = state.cartonSeq || cartons.length;
   productsDraft = report.products || [];
   $('#f-buyer').value = report.buyer||'';
@@ -6586,24 +6990,34 @@ async function saveReportFile() {
 /* ------------------------------ Resume-on-load ------------------------------ */
 function showResumeDialog(state) {
   window._pendingResumeState = state;
-  const r = state.report || {};
+  let metaHtml;
+  if (state.multiReport) {
+    const mi = state.masterInfo || {};
+    const children = state.orderChildren || [];
+    const totalCartons = children.reduce((s,c) => s + (c.cartons ? c.cartons.length : 0), 0);
+    metaHtml = `<strong>${escapeHtml(mi.poNo || mi.buyer || '—')}</strong>` +
+      `${escapeHtml(mi.buyer || '')} · ${children.length} ${bi('child report(s)','báo cáo con')} · ${totalCartons} carton(s)`;
+  } else {
+    const r = state.report || {};
+    metaHtml = `<strong>${escapeHtml(r.poNo || r.buyer || '—')}</strong>` +
+      `${escapeHtml(r.buyer || '')}${r.auditorName ? ' · ' + escapeHtml(r.auditorName) : ''} · ${(state.cartons||[]).length} carton(s)`;
+  }
   let autoSavedLine = '';
   if (state.autoSavedAt) {
     const d = new Date(state.autoSavedAt);
     const stamp = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
     autoSavedLine = `<br><span style="font-size:11px; opacity:0.75;">${bi('Auto-saved at', 'Tự lưu lúc')} ${escapeHtml(stamp)}</span>`;
   }
-  $('#oca-resume-meta').innerHTML =
-    `<strong>${escapeHtml(r.poNo || r.buyer || '—')}</strong>` +
-    `${escapeHtml(r.buyer || '')}${r.auditorName ? ' · ' + escapeHtml(r.auditorName) : ''} · ${(state.cartons||[]).length} carton(s)` +
-    autoSavedLine;
+  $('#oca-resume-meta').innerHTML = metaHtml + autoSavedLine;
   $('#oca-resume-modal').style.display = 'flex';
 }
 
 function resumeFromSavedState() {
   $('#oca-resume-modal').style.display = 'none';
   const state = window._pendingResumeState;
-  if (state) { restoreAppState(state); showView('list'); }
+  if (!state) return;
+  restoreAppState(state);
+  showView(state.multiReport ? 'setup' : 'list');
 }
 
 function startFreshFromResume() {
@@ -6632,7 +7046,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stEl = $('#__oca_saved_state__');
     if (stEl) {
       const st = JSON.parse(stEl.textContent);
-      if (st && st.report) { showResumeDialog(st); return; }
+      if (st && (st.report || st.multiReport)) { showResumeDialog(st); return; }
     }
   } catch (_) {}
   // No embedded saved-file state (this is the plain, blank app) — check for an in-progress
@@ -6648,9 +7062,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const _origShowView = showView;
   showView = function(name){
     _origShowView(name);
-    ['setup','list','audit','report','split'].forEach(v=>{
+    ['setup','list','audit','report'].forEach(v=>{
       const bar = document.getElementById('actionbar-'+v);
-      if (bar) bar.style.display = (v===name) ? 'flex' : 'none';
+      if (!bar) return;
+      // The whole-order "Start Audit" bar is replaced by the child-reports list once the
+      // order has been split into child reports (see renderChildList()) — never show it then.
+      const show = (v===name) && !(v==='setup' && typeof orderChildren !== 'undefined' && orderChildren.length && typeof activeChildId !== 'undefined' && !activeChildId);
+      bar.style.display = show ? 'flex' : 'none';
     });
   };
 </script>
