@@ -748,7 +748,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <div class="field" style="margin-top:16px;">
       <label><span class="en">Paste from Excel / Clipboard</span><span class="sep"> # </span><span class="vi">Dán từ Excel / Clipboard</span></label>
       <textarea id="paste-area" class="paste-area" placeholder="Code[TAB]Name[TAB]Qty — one row per line / mỗi dòng 1 sản phẩm"></textarea>
-      <button class="btn btn-sm btn-outline" onclick="parsePaste()" style="margin-top:8px;"><span class="en">Parse &amp; Add</span><span class="sep"> # </span><span class="vi">Thêm vào bảng</span></button>
+      <button class="btn btn-sm btn-outline" onclick="parsePaste()" style="margin-top:8px;"><span class="en">Import</span><span class="sep"> # </span><span class="vi">Nhập</span></button>
     </div>
 
     <div class="dev-tools-row">
@@ -2498,7 +2498,14 @@ function exportDemoData() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `oca_demo_${Date.now()}.json`;
+  // Same "YYMMDD_OCA Report_00X" convention as the real Save/Report filename, plus the time
+  // of day — this export has no report number of its own to stay unique by, and a tester
+  // re-exporting several times in one day needs each file to keep its own name.
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mi = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  a.download = `${reportFilename()}_${hh}${mi}${ss}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
