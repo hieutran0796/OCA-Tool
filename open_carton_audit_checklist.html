@@ -608,17 +608,29 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .carton-banner{
   font-size:12.6px; font-weight:400; margin-bottom:0; padding:7.2px 14px;
   display:flex; align-items:center; gap:0; background:var(--brown); color:#fff; border-radius:6px 6px 0 0;
-  border-left:8px solid #999; page-break-after:avoid; break-after:avoid;
+  page-break-after:avoid; break-after:avoid;
 }
-.cb-label{ font-weight:400; }
+.cb-label{ font-weight:400; display:flex; align-items:center; }
 .cb-detail{ font-size:13px; font-weight:400; }
 .carton-banner .cb-detail{ font-size:11.7px; }
-/* Left stripe + banner tint reads the carton's verdict at a glance while scrolling a
-   long multi-carton report, without needing to stop and read the badge text. */
-.carton-banner.v-pass{ border-left-color:var(--ok); background:var(--ok-bg); color:var(--en); }
-.carton-banner.v-fail{ border-left-color:var(--ng); background:var(--ng-bg); color:var(--en); }
-.carton-banner.v-conditional{ border-left-color:var(--maj); background:#fff3d6; color:var(--en); }
-.carton-banner.v-pending{ border-left-color:#999; }
+/* Banner tint reads the carton's verdict at a glance while scrolling a long multi-carton
+   report, without needing to stop and read the badge text. */
+.carton-banner.v-pass{ background:var(--ok-bg); color:var(--en); }
+.carton-banner.v-fail{ background:var(--ng-bg); color:var(--en); }
+.carton-banner.v-conditional{ background:#fff3d6; color:var(--en); }
+/* Carton-number badge: a verdict-colored circle behind "#N", diameter matched to the
+   rendered height of .carton-banner .cd-verdict (3.5px*2 padding + 11.7px*1.5 line-height
+   ≈ 24.55px) so the two verdict indicators in this banner read as one consistent size. */
+.cb-num-badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:24.55px; height:24.55px; min-width:24.55px; border-radius:50%;
+  background:#999; margin-right:7px; flex-shrink:0;
+}
+.carton-banner .cb-num-badge .cb-bold{ color:#fff; }
+.cb-num-badge.v-pass{ background:var(--ok); }
+.cb-num-badge.v-fail{ background:var(--ng); }
+.cb-num-badge.v-conditional{ background:var(--maj); }
+.cb-num-badge.v-pending{ background:rgba(255,255,255,0.25); }
 /* Pale verdict backgrounds above switch the banner from dark (--brown) to a light tint, so the
    bi() helper's default light-on-dark overrides below no longer apply — restore dark text for
    these three variants specifically. */
@@ -4446,7 +4458,7 @@ const DEPT_OPTIONS = ["QA", "QC", "CLIENT"];
 // Paste the deployed Web App URL below once; leave it blank to keep the app 100% offline
 // with the Sync button simply disabled (never required for normal use — local Save/Export
 // always works with or without this).
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx7R8Vs8hbXajB4vBfe0fnOzFN0Nj-IuVDFqy-ItuUfTWZSVRvBNccxJGHxeZYvrJ8/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMmkcjh-AiJN8Tg9Q6RKf9zkgSByNrLpFtHef_-3uZ1-XmS7REXZSrU-d2RQNscyI/exec';
 
 // Per-auditor allowlist: the Auditor field IS the credential — no separate password/popup.
 // Only a row whose `auditor` name matches one of these (case/space-insensitive) gets synced;
@@ -4576,6 +4588,33 @@ function reportFilename() {
   }
   const num = String((report && report.reportNo) || 1).padStart(3, '0');
   return `${yy}${mm}${dd}_OCA Report_${num}`;
+}
+
+// Filename for the whole-state backup uploaded to Drive on Sync (see syncToGoogle()) —
+// deliberately independent of whatever screen/child happens to be active right now (unlike
+// reportFilename(), which depends on `report`/`_mergedReportActive`), since this always
+// represents the ENTIRE file's current state, same scope as Save/Export Master.
+function backupFilename() {
+  const d = new Date();
+  const yy = String(d.getFullYear()).slice(-2);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const clean = s => String(s || '').trim().replace(/[\\/:*?"<>|]/g, '_');
+  if (orderChildren.length) {
+    const po = clean(masterInfo && masterInfo.poNo).toUpperCase();
+    return `${yy}${mm}${dd}_OCA Report_${po}_MASTER`;
+  }
+  if (!report) return `${yy}${mm}${dd}_OCA Report`;
+  const num = String(report.reportNo || 1).padStart(3, '0');
+  return `${yy}${mm}${dd}_OCA Report_${num}`;
+}
+
+// btoa() only handles Latin1 — any Vietnamese/Unicode character throws "Failed to execute
+// 'btoa': the string to be encoded contains characters outside of the Latin1 range". This is
+// the standard browser-safe workaround: re-encode as UTF-8 bytes (via encodeURIComponent),
+// then let unescape() turn those %XX escapes back into raw Latin1-range chars btoa() accepts.
+function utf8ToBase64(str) {
+  return btoa(unescape(encodeURIComponent(str)));
 }
 
 function capFirst(str) {
@@ -5447,6 +5486,17 @@ async function syncToGoogle() {
     return;
   }
 
+  // Whole-file raw backup (NEW): piggybacks on the same Sync click + same POST, uploading the
+  // entire current state as a real .html file into a Drive folder (Code.gs: saveOcaRawFile_()).
+  // This is a snapshot of the WHOLE file (every child/carton), independent of the per-row
+  // ALLOWED_AUDITORS filter above — that filter only governs what reaches the "OCA QC Index"
+  // Sheet rows; the raw backup is an all-or-nothing copy of this device's file, same scope as
+  // the local Save/Export Master button, just also pushed to Drive for safekeeping.
+  saveActiveChildBack();
+  const rawFilename = `${backupFilename()}.html`;
+  const rawHtml = snapshotHtmlWithState(buildAppState());
+  const rawFile = { filename: rawFilename, mimeType: 'text/html', contentBase64: utf8ToBase64(rawHtml) };
+
   toast('☁️ Đang đồng bộ... / Syncing...');
   try {
     // mode:'no-cors' is required here, not optional: Apps Script's ContentService (the only
@@ -5464,10 +5514,10 @@ async function syncToGoogle() {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'oca_save', rows }),
+      body: JSON.stringify({ action: 'oca_save', rows, rawFile }),
     });
     const skipNote = blocked.length ? `\n(Bỏ qua ${blocked.length} dòng tên Auditor chưa được cấp quyền.)` : '';
-    toast(`☁️ Đã gửi ${rows.length} dòng lên Google (kiểm tra lại trong Sheet "OCA QC Index" để chắc chắn).\nSent ${rows.length} row(s) to Google (check the "OCA QC Index" Sheet to confirm).${skipNote}`);
+    toast(`☁️ Đã gửi ${rows.length} dòng + file backup lên Google (kiểm tra lại trong Sheet "OCA QC Index" và folder Drive để chắc chắn).\nSent ${rows.length} row(s) + backup file to Google (check the "OCA QC Index" Sheet and Drive folder to confirm).${skipNote}`);
   } catch (e) {
     // Offline, blocked network, wrong URL, etc. — never throws up into the caller; the
     // local file is already safe regardless of whether this succeeds.
@@ -6624,7 +6674,7 @@ function buildReportPages() {
       flow += `
         <div class="carton-section">
           <div class="carton-banner v-${(c.verdict||'pending').toLowerCase()}">
-            <span class="cb-label">Thùng <b class="cb-bold">#${escapeHtml(c.cartonNo)}</b></span>
+            <span class="cb-label">Thùng&nbsp;<span class="cb-num-badge v-${(c.verdict||'pending').toLowerCase()}"><b class="cb-bold">#${escapeHtml(c.cartonNo)}</b></span></span>
             <span class="cb-detail">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${c.sku? '· SKU: <b class="cb-bold">'+escapeHtml(c.sku)+'</b>'+multiTag:''}</span>
             <span class="cd-verdict v-${(c.verdict||'pending').toLowerCase()}">${c.verdict||'PENDING'}</span>
           </div>
