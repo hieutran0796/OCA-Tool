@@ -145,13 +145,13 @@ button, input, select, textarea{ font-family:inherit; font-size:14px; }
 /* ---------------- App shell ---------------- */
 #app{ max-width:900px; margin:0 auto; padding-bottom:100px; }
 .topbar{
-  background:var(--brown); color:#fff; padding:14px 16px;
+  background:var(--brown); color:#fff; padding:10px 14px;
   display:flex; align-items:center; justify-content:space-between;
   position:sticky; top:0; z-index:50;
 }
-.topbar-brand{ display:flex; align-items:baseline; gap:12px; }
-.boka-logo{ font-family:var(--logo-font); font-size:16px; font-weight:normal; color:#fff; text-transform:lowercase; }
-.app-title{ font-family:var(--font); font-size:19px; font-weight:600; letter-spacing:0.5px; color:#fff; }
+.topbar-brand{ display:flex; align-items:baseline; gap:10px; }
+.boka-logo{ font-family:var(--logo-font); font-size:12px; font-weight:normal; color:#fff; text-transform:lowercase; }
+.app-title{ font-family:var(--font); font-size:14px; font-weight:600; letter-spacing:0.5px; color:#fff; }
 .topbar-contact{
   font-size:10px; line-height:1.5; text-align:right; color:#fff; opacity:0.95; flex-shrink:1;
 }
@@ -289,7 +289,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   background:var(--beige); border-bottom:1px solid var(--border); padding:8px 16px; font-size:12.5px;
 }
-.child-mode-banner b{ color:var(--brown); }
+.child-mode-banner b{ color:var(--brown); text-transform:uppercase; }
 
 #hub-list{ margin-top:4px; padding-bottom:4px; }
 .child-report-row{
@@ -298,6 +298,8 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 }
 .child-report-info{ display:flex; flex-direction:column; gap:2px; min-width:0; }
 .child-report-sub{ font-size:12px; color:var(--vi); }
+.child-report-info b{ text-transform:uppercase; }
+.child-report-sub .upper{ text-transform:uppercase; }
 .child-report-btns{ display:flex; gap:8px; flex-wrap:wrap; }
 .child-gear-btn{ padding:8px 10px; min-width:36px; flex:none; }
 /* Start Audit / Cartons / Export on each child row — light green so the "go do something"
@@ -367,12 +369,23 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
   .btn-wrap-vi .vi{ flex-basis:100%; text-align:center; }
 }
 
-/* ---------------- Summary bar (carton list) ---------------- */
-#rep-summary-bar{
-  display:flex; flex-wrap:wrap; gap:16px 32px; background:#fff; border:1px solid var(--border);
-  border-radius:10px; padding:16px 20px; margin-bottom:16px; font-size:12px;
+/* Empty-state hint (Cartons list, no cartons yet) — stack VI onto its own line on phones,
+   same wrap treatment as .btn-wrap-vi buttons. */
+@media (max-width:480px){
+  .empty-hint .sep{ display:none; }
+  .empty-hint .vi{ display:block; margin-top:2px; }
 }
-.rsum-item{ display:flex; flex-direction:column; gap:6px; }
+
+/* ---------------- Summary bar (carton list) ---------------- */
+/* Label column / value column grid instead of stacked label-over-value blocks — each
+   .rsum-item becomes "display:contents" so its label span and <b>value</b> drop straight
+   into the grid as a row's two cells, keeping the whole block compact on a phone screen. */
+#rep-summary-bar{
+  display:grid; grid-template-columns:max-content 1fr; column-gap:14px; row-gap:7px;
+  background:#fff; border:1px solid var(--border); align-items:baseline;
+  border-radius:10px; padding:14px 18px; margin-bottom:16px; font-size:12px;
+}
+.rsum-item{ display:contents; }
 .rsum-item b{ color:var(--en); font-size:13px; text-transform:uppercase; }
 
 .empty-hint{ text-align:center; padding:40px 16px; color:var(--vi); font-size:13px; }
@@ -399,18 +412,26 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 /* ---------------- Accordion groups ---------------- */
 #groups-accordion{ margin-bottom:100px; }
 .grp{ background:#fff; border:1px solid var(--border); border-radius:10px; margin-bottom:10px; overflow:hidden; }
+/* Two-row header: row 1 is the letter badge + title (never wraps mid-sentence — EN and VI
+   each sit on their own line instead); row 2 holds the item count on the left and the
+   Skip button + chevron pinned to the bottom-right, at a fixed position regardless of how
+   long the title above it is. */
 .grp-head{
-  display:flex; align-items:center; gap:10px; padding:14px 16px; cursor:pointer;
+  display:flex; flex-direction:column; gap:6px; padding:12px 14px; cursor:pointer;
   background:var(--group-bg);
 }
+.grp-head-top{ display:flex; align-items:flex-start; gap:10px; }
+.grp-head-bottom{ display:flex; align-items:center; gap:8px; padding-left:36px; }
 .grp-letter{
   width:26px; height:26px; border-radius:50%; background:var(--brown); color:#fff;
   display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;
 }
-.grp-title{ flex:1; font-size:13px; }
-.grp-meta{ font-size:11px; color:var(--vi); white-space:nowrap; }
+.grp-title{ flex:1; font-size:13px; display:flex; flex-direction:column; line-height:1.35; min-width:0; }
+.grp-title .en{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.grp-title .vi{ font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.grp-meta{ flex:1; font-size:11px; color:var(--vi); white-space:nowrap; }
 .ng-flag{ color:var(--ng); font-weight:700; }
-.grp-chev{ transition:transform 0.2s; color:var(--brown); }
+.grp-chev{ transition:transform 0.2s; color:var(--brown); flex-shrink:0; }
 .grp-head.open .grp-chev{ transform:rotate(180deg); }
 .grp-head.skipped{ opacity:0.65; }
 .grp-skip-flag{ color:var(--ng); font-weight:700; }
@@ -484,11 +505,11 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 
 /* ---------------- Stepbar ---------------- */
 .stepbar{ display:flex; background:#fff; border-bottom:1px solid var(--border); position:sticky; top:57px; z-index:45; }
-.stepbar .step{ flex:1; text-align:center; padding:10px 4px; font-size:11px; font-weight:600; color:#999; border-bottom:3px solid transparent; text-transform:uppercase; letter-spacing:0.3px; }
+.stepbar .step{ flex:1; display:flex; align-items:center; justify-content:center; padding:10px 4px; font-size:11px; font-weight:600; color:#999; border-bottom:3px solid transparent; text-transform:uppercase; letter-spacing:0.3px; }
 .stepbar .step.active{ color:var(--brown); border-bottom-color:var(--accent); }
 .step-gear{
   margin-left:4px; border:none; background:none; color:inherit; font-size:14.4px; font-weight:700; cursor:pointer;
-  padding:2px 4px; vertical-align:middle; opacity:0.75;
+  padding:0 4px; opacity:0.75; display:inline-flex; align-items:center; vertical-align:middle;
 }
 .step-gear:hover{ opacity:1; }
 
@@ -497,6 +518,19 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .report-toolbar{
   display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;
   position:sticky; top:97px; z-index:40; background:#e9e4d8; padding:10px 0; margin-top:-10px;
+}
+/* Phone layout: 2x2 grid instead of 4 stacked full-width rows (each btn-wrap-vi button was
+   claiming its own full row, burning ~half the screen before any report content showed).
+   DOM order stays Back/Save/Sync/Print (desktop + tab order unaffected) — `order` below only
+   reflows the grid on phones into Save+Sync on top, Back+Print(Export) underneath, per request. */
+@media (max-width:480px){
+  .report-toolbar{ display:grid; grid-template-columns:1fr 1fr; gap:6px; position:static; margin-top:0; padding:0; }
+  .report-toolbar .btn{ min-height:38px; padding:7px 8px; font-size:11.5px; }
+  .report-toolbar .btn .oci{ width:15px; height:15px; }
+  .report-toolbar button:nth-child(1){ order:3; } /* Back -> row2 col1 */
+  .report-toolbar button:nth-child(2){ order:1; } /* Save -> row1 col1 */
+  .report-toolbar button:nth-child(3){ order:2; } /* Sync -> row1 col2 */
+  .report-toolbar button:nth-child(4){ order:4; } /* Print -> row2 col2 */
 }
 
 .upper{ text-transform:uppercase; }
@@ -531,9 +565,15 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
    (width:1% + nowrap, same trick used on the report tables' short columns) instead of a
    fixed 150px, and labels use bi() (inline "EN # VI") instead of biBreak() since each row now
    has plenty of width for both languages on one line. */
-.meta-table{ width:100%; border-collapse:collapse; margin-bottom:34px; }
-.meta-table td{ border:1px solid var(--border); padding:8px 10px; font-size:12px; }
-.mt-label{ background:var(--group-bg); font-weight:600; width:1%; white-space:nowrap; color:var(--brown); text-transform:none; }
+.meta-table{ width:100%; border-collapse:collapse; margin-bottom:34px; table-layout:fixed; }
+.meta-table td{ border:1px solid var(--border); padding:8px 10px; font-size:12px; word-wrap:break-word; overflow-wrap:break-word; }
+/* table-layout:fixed above gives every column a hard width split (not the old width:1%+
+   nowrap trick, which sized the WHOLE column to the single longest label across every row —
+   e.g. "Factory / Line # Nhà máy / Chuyền" — so a short value like a date still got squeezed
+   into a narrow remainder and wrapped mid-word). 40/60 keeps the label column compact while
+   guaranteeing the value column enough room on a phone screen; labels wrap normally instead
+   of forcing one unbroken line. */
+.mt-label{ background:var(--group-bg); font-weight:600; width:40%; white-space:normal; color:var(--brown); text-transform:none; }
 
 .overall-verdict{ text-align:center; font-size:18px; font-weight:700; padding:12px; border-radius:8px; margin-bottom:34px; }
 .ov-pass{ background:var(--ok-bg); color:var(--ok); }
@@ -575,10 +615,19 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .carton-banner .cb-detail{ font-size:11.7px; }
 /* Left stripe + banner tint reads the carton's verdict at a glance while scrolling a
    long multi-carton report, without needing to stop and read the badge text. */
-.carton-banner.v-pass{ border-left-color:var(--ok); }
-.carton-banner.v-fail{ border-left-color:var(--ng); }
-.carton-banner.v-conditional{ border-left-color:var(--maj); }
+.carton-banner.v-pass{ border-left-color:var(--ok); background:var(--ok-bg); color:var(--en); }
+.carton-banner.v-fail{ border-left-color:var(--ng); background:var(--ng-bg); color:var(--en); }
+.carton-banner.v-conditional{ border-left-color:var(--maj); background:#fff3d6; color:var(--en); }
 .carton-banner.v-pending{ border-left-color:#999; }
+/* Pale verdict backgrounds above switch the banner from dark (--brown) to a light tint, so the
+   bi() helper's default light-on-dark overrides below no longer apply — restore dark text for
+   these three variants specifically. */
+.carton-banner.v-pass .en, .carton-banner.v-pass .cb-label, .carton-banner.v-pass .cb-detail,
+.carton-banner.v-fail .en, .carton-banner.v-fail .cb-label, .carton-banner.v-fail .cb-detail,
+.carton-banner.v-conditional .en, .carton-banner.v-conditional .cb-label, .carton-banner.v-conditional .cb-detail{ color:var(--en); }
+.carton-banner.v-pass .vi, .carton-banner.v-pass .sep,
+.carton-banner.v-fail .vi, .carton-banner.v-fail .sep,
+.carton-banner.v-conditional .vi, .carton-banner.v-conditional .sep{ color:var(--vi); }
 .cd-verdict{ margin-left:auto; font-size:13px; font-weight:700; padding:4px 12px; border-radius:12px; }
 .carton-banner .cd-verdict{ font-size:11.7px; padding:3.5px 10px; }
 .cd-verdict.v-pass{ background:var(--ok); color:#fff; }
@@ -604,16 +653,15 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .sku-banner.sku-break{ margin-top:26px; }
 .sku-banner .cb-label{ font-weight:700; }
 .sku-banner .cb-detail{ font-size:11.5px; color:#fff; }
-.sku-banner.v-pass{ border-left-color:var(--ok); }
-.sku-banner.v-fail{ border-left-color:var(--ng); }
-/* PASS badge on the sku-banner needs its own color, not var(--ok): the banner's own
-   background is var(--accent), a mid-tone green almost the same lightness as --ok, so the
-   pill nearly disappears into it. A bright yellow-green ("banana-shoot" green) with dark text
-   gives a big lightness jump against the banner on screen AND stays clearly distinct from the
-   accent background when printed in black & white (where hue is lost and only lightness is
-   left to read). */
-.sku-banner .cd-verdict.v-pass{ background:#9acd32; color:var(--brown); }
-.sku-banner .cd-verdict.v-fail{ background:var(--ng); color:#fff; }
+.sku-banner.v-pass{ border-left-color:var(--ok); background:var(--ok); }
+.sku-banner.v-fail{ border-left-color:var(--ng); background:var(--ng); }
+.sku-banner.v-conditional{ border-left-color:var(--maj); background:var(--maj); }
+/* Badge always a plain white pill + verdict-colored text — reads clearly against any of the
+   three banner colors above (a colored pill on a same-hue banner would nearly disappear). */
+.sku-banner .cd-verdict{ background:#fff; }
+.sku-banner .cd-verdict.v-pass{ background:#fff; color:var(--ok); }
+.sku-banner .cd-verdict.v-fail{ background:#fff; color:var(--ng); }
+.sku-banner .cd-verdict.v-conditional{ background:#fff; color:var(--maj); }
 
 /* AQL appendix (Report, AQL mode only) */
 .aql-appendix{ margin-top:20px; }
@@ -633,12 +681,21 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 /* Three-tone hierarchy top to bottom: carton banner (darkest, --brown) > column header
    (mid-tone, --accent) > group row (lightest, --group-bg). */
 .check-table th{ background:var(--accent); color:#fff; text-align:left; }
+/* Verdict-colored header — dark tier (pairs with the pale .grp-row tier below): PASS stays
+   the usual green, FAIL/CONDITIONAL swap the hue while keeping the same darkness, so the
+   whole per-carton table reads as one colored unit together with its .carton-banner above. */
+.check-table.v-pass th{ background:var(--ok); }
+.check-table.v-fail th{ background:var(--ng); }
+.check-table.v-conditional th{ background:var(--maj); }
 .check-table tr{ page-break-inside:avoid; break-inside:avoid; }
 .col-code{ width:7%; } .col-item{ width:39%; } .col-result{ width:12%; } .col-note{ width:42%; }
 .check-table th{ font-size:10.5px; letter-spacing:0.2px; }
 .code-cell{ font-family:var(--font); font-size:10.5px; color:var(--vi); }
 .code-cell .code-suffix{ display:block; white-space:nowrap; }
 .grp-row td{ background:var(--group-bg); font-weight:700; text-transform:uppercase; font-size:10.5px; color:var(--brown); page-break-after:avoid; break-after:avoid; }
+.check-table.v-pass .grp-row td{ background:var(--ok-bg); }
+.check-table.v-fail .grp-row td{ background:var(--ng-bg); }
+.check-table.v-conditional .grp-row td{ background:#fff3d6; }
 .grp-skip-note{ font-weight:400; text-transform:none; color:var(--ng); }
 .grp-skip-note .en, .grp-skip-note .vi{ font-weight:400; }
 .bi-break .sep{ margin-right:2px; }
@@ -811,9 +868,9 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <g id="ic-x" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M6 6l12 12M18 6L6 18"/>
     </g>
-    <g id="ic-gear" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <g id="ic-gear" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       <circle cx="12" cy="12" r="3"/>
-      <path d="M12 2v3M12 19v3M22 12h-3M5 12H2M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12M19.07 19.07l-2.12-2.12M7.05 7.05 4.93 4.93"/>
     </g>
     <g id="ic-arrow-right" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
@@ -843,7 +900,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
   </div>
   <div class="child-mode-banner" id="child-mode-banner" style="display:none;">
     <span><span class="en">Working on</span><span class="sep"> # </span><span class="vi">Đang làm</span>: <b id="child-mode-label"></b></span>
-    <button type="button" class="btn btn-sm btn-outline" onclick="backToHub()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back to Order Hub</span><span class="sep"> # </span><span class="vi">Về Trung Tâm</span></button>
+    <button type="button" class="btn btn-sm btn-outline btn-wrap-vi" onclick="backToHub()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back to Order Hub</span><span class="sep"> # </span><span class="vi">Về Trung Tâm</span></button>
   </div>
   <div class="stepbar">
     <div class="step" data-step="setup">1. Setup <button type="button" class="step-gear" onclick="event.stopPropagation(); editSetup()" title="Edit setup info / Sửa lại thông tin thiết lập"><svg class="oci" viewBox="0 0 24 24" style="margin:0;width:15px;height:15px;"><use href="#ic-gear"/></svg></button></div>
@@ -861,7 +918,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
         <input id="f-buyer" type="text" placeholder="e.g. Arhaus" required>
       </div>
       <div class="field">
-        <label><span class="en">PO Number</span><span class="sep"> # </span><span class="vi">Số PO</span> *</label>
+        <label><span class="en">Order number</span><span class="sep"> # </span><span class="vi">Đơn hàng</span> *</label>
         <input id="f-po" type="text" placeholder="PO-xxxxx" required>
       </div>
       <div class="field">
@@ -870,7 +927,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
         <input id="f-factory" type="text" style="display:none; margin-top:8px;" placeholder="Enter factory / line name" onchange="onFactoryManualChange()">
       </div>
       <div class="field">
-        <label><span class="en">Auditor Name</span><span class="sep"> # </span><span class="vi">Người kiểm tra</span> *</label>
+        <label><span class="en">Auditor</span><span class="sep"> # </span><span class="vi">Người audit</span> *</label>
         <input id="f-auditor" type="text" required>
       </div>
       <div class="field">
@@ -955,7 +1012,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <div id="hub-list"></div>
     <div class="child-master-actions" id="hub-master-actions" style="display:none;">
       <button class="btn btn-outline cma-save" type="button" onclick="exportMasterFile()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-save"/></svg><span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
-      <button class="btn btn-outline cma-sync" type="button" onclick="syncToGoogle()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-cloud"/></svg><span class="en">Sync</span><span class="sep"> # </span><span class="vi">Đồng bộ lên máy chủ</span></button>
+      <button class="btn btn-outline cma-sync" type="button" onclick="syncToGoogle()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-cloud"/></svg><span class="en">Sync</span><span class="sep"> # </span><span class="vi">Tải lên máy chủ</span></button>
       <button class="btn btn-primary cma-merge" type="button" onclick="mergeReports()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-merge"/></svg><span class="en">Merge Reports</span><span class="sep"> # </span><span class="vi">Gộp Báo Cáo</span></button>
       <button class="btn btn-outline btn-danger cma-undo" type="button" onclick="undoSplit()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-undo"/></svg><span class="en">Undo split</span><span class="sep"> # </span><span class="vi">Huỷ tách báo cáo</span></button>
     </div>
@@ -1011,17 +1068,17 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <div id="verdict-box"></div>
   </div>
   <div class="actionbar" id="actionbar-audit" style="display:none;">
-    <button class="btn btn-outline" onclick="syncCartonMeta(); renderCartonList();"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
-    <button class="btn btn-primary" onclick="finishCarton()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-check"/></svg><span class="en">Done</span><span class="sep"> # </span><span class="vi">Xong</span></button>
+    <button class="btn btn-outline btn-wrap-vi" onclick="syncCartonMeta(); renderCartonList();"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
+    <button class="btn btn-primary btn-wrap-vi" onclick="finishCarton()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-check"/></svg><span class="en">Done</span><span class="sep"> # </span><span class="vi">Xong</span></button>
   </div>
 
   <!-- ============ VIEW: REPORT ============ -->
   <div class="view" id="view-report">
     <div class="report-toolbar">
-      <button class="btn btn-outline" onclick="reportBack()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
-      <button class="btn btn-outline" onclick="saveReportFile()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-save"/></svg><span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
-      <button class="btn btn-outline" type="button" onclick="syncToGoogle()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-cloud"/></svg><span class="en">Sync</span><span class="sep"> # </span><span class="vi">Đồng bộ lên máy chủ</span></button>
-      <button class="btn btn-primary" onclick="printReport()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-print"/></svg><span class="en">Print</span><span class="sep"> # </span><span class="vi">In - Xuất PDF</span></button>
+      <button class="btn btn-outline btn-wrap-vi" onclick="reportBack()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
+      <button class="btn btn-outline btn-wrap-vi" onclick="saveReportFile()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-save"/></svg><span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
+      <button class="btn btn-outline btn-wrap-vi" type="button" onclick="syncToGoogle()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-cloud"/></svg><span class="en">Sync</span><span class="sep"> # </span><span class="vi">Tải lên máy chủ</span></button>
+      <button class="btn btn-primary btn-wrap-vi" onclick="printReport()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-print"/></svg><span class="en">Print</span><span class="sep"> # </span><span class="vi">In - Xuất PDF</span></button>
     </div>
     <div id="report-pages"></div>
   </div>
@@ -4794,9 +4851,9 @@ function startAudit() {
 
   const missingVi = [], missingEn = [];
   if (!buyer) { missingEn.push('Client'); missingVi.push('Khách hàng'); }
-  if (!poNo) { missingEn.push('PO Number'); missingVi.push('Số PO'); }
+  if (!poNo) { missingEn.push('Order number'); missingVi.push('Đơn hàng'); }
   if (!category) { missingEn.push('Category'); missingVi.push('Nhóm sản phẩm'); }
-  if (!auditor) { missingEn.push('Auditor Name'); missingVi.push('Người kiểm tra'); }
+  if (!auditor) { missingEn.push('Auditor'); missingVi.push('Người audit'); }
   if (missingEn.length) {
     alert('Vui lòng nhập đầy đủ: ' + missingVi.join(', ') +
       '\n\nPlease fill in the required fields: ' + missingEn.join(', '));
@@ -4856,9 +4913,9 @@ function applySetupEdits() {
 
   const missingVi2 = [], missingEn2 = [];
   if (!buyer) { missingEn2.push('Client'); missingVi2.push('Khách hàng'); }
-  if (!poNo) { missingEn2.push('PO Number'); missingVi2.push('Số PO'); }
+  if (!poNo) { missingEn2.push('Order number'); missingVi2.push('Đơn hàng'); }
   if (!category) { missingEn2.push('Category'); missingVi2.push('Nhóm sản phẩm'); }
-  if (!auditor) { missingEn2.push('Auditor Name'); missingVi2.push('Người kiểm tra'); }
+  if (!auditor) { missingEn2.push('Auditor'); missingVi2.push('Người audit'); }
   if (missingEn2.length) {
     alert('Vui lòng nhập đầy đủ: ' + missingVi2.join(', ') +
       '\n\nPlease fill in the required fields: ' + missingEn2.join(', '));
@@ -4894,9 +4951,9 @@ function openSplitModal() {
   const auditor = $('#f-auditor').value.trim();
   const missingEn = [], missingVi = [];
   if (!buyer) { missingEn.push('Client'); missingVi.push('Khách hàng'); }
-  if (!poNo) { missingEn.push('PO Number'); missingVi.push('Số PO'); }
+  if (!poNo) { missingEn.push('Order number'); missingVi.push('Đơn hàng'); }
   if (!category) { missingEn.push('Category'); missingVi.push('Nhóm sản phẩm'); }
-  if (!auditor) { missingEn.push('Auditor Name'); missingVi.push('Người kiểm tra'); }
+  if (!auditor) { missingEn.push('Auditor'); missingVi.push('Người audit'); }
   if (missingEn.length) {
     alert('Vui lòng nhập đầy đủ ở Setup trước khi tách: ' + missingVi.join(', ') +
       '\n\nPlease fill in these Setup fields first: ' + missingEn.join(', '));
@@ -4948,7 +5005,7 @@ function renderSplitModalRows() {
           <select onchange="updateSplitRow(${i},'category',this.value)">${catOpts}</select>
         </div>
         <div class="field">
-          <label>${biBreak('Auditor / QC','Tên QC')}</label>
+          <label>${biBreak('Auditor','Người audit')}</label>
           <input type="text" value="${escapeHtml(row.auditor)}" oninput="updateSplitRow(${i},'auditor',this.value)">
         </div>
         <div class="field">
@@ -4982,7 +5039,7 @@ function createChildReports() {
   included.forEach(row => {
     const tag = row.code || row.name;
     if (!row.category) rowErrors.push(`${tag}: Category`);
-    if (!row.auditor || !row.auditor.trim()) rowErrors.push(`${tag}: Auditor / QC`);
+    if (!row.auditor || !row.auditor.trim()) rowErrors.push(`${tag}: Auditor`);
   });
   if (rowErrors.length) {
     alert('Thiếu thông tin ở các dòng sau / Missing info on these rows:\n' + rowErrors.join('\n'));
@@ -5105,14 +5162,14 @@ function renderHub() {
       <div class="child-report-row">
         <div class="child-report-info">
           <b>${escapeHtml(c.label)}</b>
-          <span class="child-report-sub">${CATEGORIES[c.report.category].label.en} · ${escapeHtml(c.report.auditorName||'—')} · ${c.cartons.length} carton(s)</span>
+          <span class="child-report-sub">${CATEGORIES[c.report.category].label.en} · <span class="upper">${escapeHtml(c.report.auditorName||'—')}</span> · ${c.cartons.length} carton(s)</span>
         </div>
         <div class="child-report-btns">
           <button class="btn btn-sm btn-ghost child-gear-btn" type="button" onclick="editChildSetup('${c.id}')" title="Edit info / Sửa thông tin"><svg class="oci" viewBox="0 0 24 24" style="margin:0;"><use href="#ic-gear"/></svg></button>
           ${c.cartons.length === 0
             ? `<button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}')"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-play"/></svg><span class="en">Start Audit</span><span class="sep"> # </span><span class="vi">Bắt Đầu Kiểm Tra</span></button>`
             : `<button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}')"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-plus"/></svg><span class="en">Cartons</span><span class="sep"> # </span><span class="vi">Thùng</span></button>`}
-          <button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}','report')"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-export"/></svg><span class="en">Export</span><span class="sep"> # </span><span class="vi">Xuất báo cáo</span></button>
+          <button class="btn btn-sm btn-start-green btn-wrap-vi" onclick="enterChild('${c.id}','report')"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-export"/></svg><span class="en">Export</span><span class="sep"> # </span><span class="vi">Xuất báo cáo con</span></button>
         </div>
       </div>`).join('');
     return;
@@ -5123,7 +5180,7 @@ function renderHub() {
     <div class="child-report-row">
       <div class="child-report-info">
         <b>${escapeHtml(report.poNo || report.buyer || '—')}</b>
-        <span class="child-report-sub">${CATEGORIES[report.category] ? CATEGORIES[report.category].label.en : ''} · ${escapeHtml(report.auditorName||'—')} · ${cartons.length} carton(s)</span>
+        <span class="child-report-sub">${CATEGORIES[report.category] ? CATEGORIES[report.category].label.en : ''} · <span class="upper">${escapeHtml(report.auditorName||'—')}</span> · ${cartons.length} carton(s)</span>
       </div>
       <div class="child-report-btns">
         <button class="btn btn-sm btn-ghost child-gear-btn" type="button" onclick="editSetup()" title="Edit info / Sửa thông tin"><svg class="oci" viewBox="0 0 24 24" style="margin:0;"><use href="#ic-gear"/></svg></button>
@@ -5243,7 +5300,7 @@ function mergeReports() {
       const header = `<div class="merged-section-header"${childSummaries.length>1?' style="page-break-before:always;"':''}>
         ${bi('Product / SKU','Sản phẩm / SKU')}: <b>${escapeHtml(summary.label)}</b>
         &nbsp;·&nbsp; ${bi('Category','Nhóm SP')}: ${escapeHtml(summary.categoryEn)}
-        &nbsp;·&nbsp; ${bi('Auditor','Người kiểm tra')}: ${escapeHtml(summary.auditor)}
+        &nbsp;·&nbsp; ${bi('Auditor','Người audit')}: ${escapeHtml(summary.auditor)}
       </div>`;
       flowInner += header + flowEl.innerHTML;
     }
@@ -5272,7 +5329,7 @@ function mergeReports() {
         <table class="meta-table upper meta-table-1col">
           <tr><td class="mt-label">${bi('Client','Khách hàng')}</td><td>${escapeHtml(mi.buyer||'—')}</td></tr>
           <tr><td class="mt-label">${bi('Factory / Line','Nhà máy / Chuyền')}</td><td>${escapeHtml(mi.factory||'—')}</td></tr>
-          <tr><td class="mt-label">${bi('PO No.','Số PO')}</td><td>${escapeHtml(mi.poNo||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('Order No.','Đơn hàng')}</td><td>${escapeHtml(mi.poNo||'—')}</td></tr>
           <tr><td class="mt-label">${bi('Date','Ngày')}</td><td>${escapeHtml(mi.date||'—')}</td></tr>
           <tr><td class="mt-label">${bi('Dept.','Bộ phận')}</td><td>${escapeHtml(mi.dept||'—')}</td></tr>
         </table>
@@ -5302,7 +5359,7 @@ function mergeReports() {
       <div class="sign-col">
         <div class="sign-name">${auditorsLine}</div>
         <div class="sign-line"></div>
-        <div class="sign-label">${biBreak('QC Auditor','Người kiểm tra')}</div>
+        <div class="sign-label">${biBreak('Auditor','Người audit')}</div>
       </div>
       <div class="sign-col">
         <div class="sign-name">&nbsp;</div>
@@ -5577,8 +5634,8 @@ function cartonStats(c) {
 function renderCartonList() {
   $('#rep-summary-bar').innerHTML = `
     <div class="rsum-item">${bi('Client','Khách hàng')}<b>${escapeHtml(report.buyer||'—')}</b></div>
-    <div class="rsum-item">${bi('PO No.','Số PO')}<b>${escapeHtml(report.poNo||'—')}</b></div>
-    ${report.batchId ? `<div class="rsum-item">${bi('Batch / Part','Lô / Phần')}<b>${escapeHtml(report.batchId)}${report.partLabel ? ' - '+escapeHtml(report.partLabel) : ''}</b></div>` : ''}
+    <div class="rsum-item">${bi('Order No.','Đơn hàng')}<b>${escapeHtml(report.poNo||'—')}</b></div>
+    ${report.batchId ? `<div class="rsum-item"><span>Order - SKU</span><b>${escapeHtml(report.batchId)}${report.partLabel ? ' - '+escapeHtml(report.partLabel) : ''}</b></div>` : ''}
     <div class="rsum-item">${bi('Category','Nhóm SP')}<b>${CATEGORIES[report.category].label.en}</b></div>
     <div class="rsum-item">${bi('Auditor','Người audit')}<b>${escapeHtml(report.auditorName||'—')}</b></div>
     <div class="rsum-item">${bi('Date','Ngày')}<b>${escapeHtml(report.date||'—')}</b></div>
@@ -6031,11 +6088,15 @@ function renderGroups(c) {
     return `
     <div class="grp" data-group="${g.id}">
       <div class="grp-head ${skipped?'skipped':''}" onclick="toggleGroup('${g.id}')">
-        <span class="grp-letter">${g.id}</span>
-        <span class="grp-title"><span class="en">${g.en}</span><span class="sep"> # </span><span class="vi">${g.vi}</span></span>
-        <span class="grp-meta">${skipped ? '<span class="grp-skip-flag">SKIPPED</span>' : (items.length + ' items' + (ngCount? ' · <span class="ng-flag">'+ngCount+' NG</span>':''))}</span>
-        <button type="button" class="skip-toggle-btn ${skipped?'active':''}" onclick="event.stopPropagation(); toggleSkipGroup('${g.id}')" title="Skip this checklist group / Bỏ qua checklist nhóm này">${skipped ? bi('↺ Unskip','Huỷ bỏ qua') : bi('⊘ Skip','Bỏ qua mục này')}</button>
-        <span class="grp-chev">▾</span>
+        <div class="grp-head-top">
+          <span class="grp-letter">${g.id}</span>
+          <span class="grp-title"><span class="en">${g.en}</span><span class="vi">${g.vi}</span></span>
+        </div>
+        <div class="grp-head-bottom">
+          <span class="grp-meta">${skipped ? '<span class="grp-skip-flag">SKIPPED</span>' : (items.length + ' items' + (ngCount? ' · <span class="ng-flag">'+ngCount+' NG</span>':''))}</span>
+          <button type="button" class="skip-toggle-btn ${skipped?'active':''}" onclick="event.stopPropagation(); toggleSkipGroup('${g.id}')" title="Skip this checklist group / Bỏ qua checklist nhóm này">${skipped ? bi('↺ Unskip','Huỷ bỏ qua') : bi('⊘ Skip','Bỏ qua mục này')}</button>
+          <span class="grp-chev">▾</span>
+        </div>
       </div>
       <div class="grp-body" id="grpbody-${g.id}">
         ${skipped
@@ -6438,7 +6499,7 @@ function buildReportPages() {
   const skuRows = computeSkuAudit();
   const ov = overallVerdict();
   const auditorUpper = escapeHtml((report.auditorName||'').toUpperCase());
-  const modeLabel = isAql ? bi('AQL (ANSI/ASQ Z1.4)','AQL (ANSI/ASQ Z1.4)') : bi('Non-AQL (fixed threshold)','Non-AQL (ngưỡng cố định)');
+  const modeLabel = isAql ? bi('AQL (ANSI/ASQ Z1.4)','AQL (ANSI/ASQ Z1.4)') : biBreak('Non-AQL (fixed threshold)','Non-AQL (ngưỡng cố định)');
 
   // ---- Cover page ----
   const resultHead = isAql
@@ -6478,14 +6539,14 @@ function buildReportPages() {
         <table class="meta-table upper meta-table-1col">
           <tr><td class="mt-label">${bi('Client','Khách hàng')}</td><td>${escapeHtml(report.buyer||'—')}</td></tr>
           <tr><td class="mt-label">${bi('Factory / Line','Nhà máy / Chuyền')}</td><td>${escapeHtml(report.factory||'—')}</td></tr>
-          <tr><td class="mt-label">${bi('PO No.','Số PO')}</td><td>${escapeHtml(report.poNo||'—')}</td></tr>
-          ${report.batchId ? `<tr><td class="mt-label">${bi('Batch / Part','Lô / Phần')}</td><td>${escapeHtml(report.batchId)}${report.partLabel ? ' - '+escapeHtml(report.partLabel) : ''}</td></tr>` : ''}
+          <tr><td class="mt-label">${bi('Order No.','Đơn hàng')}</td><td>${escapeHtml(report.poNo||'—')}</td></tr>
+          ${report.batchId ? `<tr><td class="mt-label"><span>Order - SKU</span></td><td>${escapeHtml(report.batchId)}${report.partLabel ? ' - '+escapeHtml(report.partLabel) : ''}</td></tr>` : ''}
           <tr><td class="mt-label">${bi('Category','Nhóm sản phẩm')}</td><td>${bi(CATEGORIES[report.category].label.en, CATEGORIES[report.category].label.vi)}</td></tr>
           <tr><td class="mt-label">${bi('Order Qty','SL đơn hàng')}</td><td>${escapeHtml(report.orderQty||'—')}</td></tr>
           <tr><td class="mt-label">${bi('Date','Ngày')}</td><td>${escapeHtml(report.date||'—')}</td></tr>
-          <tr><td class="mt-label">${bi('Auditor','Người kiểm tra')}</td><td>${escapeHtml(report.auditorName||'—')}</td></tr>
+          <tr><td class="mt-label">${bi('Auditor','Người audit')}</td><td>${escapeHtml(report.auditorName||'—')}</td></tr>
           <tr><td class="mt-label">${bi('Dept.','Bộ phận')}</td><td>${escapeHtml(report.dept||'—')}</td></tr>
-          <tr><td class="mt-label">${bi('Quality Mode','Mức đánh giá')}</td><td>${modeLabel}</td></tr>
+          <tr><td class="mt-label">${biBreak('Quality Mode','Mức đánh giá')}</td><td>${modeLabel}</td></tr>
         </table>
         <div class="overall-verdict ov-${ov.toLowerCase()}">
           ${bi('Overall Result','Kết Quả Chung')} : ${ov}
@@ -6568,7 +6629,7 @@ function buildReportPages() {
             <span class="cd-verdict v-${(c.verdict||'pending').toLowerCase()}">${c.verdict||'PENDING'}</span>
           </div>
           <div class="check-table-wrap table-scroll">
-            <table class="check-table">
+            <table class="check-table v-${(c.verdict||'pending').toLowerCase()}">
               <colgroup><col class="col-code"><col class="col-item"><col class="col-result"><col class="col-note"></colgroup>
               <thead><tr><th>CODE</th><th>DESCRIPTIONS</th><th>RESULT</th><th>NOTE</th></tr></thead>
               <tbody>${bodyRows}</tbody>
@@ -6583,7 +6644,7 @@ function buildReportPages() {
       <div class="sign-col">
         <div class="sign-name">${auditorUpper || '—'}</div>
         <div class="sign-line"></div>
-        <div class="sign-label">${biBreak('QC Auditor','Người kiểm tra')}</div>
+        <div class="sign-label">${biBreak('Auditor','Người audit')}</div>
       </div>
       <div class="sign-col">
         <div class="sign-name">&nbsp;</div>
@@ -6841,8 +6902,26 @@ function applyCartonPageBreaks() {
   clone.querySelectorAll('.carton-section').forEach(el => el.classList.remove('carton-break'));
   clone.querySelectorAll('.sku-banner').forEach(el => el.classList.remove('sku-page-break'));
   clone.querySelectorAll('.sign-block').forEach(el => el.classList.remove('sign-block-page-break'));
+  // The clone must reproduce the REAL printed layout, not the on-screen one, or every height
+  // it measures is wrong. Two things differ between screen and @media print (see style.css):
+  //  1. Padding — on screen .flow-content has 16/28/40/28px padding; print resets the sides to
+  //     0 and keeps only a 6mm top padding. Leaving the screen padding on this clone narrows its
+  //     usable width by 56px versus the real page, which wraps text onto extra lines and makes
+  //     every row measure taller than it will actually print.
+  //  2. Font sizes — print bumps body to 12pt and several tables to 10.5pt/9.5pt, all LARGER
+  //     than their screen px sizes. Measuring at screen sizes understates real row heights.
+  // Both biases made this function think less content fit per page than actually does (or, for
+  // the width bias, the reverse for wrapping) — in practice the two interacted unpredictably and
+  // could leave the sign-off block stranded with a large blank gap above it, instead of packed
+  // tightly against the last printed row. Applying the same print overrides here keeps the
+  // measurement honest.
+  const printPaddingTopPx = 6 * mmToPx;
   clone.style.cssText = `position:absolute; left:-9999px; top:0; visibility:hidden; `
-    + `width:${pageContentWidthPx}px; max-width:none; margin:0; padding:16px 28px 40px 28px; box-shadow:none;`;
+    + `width:${pageContentWidthPx}px; max-width:none; margin:0; padding:${printPaddingTopPx}px 0 0 0; `
+    + `box-shadow:none; font-size:12pt;`;
+  clone.querySelectorAll('.check-table').forEach(t => { t.style.fontSize = '10.5pt'; });
+  clone.querySelectorAll('.meta-table td').forEach(t => { t.style.fontSize = '10.5pt'; });
+  clone.querySelectorAll('.carton-summary-table th, .carton-summary-table td').forEach(t => { t.style.fontSize = '9.5pt'; });
   document.body.appendChild(clone);
 
   const liveBlocks = flow.querySelectorAll('.sku-banner, .carton-section');
@@ -7016,6 +7095,19 @@ function toast(msg) {
   const el = $('#toast');
   if (!el) { alert(msg); return; }
   el.textContent = msg;
+  // #toast's default bottom offset (80px, see style.css) exists to clear the Cartons/Checklist
+  // screens' fixed bottom .actionbar. The Report screen has no bottom bar any more (its toolbar
+  // moved to the top), so that same 80px just left the toast floating over real report content
+  // — the Sync confirmation was landing on top of the Order No./Date rows (reported). Hug the
+  // true bottom edge instead whenever no bottom actionbar is actually visible right now.
+  // There are 3 separate .actionbar elements (setup/list/audit), only one of which is ever
+  // shown at a time — querySelector() alone would always grab the first in DOM order (setup's)
+  // regardless of which view is actually active, so check all of them for the one that's visible.
+  // offsetParent doesn't work here: .actionbar is position:fixed, and a fixed element's
+  // offsetParent is always null in every browser regardless of whether it's actually shown —
+  // checking the computed display is what actually reflects visibility for a fixed element.
+  const barVisible = Array.from(document.querySelectorAll('.actionbar')).some(b => getComputedStyle(b).display !== 'none');
+  el.style.bottom = barVisible ? '80px' : '16px';
   el.classList.add('show');
   clearTimeout(el._t);
   el._t = setTimeout(() => el.classList.remove('show'), 4500);
