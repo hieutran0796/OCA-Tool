@@ -144,10 +144,12 @@ button, input, select, textarea{ font-family:inherit; font-size:14px; }
 
 /* ---------------- App shell ---------------- */
 #app{ max-width:900px; margin:0 auto; padding-bottom:100px; }
+/* Groups topbar + context bar + stepbar into ONE sticky unit so they always scroll together —
+   see the comment on #app-header in body.html for why this replaced per-element sticky/top. */
+.app-header{ position:sticky; top:0; z-index:50; }
 .topbar{
   background:var(--brown); color:#fff; padding:10px 14px;
   display:flex; align-items:center; justify-content:space-between;
-  position:sticky; top:0; z-index:50;
 }
 .topbar-brand{ display:flex; align-items:baseline; gap:10px; }
 .boka-logo{ font-family:var(--logo-font); font-size:12px; font-weight:normal; color:#fff; text-transform:lowercase; }
@@ -286,10 +288,26 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 @media (max-width:520px){ .split-row-fields{ grid-template-columns:1fr 1fr; } .split-row-fields .field:nth-child(3){ grid-column:1/-1; } }
 
 .child-mode-banner{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
   background:var(--beige); border-bottom:1px solid var(--border); padding:8px 16px; font-size:12.5px;
+  min-height:20px;
 }
 .child-mode-banner b{ color:var(--brown); text-transform:uppercase; }
+.cmb-btns{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+/* Keep CAPA + Back to Hub/Report on ONE row even on a narrow phone — shrink just enough to
+   fit both side by side instead of letting them wrap onto separate lines (which would change
+   the context bar's height and defeat the whole point of freezing the stepbar's position). */
+@media (max-width:480px){
+  .cmb-btns .btn{ min-height:30px; padding:5px 10px; font-size:11px; flex-wrap:nowrap; }
+  .cmb-btns .btn .oci{ width:14px; height:14px; }
+  /* The context bar now stays on screen while scrolling (part of the sticky #app-header), so
+     on small phones every px of its height is permanently-visible screen real estate taken
+     away from the checklist/report content below. Trim padding/font, and — unlike the usual
+     .btn-wrap-vi treatment elsewhere — drop the stacked Vietnamese subtitle here entirely
+     (English + icon only) so these buttons stay a single short line instead of two. */
+  .cmb-btns .btn .vi, .cmb-btns .btn .sep{ display:none; }
+  .child-mode-banner{ padding:5px 12px; font-size:11.5px; min-height:16px; gap:4px 6px; }
+}
 
 #hub-list{ margin-top:4px; padding-bottom:4px; }
 .child-report-row{
@@ -470,7 +488,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .ng-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
 .ng-label{ font-size:11px; font-weight:600; color:var(--ng); }
 .sev-group{ display:flex; gap:6px; }
-.sev-btn{ padding:6px 10px; border-radius:6px; border:1px solid var(--border); background:#fff; font-size:11px; font-weight:700; cursor:pointer; }
+.sev-btn{ padding:6px 10px; border-radius:6px; border:1px solid var(--border); background:#fff; font-size:11px; font-weight:700; cursor:pointer; text-transform:uppercase; }
 .sev-crit.active{ background:var(--crit); border-color:var(--crit); color:#fff; }
 .sev-maj.active{ background:var(--maj); border-color:var(--maj); color:#fff; }
 .sev-min.active{ background:var(--min); border-color:var(--min); color:#fff; }
@@ -504,7 +522,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .verdict-note{ width:100%; min-height:44px; border:1px solid var(--border); border-radius:6px; padding:8px; resize:vertical; }
 
 /* ---------------- Stepbar ---------------- */
-.stepbar{ display:flex; background:#fff; border-bottom:1px solid var(--border); position:sticky; top:57px; z-index:45; }
+.stepbar{ display:flex; background:#fff; border-bottom:1px solid var(--border); }
 .stepbar .step{ flex:1; display:flex; align-items:center; justify-content:center; padding:10px 4px; font-size:11px; font-weight:600; color:#999; border-bottom:3px solid transparent; text-transform:uppercase; letter-spacing:0.3px; }
 .stepbar .step.active{ color:var(--brown); border-bottom-color:var(--accent); }
 .step-gear{
@@ -515,9 +533,10 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 
 /* ---------------- Report / print pages ---------------- */
 #view-report{ background:#e9e4d8; }
+.capa-carton-tag{ display:block; font-size:11px; font-weight:700; color:var(--brown); text-transform:uppercase; opacity:0.75; }
 .report-toolbar{
   display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;
-  position:sticky; top:97px; z-index:40; background:#e9e4d8; padding:10px 0; margin-top:-10px;
+  position:sticky; top:var(--header-h, 97px); z-index:40; background:#e9e4d8; padding:10px 0; margin-top:-10px;
 }
 /* Phone layout: 2x2 grid instead of 4 stacked full-width rows (each btn-wrap-vi button was
    claiming its own full row, burning ~half the screen before any report content showed).
@@ -610,7 +629,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
   display:flex; align-items:center; gap:0; background:var(--brown); color:#fff; border-radius:6px 6px 0 0;
   page-break-after:avoid; break-after:avoid;
 }
-.cb-label{ font-weight:400; display:flex; align-items:center; }
+.cb-label{ font-weight:400; min-width:0; flex:1 1 auto; overflow-wrap:anywhere; word-break:break-word; }
 .cb-detail{ font-size:13px; font-weight:400; }
 .carton-banner .cb-detail{ font-size:11.7px; }
 /* Banner tint reads the carton's verdict at a glance while scrolling a long multi-carton
@@ -618,19 +637,18 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .carton-banner.v-pass{ background:var(--ok-bg); color:var(--en); }
 .carton-banner.v-fail{ background:var(--ng-bg); color:var(--en); }
 .carton-banner.v-conditional{ background:#fff3d6; color:var(--en); }
-/* Carton-number badge: a verdict-colored circle behind "#N", diameter matched to the
-   rendered height of .carton-banner .cd-verdict (3.5px*2 padding + 11.7px*1.5 line-height
-   ≈ 24.55px) so the two verdict indicators in this banner read as one consistent size. */
-.cb-num-badge{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:24.55px; height:24.55px; min-width:24.55px; border-radius:50%;
-  background:#999; margin-right:7px; flex-shrink:0;
+/* Carton-number pill: same shape/size/weight as the PASS/FAIL/CONDITIONAL badge (.cd-verdict)
+   on this same row, uppercased, so "Thùng #N" reads as a matching badge pair rather than a
+   plain label next to a tiny circle. */
+.cb-carton-pill{
+  font-size:13px; font-weight:700; padding:4px 12px; border-radius:12px;
+  text-transform:uppercase; color:#fff; margin-right:7px; flex-shrink:0;
 }
-.carton-banner .cb-num-badge .cb-bold{ color:#fff; }
-.cb-num-badge.v-pass{ background:var(--ok); }
-.cb-num-badge.v-fail{ background:var(--ng); }
-.cb-num-badge.v-conditional{ background:var(--maj); }
-.cb-num-badge.v-pending{ background:rgba(255,255,255,0.25); }
+.carton-banner .cb-carton-pill{ font-size:11.7px; padding:3.5px 10px; }
+.cb-carton-pill.v-pass{ background:var(--ok); }
+.cb-carton-pill.v-fail{ background:var(--ng); }
+.cb-carton-pill.v-conditional{ background:var(--maj); }
+.cb-carton-pill.v-pending{ background:rgba(255,255,255,0.25); }
 /* Pale verdict backgrounds above switch the banner from dark (--brown) to a light tint, so the
    bi() helper's default light-on-dark overrides below no longer apply — restore dark text for
    these three variants specifically. */
@@ -664,6 +682,11 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 }
 .sku-banner.sku-break{ margin-top:26px; }
 .sku-banner .cb-label{ font-weight:700; }
+/* Always put the "Đã audit / Critical·Major·Minor" line + verdict badge on their own row,
+   below the SKU code/name — not just when the SKU text happens to be long enough to force a
+   wrap. flex:1 0 100% means this row always claims the full banner width, so it can never
+   share a line with .cb-label regardless of how short the SKU code/name is. */
+.sku-meta-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex:1 0 100%; }
 .sku-banner .cb-detail{ font-size:11.5px; color:#fff; }
 .sku-banner.v-pass{ border-left-color:var(--ok); background:var(--ok); }
 .sku-banner.v-fail{ border-left-color:var(--ng); background:var(--ng); }
@@ -748,7 +771,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 
 @media print{
   *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
-  .topbar, .stepbar, .actionbar, .report-toolbar{ display:none !important; }
+  .topbar, .stepbar, .actionbar, .report-toolbar, .child-mode-banner{ display:none !important; }
   #view-report{ display:block !important; padding:0; background:#fff; }
   /* #app's 100px bottom padding (clearance for the mobile action bar) was leaking into
      print — often just enough extra height after the sign-block to spill an otherwise-
@@ -900,9 +923,21 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
       <circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="17" cy="12" r="2.2"/>
       <path d="M6 8.2V18"/><path d="M6 8.2c0 4 4 3.8 9 3.8"/>
     </g>
+    <g id="ic-link" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 14 20 4"/><path d="M15 4h5v5"/>
+      <path d="M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/>
+    </g>
   </defs>
 </svg>
 <div id="app">
+  <!-- app-header groups topbar + context bar + stepbar into ONE sticky unit (position:sticky
+       lives on this wrapper only — see .app-header in style.css). Keeping them as separate
+       sticky elements with hand-picked `top` offsets made the context bar (CAPA/Back to Hub)
+       scroll away while the stepbar — pinned to a fixed `top` that assumed the banner's height —
+       stayed stuck right under the topbar, so the context bar visibly vanished while scrolling.
+       Grouping them removes the need for any hardcoded offset: whatever this wrapper's real
+       height is, everything inside it stays together and visible. -->
+  <div class="app-header" id="app-header">
   <div class="topbar">
     <div class="topbar-brand">
       <div class="boka-logo">Boka</div>
@@ -910,15 +945,25 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     </div>
     <div class="topbar-contact">For copyright &amp; technical support, please contact<br><span class="topbar-contact-vi">Bản quyền &amp; hỗ trợ kỹ thuật vui lòng liên hệ</span>: <a href="mailto:Hieu.tran@boka.ltd">Hieu.tran@boka.ltd</a></div>
   </div>
+  <!-- Persistent context bar — visible on every screen except Setup, with the SAME height/
+       position whether showing the "Working on + Back to Hub" (List/Checklist/Report) or
+       "Back to Report" (Hub) content, so the stepbar below never jumps when switching between
+       a report and the Hub. CAPA sits here too (left of Back to Order Hub), visible only on
+       the Report screen. See renderContextBar() in app.js for what toggles what. -->
   <div class="child-mode-banner" id="child-mode-banner" style="display:none;">
-    <span><span class="en">Working on</span><span class="sep"> # </span><span class="vi">Đang làm</span>: <b id="child-mode-label"></b></span>
-    <button type="button" class="btn btn-sm btn-outline btn-wrap-vi" onclick="backToHub()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back to Order Hub</span><span class="sep"> # </span><span class="vi">Về Trung Tâm</span></button>
+    <span id="child-mode-label-wrap"><span class="en">Working on</span><span class="sep"> # </span><span class="vi">Đang làm</span>: <b id="child-mode-label"></b></span>
+    <div class="cmb-btns">
+      <button type="button" class="btn btn-sm btn-outline btn-wrap-vi" id="cmb-capa-btn" onclick="openCapaPicker()" style="display:none;"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-link"/></svg><span class="en">CAPA</span><span class="sep"> # </span><span class="vi">Gửi CAPA</span></button>
+      <button type="button" class="btn btn-sm btn-outline btn-wrap-vi" id="cmb-hub-btn" onclick="backToHub()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back to Hub</span><span class="sep"> # </span><span class="vi">Về Trung Tâm</span></button>
+      <button type="button" class="btn btn-sm btn-outline btn-wrap-vi" id="cmb-resume-btn" onclick="resumeLastReport()" style="display:none;"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back to Report</span><span class="sep"> # </span><span class="vi">Về Báo Cáo</span></button>
+    </div>
   </div>
   <div class="stepbar">
     <div class="step" data-step="setup">1. Setup <button type="button" class="step-gear" onclick="event.stopPropagation(); editSetup()" title="Edit setup info / Sửa lại thông tin thiết lập"><svg class="oci" viewBox="0 0 24 24" style="margin:0;width:15px;height:15px;"><use href="#ic-gear"/></svg></button></div>
     <div class="step" data-step="list">2. Cartons</div>
     <div class="step" data-step="audit">3. Checklist</div>
     <div class="step" data-step="report">4. Report</div>
+  </div>
   </div>
 
   <!-- ============ VIEW: SETUP ============ -->
@@ -1086,6 +1131,9 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 
   <!-- ============ VIEW: REPORT ============ -->
   <div class="view" id="view-report">
+    <!-- CAPA lives in the context bar above (left of "Back to Order Hub"), shown only while
+         this Report screen is active — see renderContextBar() in app.js. The picker it opens
+         aggregates NG items across every carton of this report, not just one. -->
     <div class="report-toolbar">
       <button class="btn btn-outline btn-wrap-vi" onclick="reportBack()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back</span><span class="sep"> # </span><span class="vi">Quay lại</span></button>
       <button class="btn btn-outline btn-wrap-vi" onclick="saveReportFile()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-save"/></svg><span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
@@ -1176,6 +1224,23 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     <div class="modal-btns">
       <button id="oca-dupcarton-confirm-overwrite" class="btn btn-primary">✓ <span class="en">Overwrite</span><span class="sep"> # </span><span class="vi">Ghi đè</span></button>
       <button id="oca-dupcarton-confirm-cancel" class="btn btn-outline">↺ <span class="en">Cancel</span><span class="sep"> # </span><span class="vi">Huỷ</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CAPA PICKER MODAL — pick which NG/fail checklist items, across EVERY carton of the
+     current report, to send over to the Quality Report tool's CAPA flow ══ -->
+<div class="modal-overlay" id="oca-capa-modal" style="display:none">
+  <div class="modal-box modal-box-wide">
+    <div class="modal-subtitle"><span class="en">Send to CAPA</span><span class="sep"> # </span><span class="vi">Gửi sang CAPA</span></div>
+    <div class="modal-question" style="margin-bottom:10px;">
+      <span class="en">Pick the failed item(s) to carry over (from any carton) — you'll finish picking Category/Type in the Quality Report tool.</span><br>
+      <span class="vi">Chọn (các) lỗi muốn gửi qua (của bất kỳ thùng nào) — Category/Type sẽ chọn tiếp bên Quality Report.</span>
+    </div>
+    <div id="capa-modal-rows" class="split-modal-rows"></div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="confirmSendToCapa()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-link"/></svg><span class="en">Open CAPA</span><span class="sep"> # </span><span class="vi">Mở CAPA</span></button>
+      <button class="btn btn-outline" onclick="closeCapaModal()">✕ <span class="en">Cancel</span><span class="sep"> # </span><span class="vi">Huỷ</span></button>
     </div>
   </div>
 </div>
@@ -4460,6 +4525,13 @@ const DEPT_OPTIONS = ["QA", "QC", "CLIENT"];
 // always works with or without this).
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMmkcjh-AiJN8Tg9Q6RKf9zkgSByNrLpFtHef_-3uZ1-XmS7REXZSrU-d2RQNscyI/exec';
 
+// Standalone "Boka Quality Report" tool (separate GitHub Pages app, not part of this file) —
+// the CAPA button on the Checklist screen opens it in a new tab with the failed item(s)
+// carried over as URL query params (see openCapaPicker()/confirmSendToCapa() below). That
+// tool reads the same params on load to pre-fill its Header tab and seed one Issue/Photo
+// slot per item — Category/Type stays a manual pick there (it already has its own taxonomy).
+const CAPA_TOOL_URL = 'https://hieutran0796.github.io/Quality-report/quality-report-form.html';
+
 // Per-auditor allowlist: the Auditor field IS the credential — no separate password/popup.
 // Only a row whose `auditor` name matches one of these (case/space-insensitive) gets synced;
 // everything else still works as a completely normal local report, it just never leaves the
@@ -5160,11 +5232,29 @@ function enterMain(targetView) {
   else { renderCartonList(); showView('list'); }
 }
 
+// Remembers which report (and which screen of it) was last left via backToHub(), so the Hub
+// can offer a one-tap way back instead of making the auditor re-pick the right card/button.
+// { id: <childId, or null for the single un-split report>, view: 'list'|'audit'|'report',
+//   cartonId: <open carton's id, only when view==='audit'>, label: <display text for the button> }
+let lastReportContext = null;
+
 // Leaves whatever report is currently open (child or the single main report) and returns to
 // the Order Hub — the one consistent "back out" action for every report, replacing the old
-// child-only "Back to Order" which only existed for split orders.
+// child-only "Back to Order" which only existed for split orders. Before leaving, records
+// where we were so the Hub's "Back to Report" button can jump straight back to it.
 function backToHub() {
   saveActiveChildBack();
+  const activeEl = document.querySelector('.view.active');
+  const activeName = activeEl ? activeEl.id.replace('view-', '') : null;
+  if (activeName === 'list' || activeName === 'audit' || activeName === 'report') {
+    const child = activeChildId ? orderChildren.find(c => c.id === activeChildId) : null;
+    const label = child ? child.label : (report ? (report.poNo || report.buyer || '—') : '—');
+    lastReportContext = {
+      id: activeChildId, view: activeName,
+      cartonId: activeName === 'audit' ? activeCartonId : null,
+      label
+    };
+  }
   activeChildId = null;
   renderHub();
   showView('hub');
@@ -5173,6 +5263,18 @@ function backToHub() {
 // Kept as an alias: existing call sites (e.g. the merged-report view's own back action)
 // still refer to this name.
 function backToMaster() { backToHub(); }
+
+// The Hub's "Back to Report" button — jumps straight back into whichever report/screen was
+// last left via backToHub(), instead of making the auditor re-find the right card and button.
+function resumeLastReport() {
+  if (!lastReportContext) return;
+  const { id, view, cartonId } = lastReportContext;
+  const targetView = view === 'report' ? 'report' : 'list';
+  if (id) { enterChild(id, targetView); } else { enterMain(targetView); }
+  if (view === 'audit' && cartonId && getCarton(cartonId)) {
+    openCarton(cartonId);
+  }
+}
 
 function renderChildModeBanner() {
   const label = $('#child-mode-label');
@@ -5233,6 +5335,49 @@ function renderHub() {
 
 // Back-compat alias for any remaining reference to the old name.
 function renderChildList() { renderHub(); }
+
+// Drives the persistent context bar (between the topbar and the stepbar) for every screen —
+// called from the showView() wrapper in body.html on every navigation. Kept visible with the
+// SAME height on every screen except Setup (just its content/buttons change) so the stepbar
+// never jumps when switching between a report (List/Checklist/Report) and the Hub:
+//  - Hub: shows only "Back to Report" (if lastReportContext exists); the "Working on" label
+//    is hidden via visibility (not display) so the bar's height doesn't change.
+//  - List/Checklist/Report: shows "Working on: X" + CAPA (Report screen only, left of the
+//    next button) + "Back to Order Hub".
+function renderContextBar(name) {
+  const banner = $('#child-mode-banner');
+  if (!banner) return;
+  const labelWrap = $('#child-mode-label-wrap');
+  const capaBtn = $('#cmb-capa-btn');
+  const hubBtn = $('#cmb-hub-btn');
+  const resumeBtn = $('#cmb-resume-btn');
+  if (name === 'setup') {
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = 'flex';
+  if (name === 'hub') {
+    if (labelWrap) labelWrap.style.visibility = 'hidden';
+    if (capaBtn) capaBtn.style.display = 'none';
+    if (hubBtn) hubBtn.style.display = 'none';
+    if (resumeBtn) {
+      if (lastReportContext) {
+        resumeBtn.style.display = '';
+        const label = lastReportContext.label || '';
+        const suffix = label ? ': ' + escapeHtml(label) : '';
+        resumeBtn.innerHTML = `<svg class="oci" viewBox="0 0 24 24"><use href="#ic-back"/></svg><span class="en">Back to Report${suffix}</span><span class="sep"> # </span><span class="vi">Về Báo Cáo${suffix}</span>`;
+      } else {
+        resumeBtn.style.display = 'none';
+      }
+    }
+  } else { // list / audit / report
+    if (labelWrap) labelWrap.style.visibility = '';
+    if (hubBtn) hubBtn.style.display = '';
+    if (resumeBtn) resumeBtn.style.display = 'none';
+    if (capaBtn) capaBtn.style.display = (name === 'report') ? '' : 'none';
+    renderChildModeBanner();
+  }
+}
 
 // The Hub's "Order Info" button — lets the auditor see/edit the shared Client/PO/Factory/
 // Dept/Date/Quality-mode fields (and, for an un-split order, the Product List) without
@@ -5589,6 +5734,163 @@ function toggleSkipGroup(gid) {
 }
 
 function getCarton(id) { return cartons.find(c => c.id === id); }
+
+/* ------------------------------ CAPA hand-off ------------------------------ */
+// Working list for the CAPA picker modal — one entry per NG item across EVERY carton of the
+// current report (not just one), rebuilt each time openCapaPicker() runs. `include` tracks
+// the checkbox state. Each item carries its own cartonId/cartonNo/sku so a flat, report-wide
+// list can still show (and later hand off) exactly which carton each defect came from.
+let capaPickerItems = [];
+
+function openCapaPicker() {
+  if (!cartons.length) {
+    alert('Chưa có thùng nào được audit trong báo cáo này.\nNo cartons audited in this report yet.');
+    return;
+  }
+  const items = [];
+  cartons.forEach(c => {
+    GROUPS.forEach(g => {
+      (c.groups[g.id] || []).forEach(item => {
+        if (item.status === 'NG') {
+          items.push({
+            cartonId: c.id, cartonNo: c.cartonNo, sku: c.sku || c.linkedCode || '',
+            gid: g.id, gEn: g.en, gVi: g.vi, code: item.code, en: item.en, vi: item.vi,
+            severity: item.severity || '', note: item.note || '',
+            photos: (item.photos || []).map(p => p.src), include: true
+          });
+        }
+      });
+    });
+  });
+  if (!items.length) {
+    alert('Chưa có mục nào bị đánh dấu NG (Không đạt) trong báo cáo này.\nNo item is marked NG (Fail) in this report yet.');
+    return;
+  }
+  capaPickerItems = items;
+  renderCapaPickerRows();
+  $('#oca-capa-modal').style.display = 'flex';
+}
+
+function closeCapaModal() {
+  $('#oca-capa-modal').style.display = 'none';
+}
+
+function toggleCapaRowInclude(i) {
+  if (capaPickerItems[i]) capaPickerItems[i].include = !capaPickerItems[i].include;
+  renderCapaPickerRows();
+}
+
+// Same red/orange/yellow rule used for the severity buttons/badges elsewhere in the app.
+function severityColorVar(sev) {
+  if (sev === 'Critical') return 'var(--crit)';
+  if (sev === 'Major') return 'var(--maj)';
+  if (sev === 'Minor') return 'var(--min)';
+  return 'var(--vi)';
+}
+
+function renderCapaPickerRows() {
+  const wrap = $('#capa-modal-rows');
+  if (!wrap) return;
+  wrap.innerHTML = capaPickerItems.map((it, i) => `
+    <label class="split-row-check" style="align-items:flex-start; text-align:left;">
+      <input type="checkbox" ${it.include ? 'checked' : ''} onchange="toggleCapaRowInclude(${i})">
+      <span class="split-row-text" style="text-align:left;">
+        <span class="capa-carton-tag">${bi('Carton','Thùng')} #${escapeHtml(it.cartonNo)}${it.sku ? ' · ' + escapeHtml(it.sku) : ''}</span>
+        <span class="split-row-sku" style="white-space:nowrap;">${escapeHtml(it.code)}${it.severity ? ' <span style="font-weight:700;color:' + severityColorVar(it.severity) + ';">(' + escapeHtml(it.severity.toUpperCase()) + ')</span>' : ''}</span>
+        <span class="split-row-sub" style="text-align:left;">${bi(it.en, it.vi)}${it.note ? ' — ' + escapeHtml(it.note) : ''}</span>
+      </span>
+    </label>`).join('');
+}
+
+// Pieces inspected in THIS carton — "Products per Carton" (default 1; the pcs/thùng value
+// when pcsMulti is ticked). Used for the Quality Report hand-off's Inspected Qty.
+function skuInspectedQty(c) {
+  if (!c) return '1';
+  return String(parseInt(c.qtyInspected, 10) || 1);
+}
+
+// Builds the hand-off URL and opens the Quality Report tool in a new tab. Text fields
+// (header + per-defect items + Product List) travel as URL query params; Category/Type
+// per defect is left for the auditor to pick there (it already has its own taxonomy).
+// Photos can't fit in a URL, so they travel separately over a postMessage handshake once
+// the new tab signals it's ready (see "oca-capa-ready"/"oca-capa-photos" below).
+function confirmSendToCapa() {
+  const selected = capaPickerItems.filter(it => it.include);
+  if (!selected.length) {
+    alert('Vui lòng chọn ít nhất 1 lỗi.\nPlease select at least one item.');
+    return;
+  }
+  const sevRank = { Critical: 3, Major: 2, Minor: 1 };
+  let topSev = '';
+  selected.forEach(it => { if ((sevRank[it.severity] || 0) > (sevRank[topSev] || 0)) topSev = it.severity; });
+
+  const descLines = selected.map(it => `[Thùng #${it.cartonNo}${it.sku ? ' · ' + it.sku : ''} — ${it.gid} - ${it.code}] ${it.en} / ${it.vi}${it.note ? ' — ' + it.note : ''}`);
+
+  // The picker is now report-wide, so selected defects can come from more than one carton.
+  // Resolve a single product/SKU header + one inspected-qty total for the hand-off:
+  //  - all selected items from the same carton -> same as the old single-carton behavior.
+  //  - several cartons but all the same SKU -> combine (sum inspected qty, list carton #s).
+  //  - mixed SKUs -> leave product/sku blank rather than guess; each item's own carton/SKU
+  //    is still in the description lines above and in the `items` payload below, and the
+  //    auditor can set the header fields on the Quality Report side instead.
+  const cartonIds = [...new Set(selected.map(it => it.cartonId))];
+  const selectedCartons = cartonIds.map(id => getCarton(id)).filter(Boolean);
+  const skus = [...new Set(selectedCartons.map(c => c.linkedCode || c.sku || '').filter(Boolean))];
+  let skuCode = '', productLabel = '', qtyInsp = '';
+  if (selectedCartons.length === 1) {
+    const c = selectedCartons[0];
+    skuCode = c.linkedCode || c.sku || '';
+    productLabel = [c.sku, c.cartonNo ? 'Carton #' + c.cartonNo : ''].filter(Boolean).join(' · ');
+    qtyInsp = skuInspectedQty(c);
+  } else {
+    qtyInsp = String(selectedCartons.reduce((sum, c) => sum + (parseInt(skuInspectedQty(c), 10) || 0), 0));
+    if (skus.length === 1) {
+      skuCode = skus[0];
+      const cartonNos = selectedCartons.map(c => c.cartonNo).filter(Boolean);
+      productLabel = [skuCode, cartonNos.length ? 'Cartons #' + cartonNos.join(', #') : ''].filter(Boolean).join(' · ');
+    }
+  }
+
+  const params = new URLSearchParams();
+  if (report && report.buyer) params.set('customer', report.buyer);
+  if (report && report.poNo) params.set('piwo', report.poNo);
+  if (report && report.date) params.set('date', report.date);
+  if (report && report.auditorName) params.set('reporter', report.auditorName);
+  if (productLabel) params.set('product', productLabel);
+  if (skuCode) params.set('sku', skuCode);
+  if (topSev) params.set('severity', topSev);
+  if (qtyInsp) params.set('qtyinsp', qtyInsp);
+  params.set('qtydef', String(selected.length));
+  params.set('desc', descLines.join('\n'));
+  params.set('items', JSON.stringify(selected.map(it => ({
+    group: it.gid, code: it.code, en: it.en, vi: it.vi, severity: it.severity, note: it.note,
+    cartonNo: it.cartonNo, sku: it.sku, photoCount: (it.photos || []).length,
+  }))));
+  // Whole Product List (so the Quality Report tool's own table doesn't have to be
+  // retyped), tagged with this report's PO/WO so it lands in the right "order" column.
+  if (report && report.products && report.products.length) {
+    params.set('products', JSON.stringify(report.products.map(p => ({ code: p.code, name: p.name, qty: p.qty, order: report.poNo || '' }))));
+  }
+
+  const openedWin = window.open(CAPA_TOOL_URL + '?' + params.toString(), '_blank');
+
+  // If any selected item carries photos, wait for the new tab to confirm it has finished
+  // its own init (it can't read our in-memory photos until then) before sending them.
+  const photosByItem = {};
+  selected.forEach((it, i) => { if (it.photos && it.photos.length) photosByItem[i] = it.photos; });
+  if (openedWin && Object.keys(photosByItem).length) {
+    const handler = (ev) => {
+      if (!ev.data || ev.data.type !== 'oca-capa-ready') return;
+      try { openedWin.postMessage({ type: 'oca-capa-photos', photos: photosByItem }, '*'); } catch (_) {}
+      window.removeEventListener('message', handler);
+    };
+    window.addEventListener('message', handler);
+    // Give up listening after a while in case the tab was blocked/closed before confirming.
+    setTimeout(() => window.removeEventListener('message', handler), 30000);
+  }
+
+  closeCapaModal();
+}
 
 // Custom in-page confirm modal — native confirm()/alert() get silently suppressed inside
 // some mobile in-app webviews, which would otherwise let a delete tap go through unconfirmed.
@@ -6639,9 +6941,11 @@ function buildReportPages() {
       : ` &nbsp;·&nbsp; Đã audit: <b class="cb-bold">${row.audited}</b> thùng`;
     flow += `
       <div class="sku-banner v-${row.verdict.toLowerCase()}${skuIdx>0?' sku-break':''}">
-        <span class="cb-label">SKU <b class="cb-bold">${escapeHtml(row.code || row.name)}</b>${row.name && row.code ? ' — '+escapeHtml(row.name) : ''}</span>
-        <span class="cb-detail">${skuAqlBits} &nbsp;·&nbsp; Critical:<b class="cb-bold">${row.crit}</b> Major:<b class="cb-bold">${row.maj}</b> Minor:<b class="cb-bold">${row.min}</b></span>
-        <span class="cd-verdict v-${row.verdict.toLowerCase()}">${row.verdict}</span>
+        <span class="cb-label">SKU: <b class="cb-bold">${escapeHtml(row.code || row.name)}</b>${row.name && row.code ? ' — '+escapeHtml(row.name) : ''}</span>
+        <div class="sku-meta-row">
+          <span class="cb-detail">${skuAqlBits} &nbsp;·&nbsp; Critical:<b class="cb-bold">${row.crit}</b> Major:<b class="cb-bold">${row.maj}</b> Minor:<b class="cb-bold">${row.min}</b></span>
+          <span class="cd-verdict v-${row.verdict.toLowerCase()}">${row.verdict}</span>
+        </div>
       </div>
       ${LEGEND_HTML}`;
     row.cartons.forEach((c) => {
@@ -6663,7 +6967,7 @@ function buildReportPages() {
           bodyRows += `<tr>
             <td class="code-cell">${formatCode(item.code)}</td>
             <td>${bi(item.en, item.vi)}</td>
-            <td class="status-cell status-${(item.status||'pending').toLowerCase()}">${item.status||'—'}${item.status==='NG' && item.severity? ' ('+item.severity+')':''}</td>
+            <td class="status-cell status-${(item.status||'pending').toLowerCase()}">${item.status||'—'}${item.status==='NG' && item.severity? ' ('+item.severity.toUpperCase()+')':''}</td>
             <td>${noteHtml}${photosHtml}</td>
           </tr>`;
         });
@@ -6674,7 +6978,7 @@ function buildReportPages() {
       flow += `
         <div class="carton-section">
           <div class="carton-banner v-${(c.verdict||'pending').toLowerCase()}">
-            <span class="cb-label">Thùng&nbsp;<span class="cb-num-badge v-${(c.verdict||'pending').toLowerCase()}"><b class="cb-bold">#${escapeHtml(c.cartonNo)}</b></span></span>
+            <span class="cb-carton-pill v-${(c.verdict||'pending').toLowerCase()}">Thùng&nbsp;#${escapeHtml(c.cartonNo)}</span>
             <span class="cb-detail">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${c.sku? '· SKU: <b class="cb-bold">'+escapeHtml(c.sku)+'</b>'+multiTag:''}</span>
             <span class="cd-verdict v-${(c.verdict||'pending').toLowerCase()}">${c.verdict||'PENDING'}</span>
           </div>
@@ -7374,16 +7678,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!bar) return;
       bar.style.display = (v===name) ? 'flex' : 'none';
     });
-    // The "Back to Order Hub" banner appears whenever we're inside the 4-step working flow
-    // (Cartons/Checklist/Report), regardless of whether this is a child report or the single
-    // implicit report of an un-split order — Setup and the Hub itself never show it.
-    const banner = document.getElementById('child-mode-banner');
-    if (banner) {
-      const inFlow = (name === 'list' || name === 'audit' || name === 'report');
-      banner.style.display = inFlow ? 'flex' : 'none';
-      if (inFlow && typeof renderChildModeBanner === 'function') renderChildModeBanner();
-    }
+    // The context bar (Working on/Back to Hub/CAPA, or Back to Report on the Hub) is driven
+    // entirely by renderContextBar() in app.js — kept frozen at this same position for every
+    // screen except Setup so the stepbar below never jumps between screens.
+    if (typeof renderContextBar === 'function') renderContextBar(name);
+    syncHeaderHeight();
   };
+
+  // #app-header (topbar + context bar + stepbar) is one sticky unit of varying height
+  // (the context bar shows/hides per screen). .report-toolbar needs to stick right below it,
+  // so we measure the real rendered height into a CSS var instead of a hardcoded offset.
+  function syncHeaderHeight(){
+    const header = document.getElementById('app-header');
+    if (!header) return;
+    document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px');
+  }
+  window.addEventListener('resize', syncHeaderHeight);
+  window.addEventListener('load', syncHeaderHeight);
+  syncHeaderHeight();
 </script>
 
 </body>
