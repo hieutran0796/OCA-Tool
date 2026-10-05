@@ -604,15 +604,26 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
    list, so keeping each row a bit more compact means importing many products doesn't burn
    through pages as fast. Padding only shrinks vertically; horizontal stays put so cell text
    doesn't feel cramped against its neighbours. */
+/* Safety net for the live app (not print — print needs the page to stay one physical width, so
+   it overrides this back to overflow:visible below): if column min-widths still add up to more
+   than the available width (e.g. AQL mode's 11-column Result table on a narrow screen), scroll
+   horizontally instead of letting the browser silently squeeze every column, SKU included. */
+.table-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
 .carton-summary-table{ width:100%; border-collapse:collapse; font-size:10px; }
 .carton-summary-table th, .carton-summary-table td{ border:1px solid var(--border); padding:5.4px 8px; text-align:center; }
 /* Column sizing: SKU/Product left-aligned and get all spare width (SKU can still grow if its
    content is long); the short numeric/status columns shrink and lock to their header width via
    the classic width:1%+nowrap trick (table-layout stays auto, so unconstrained columns absorb
-   the rest). */
-.carton-summary-table th.col-sku, .carton-summary-table td.col-sku{ text-align:left; width:auto; white-space:normal; word-break:break-word; }
-.carton-summary-table th.col-product, .carton-summary-table td.col-product{ text-align:left; width:auto; }
-.carton-summary-table th.col-num, .carton-summary-table td.col-num{ width:1%; white-space:nowrap; text-align:center; }
+   the rest). min-width on SKU/Product is a floor: with several narrow columns in the Result
+   table (Critical/Major/Minor/Verdict/...), word-break:break-word on col-sku has an effectively
+   0 min-content width, so without a floor the auto layout algorithm would starve it down to a
+   sliver and wrap the SKU code one character per line. th.col-num is allowed to wrap (td stays
+   nowrap) so a longer header label doesn't itself force the column — and SKU/Product — wider
+   than necessary. */
+.carton-summary-table th.col-sku, .carton-summary-table td.col-sku{ text-align:left; width:auto; min-width:70px; white-space:normal; word-break:break-word; }
+.carton-summary-table th.col-product, .carton-summary-table td.col-product{ text-align:left; width:auto; min-width:130px; white-space:normal; }
+.carton-summary-table td.col-num{ width:1%; white-space:nowrap; text-align:center; }
+.carton-summary-table th.col-num{ width:1%; white-space:normal; text-align:center; }
 .carton-summary-table th{ background:var(--brown); color:#fff; text-transform:none; }
 .carton-summary-table th .en, .carton-summary-table th .vi, .carton-summary-table th .sep{ color:#fff; }
 .vcell{ font-weight:700; }
@@ -6856,7 +6867,7 @@ function buildReportPages() {
   // ---- Cover page ----
   const resultHead = isAql
     ? `<tr><th class="col-sku">SKU</th><th class="col-product">Product</th><th class="col-num">Order Qty</th><th class="col-num">PCS/Carton</th><th class="col-num">Lot (Cartons)</th><th class="col-num">n (Required)</th><th class="col-num">Audited</th><th class="col-num">Critical</th><th class="col-num">Major</th><th class="col-num">Minor</th><th class="col-num">Verdict</th></tr>`
-    : `<tr><th class="col-sku">SKU</th><th class="col-product">Product</th><th class="col-num">Order Qty</th><th class="col-num">Audited (Cartons)</th><th class="col-num">Critical</th><th class="col-num">Major</th><th class="col-num">Minor</th><th class="col-num">Verdict</th></tr>`;
+    : `<tr><th class="col-sku">SKU</th><th class="col-product">Product</th><th class="col-num">Order Qty</th><th class="col-num">Audited</th><th class="col-num">Critical</th><th class="col-num">Major</th><th class="col-num">Minor</th><th class="col-num">Verdict</th></tr>`;
   const resultRows = skuRows.map(r => {
     const shortFlag = (r.insufficientSample && r.audited > 0) ? ' <span class="grp-skip-note">(insufficient sample)</span>' : '';
     if (isAql) {
