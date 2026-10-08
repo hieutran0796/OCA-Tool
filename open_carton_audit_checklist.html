@@ -478,6 +478,11 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 
 .item-ng-panel{ display:none; margin-top:10px; padding:10px; background:var(--ng-bg); border-radius:8px; }
 .item-ng-panel.open{ display:block; }
+/* Same panel, reused for an OK item to offer optional (non-mandatory) photo evidence — no
+   severity/note required, just themed green instead of the NG red. */
+.item-ng-panel.ok-theme{ background:var(--ok-bg); }
+.ok-label{ font-size:11px; font-weight:600; color:var(--ok); }
+.ok-label .opt{ font-weight:400; opacity:.75; }
 .ng-warn{
   font-size:11px; font-weight:600; color:#fff; background:var(--crit);
   padding:6px 10px; border-radius:6px; margin-bottom:10px;
@@ -6490,7 +6495,9 @@ function ngIncomplete(item) {
 }
 
 function renderItemRow(gid, idx, item) {
-  const ngOpen = item.status === 'NG';
+  const isNg = item.status === 'NG';
+  const isOk = item.status === 'OK';
+  const panelOpen = isNg || isOk;
   const incomplete = ngIncomplete(item);
   return `
   <div class="item-row" id="item-${gid}-${idx}">
@@ -6503,8 +6510,13 @@ function renderItemRow(gid, idx, item) {
         ${item.noNA ? '' : `<button class="tri-btn tri-na ${item.status==='NA'?'active':''}" onclick="setStatus('${gid}',${idx},'NA')">N/A</button>`}
       </div>
     </div>
-    <div class="item-ng-panel ${ngOpen?'open':''}" id="ngpanel-${gid}-${idx}">
+    <div class="item-ng-panel ${panelOpen?'open':''} ${isOk?'ok-theme':''}" id="ngpanel-${gid}-${idx}">
       ${incomplete ? `<div class="ng-warn"><span class="en">Required: severity + at least a note or a photo</span><span class="sep"> # </span><span class="vi">Bắt buộc: mức độ + ít nhất 1 trong (ghi chú hoặc ảnh)</span></div>` : ''}
+      ${isOk ? `
+      <div class="ng-row">
+        <label class="ok-label"><span class="en">Photo evidence</span><span class="sep"> # </span><span class="vi">Ảnh minh chứng</span> <span class="opt">(<span class="en">optional</span><span class="sep"> # </span><span class="vi">không bắt buộc</span>)</span></label>
+      </div>
+      ` : `
       <div class="ng-row">
         <label class="ng-label"><span class="en">Severity</span><span class="sep"> # </span><span class="vi">Mức độ</span> *</label>
         <div class="sev-group">
@@ -6514,6 +6526,7 @@ function renderItemRow(gid, idx, item) {
         </div>
       </div>
       <textarea class="ng-note" placeholder="Defect note / Ghi chú lỗi..." oninput="setNote('${gid}',${idx},this.value)" onblur="blurNote('${gid}',${idx},this)">${escapeHtml(item.note)}</textarea>
+      `}
       <div class="ng-photos">
         <div class="photo-thumbs" id="thumbs-${gid}-${idx}">${renderThumbs(gid, idx, item.photos)}</div>
         <div class="photo-add-btns">
@@ -6548,7 +6561,7 @@ function setStatus(gid, idx, status) {
   // re-render just this row + group header count
   const row = $('#item-' + gid + '-' + idx);
   row.outerHTML = renderItemRow(gid, idx, item);
-  if (item.status === 'NG') {
+  if (item.status === 'NG' || item.status === 'OK') {
     const panel = $('#ngpanel-' + gid + '-' + idx);
     if (panel) panel.classList.add('open');
   }
@@ -6972,7 +6985,7 @@ function buildReportPages() {
         bodyRows += `<tr class="grp-row"><td colspan="4">${g.id}. ${bi(g.en, g.vi)}</td></tr>`;
         items.forEach(item => {
           const noteHtml = item.note ? `<div class="note-text">${escapeHtml(capFirst(item.note))}</div>` : '';
-          const photosHtml = (item.status === 'NG' && item.photos.length)
+          const photosHtml = (item.photos && item.photos.length)
             ? `<div class="note-photos">${item.photos.map(p => `<img src="${p.src}" onclick="openLightbox(this.src)">`).join('')}</div>`
             : '';
           bodyRows += `<tr>
