@@ -265,7 +265,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .dev-tools-row .btn{ font-size:11px; padding:5px 10px; min-height:auto; }
 
 /* ---------------- Split by Product (modal) + Child Reports (hub screen) ---------------- */
-.split-entry-row{ margin-top:14px; }
+.split-entry-row{ margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; }
 .modal-box-wide{ max-width:560px; text-align:left; }
 .modal-box-wide .modal-subtitle{ text-align:center; }
 .split-modal-rows{ max-height:50vh; overflow-y:auto; margin-bottom:16px; }
@@ -872,6 +872,56 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
 .btn-danger.btn-ghost{ color:#c0392b; }
 .btn-danger.btn-primary{ background:#c0392b; border-color:#c0392b; color:#fff; }
 
+/* ---------------- Report screen: "Jump to issue" FAB + panel (2026-10-17) ----------------
+   Fixed to the viewport (not inside .report-toolbar, which goes position:static on phones
+   and scrolls away with the content) so it's reachable from anywhere while scrolling a long
+   report. Lives inside #view-report, so it's hidden for free whenever that view isn't the
+   active one (.view{display:none} already applies to fixed-position children). */
+.ng-fab{
+  position:fixed; right:16px; bottom:20px; width:52px; height:52px; border-radius:50%;
+  background:var(--ng); color:#fff; border:none; font-size:20px; cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,.28); z-index:60; display:flex; align-items:center; justify-content:center;
+}
+.ng-fab-badge{
+  position:absolute; top:-4px; right:-4px; background:#fff; color:var(--ng); border:2px solid var(--ng);
+  border-radius:10px; font-size:10px; font-weight:800; padding:1px 5px; min-width:18px; text-align:center; line-height:1.3;
+}
+.ng-issue-panel{
+  position:fixed; left:12px; right:12px; bottom:82px; max-width:420px; margin:0 auto;
+  background:#fff; border-radius:12px; border:1px solid var(--border); box-shadow:0 8px 28px rgba(0,0,0,.28);
+  z-index:60; max-height:min(420px, 60vh); display:flex; flex-direction:column; overflow:hidden;
+}
+.ng-issue-head{
+  background:var(--brown); color:#fff; padding:10px 14px; font-size:12.5px; font-weight:700;
+  display:flex; justify-content:space-between; align-items:center; flex:none;
+}
+.ng-issue-head-close{ cursor:pointer; font-size:14px; opacity:.85; }
+.ng-issue-list{ overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.ng-issue-item{
+  display:flex; align-items:center; gap:8px; padding:9px 12px; border-bottom:1px solid var(--border);
+  cursor:pointer; background:none; border-left:none; border-right:none; border-top:none; width:100%; text-align:left; font-family:inherit;
+}
+.ng-issue-item:last-child{ border-bottom:none; }
+.ng-issue-item:active{ background:var(--ng-bg); }
+.ngp-sev{ font-size:9px; font-weight:800; color:#fff; border-radius:4px; padding:2px 6px; flex-shrink:0; text-transform:uppercase; }
+.ngp-sev.ngp-crit{ background:var(--crit); }
+.ngp-sev.ngp-maj{ background:var(--maj); }
+.ngp-sev.ngp-min{ background:var(--min); }
+.ng-issue-text{ flex:1; font-size:11.5px; line-height:1.35; color:var(--en); min-width:0; }
+.ng-issue-loc{ color:var(--vi); font-size:10px; }
+.ng-issue-arrow{ color:var(--accent); font-size:15px; flex:none; }
+
+/* Brief flash so the eye catches the row the panel jumped to — fades back to normal. */
+@keyframes ngJumpFlash{
+  0%{ background:#fff3c4; outline:2px solid #f0b429; }
+  100%{ background:transparent; outline-color:transparent; }
+}
+tr.ng-jump-highlight{ animation:ngJumpFlash 1.8s ease-out; }
+
+@media print{
+  .ng-fab, .ng-issue-panel{ display:none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -1067,6 +1117,7 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
     </div>
 
     <div class="split-entry-row">
+      <button class="btn btn-sm btn-outline" type="button" onclick="exportMasterFile()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-save"/></svg><span class="en">Save</span><span class="sep"> # </span><span class="vi">Lưu file gốc</span></button>
       <button class="btn btn-sm btn-outline" type="button" onclick="openSplitModal()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-split"/></svg><span class="en">Split Report</span><span class="sep"> # </span><span class="vi">Tách báo cáo</span></button>
     </div>
   </div>
@@ -1157,6 +1208,14 @@ button.pl-del{ position:static; display:inline-block; width:24px; height:24px; l
       <button class="btn btn-primary btn-wrap-vi" onclick="printReport()"><svg class="oci" viewBox="0 0 24 24"><use href="#ic-print"/></svg><span class="en">Print</span><span class="sep"> # </span><span class="vi">In - Xuất PDF</span></button>
     </div>
     <div id="report-pages"></div>
+    <button id="ng-fab" class="ng-fab" type="button" style="display:none;" onclick="toggleIssuePanel()">⚠<span class="ng-fab-badge" id="ng-fab-badge"></span></button>
+    <div id="ng-issue-panel" class="ng-issue-panel" style="display:none;">
+      <div class="ng-issue-head">
+        <span id="ng-issue-head-label"></span>
+        <span class="ng-issue-head-close" onclick="toggleIssuePanel()">✕</span>
+      </div>
+      <div class="ng-issue-list" id="ng-issue-list"></div>
+    </div>
   </div>
 </div>
 
@@ -4678,6 +4737,34 @@ function reportFilename() {
   return `${yy}${mm}${dd}_OCA Report_${num}`;
 }
 
+// Same naming rule as exportMasterFile()'s download — factored out so the Ctrl+S title sync
+// below (and any other "whole file, no report open yet" save) stays in lockstep with it.
+function masterSaveFilename() {
+  const d = new Date();
+  const yy = String(d.getFullYear()).slice(-2), mm = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
+  // masterInfo is only set once an order has actually been split into child reports; before
+  // that (Save button next to Split Report, still on Setup) fall back to whatever PO is
+  // currently typed into the form so the draft save/Ctrl+S title are still named usefully.
+  const livePo = ($('#f-po') && $('#f-po').value) || '';
+  const po = String((masterInfo && masterInfo.poNo) || livePo).trim().replace(/[\\/:*?"<>|]/g, '_').toUpperCase();
+  return `${yy}${mm}${dd}_OCA Report_${po}_MASTER`;
+}
+
+// Ctrl/Cmd+S triggers the browser's own native "Save Page As" dialog (shown in the screenshot),
+// which defaults its filename to document.title — normally the static page title set in <head>.
+// Set it to whatever the in-app Save button would name the file — reportFilename() once a
+// report/audit is open, masterSaveFilename() while still on Order Info/Setup — right before the
+// dialog opens, same trick already used for the Save-as-PDF dialog in printReport(). Restored
+// shortly after so the on-screen/tab title isn't left showing a report filename.
+document.addEventListener('keydown', (e) => {
+  const key = (e.key || '').toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && key === 's') {
+    const prevTitle = document.title;
+    document.title = (typeof report !== 'undefined' && report) ? reportFilename() : masterSaveFilename();
+    setTimeout(() => { document.title = prevTitle; }, 2000);
+  }
+});
+
 // Filename for the whole-state backup uploaded to Drive on Sync (see syncToGoogle()) —
 // deliberately independent of whatever screen/child happens to be active right now (unlike
 // reportFilename(), which depends on `report`/`_mergedReportActive`), since this always
@@ -5451,10 +5538,7 @@ function exportMasterFile() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const d = new Date();
-  const yy = String(d.getFullYear()).slice(-2), mm = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
-  const po = String((masterInfo && masterInfo.poNo) || '').trim().replace(/[\\/:*?"<>|]/g, '_').toUpperCase();
-  a.download = `${yy}${mm}${dd}_OCA Report_${po}_MASTER.html`;
+  a.download = `${masterSaveFilename()}.html`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -6957,6 +7041,7 @@ function buildReportPages() {
   // ---- Flowing checklist content, grouped by SKU (fixes defects being read per-carton
   // instead of summed for the whole lot) — each SKU block starts with a summary banner,
   // then lists that SKU's cartons in full checklist detail same as before. ----
+  const reportIssues = [];
   let flow = '<div class="flow-content">';
   skuRows.forEach((row, skuIdx) => {
     if (!row.cartons.length) return; // Product List entries with zero cartons audited yet
@@ -6988,7 +7073,21 @@ function buildReportPages() {
           const photosHtml = (item.photos && item.photos.length)
             ? `<div class="note-photos">${item.photos.map(p => `<img src="${p.src}" onclick="openLightbox(this.src)">`).join('')}</div>`
             : '';
-          bodyRows += `<tr>
+          let rowIdAttr = '';
+          if (item.status === 'NG') {
+            const issueId = 'ng-issue-' + reportIssues.length;
+            rowIdAttr = ` id="${issueId}"`;
+            reportIssues.push({
+              id: issueId,
+              severity: (item.severity || 'minor').toLowerCase(),
+              en: item.en,
+              vi: item.vi,
+              cartonNo: c.cartonNo,
+              sku: row.code || row.name || '',
+              code: String(item.code || '')
+            });
+          }
+          bodyRows += `<tr${rowIdAttr}>
             <td class="code-cell">${formatCode(item.code)}</td>
             <td>${bi(item.en, item.vi)}</td>
             <td class="status-cell status-${(item.status||'pending').toLowerCase()}">${item.status||'—'}${item.status==='NG' && item.severity? ' ('+item.severity.toUpperCase()+')':''}</td>
@@ -7058,6 +7157,53 @@ function buildReportPages() {
     </div>` : '';
 
   $('#report-pages').innerHTML = cover + flow + appendix;
+  renderIssuePanel(reportIssues);
+}
+
+/* ------------------------------ Jump-to-issue FAB + panel ------------------------------ */
+const SEVERITY_ORDER = { critical: 0, major: 1, minor: 2 };
+
+function renderIssuePanel(issues) {
+  const fab = $('#ng-fab');
+  const panel = $('#ng-issue-panel');
+  if (!fab || !panel) return;
+  panel.style.display = 'none';
+  if (!issues || !issues.length) {
+    fab.style.display = 'none';
+    return;
+  }
+  const sorted = issues.slice().sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3));
+  $('#ng-fab-badge').textContent = String(issues.length);
+  fab.style.display = 'flex';
+  $('#ng-issue-head-label').innerHTML = `⚠ ${issues.length} ${bi('NG issues in this report', 'lỗi NG trong báo cáo')}`;
+  $('#ng-issue-list').innerHTML = sorted.map(iss => {
+    const sevClass = iss.severity === 'critical' ? 'ngp-crit' : iss.severity === 'major' ? 'ngp-maj' : 'ngp-min';
+    const sevLabel = iss.severity.toUpperCase();
+    const loc = `Thùng #${escapeHtml(String(iss.cartonNo))}${iss.sku ? ' · ' + escapeHtml(iss.sku) : ''} · ${escapeHtml(iss.code)}`;
+    return `<button type="button" class="ng-issue-item" onclick="jumpToIssue('${iss.id}')">
+      <span class="ngp-sev ${sevClass}">${sevLabel}</span>
+      <span class="ng-issue-text">${bi(iss.en, iss.vi)}<div class="ng-issue-loc">${loc}</div></span>
+      <span class="ng-issue-arrow">›</span>
+    </button>`;
+  }).join('');
+}
+
+function toggleIssuePanel() {
+  const panel = $('#ng-issue-panel');
+  if (!panel) return;
+  panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'flex' : 'none';
+}
+
+function jumpToIssue(id) {
+  const row = document.getElementById(id);
+  if (!row) return;
+  $('#ng-issue-panel').style.display = 'none';
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  row.classList.remove('ng-jump-highlight');
+  // Force reflow so re-adding the class restarts the animation if the same row is jumped to twice.
+  void row.offsetWidth;
+  row.classList.add('ng-jump-highlight');
+  setTimeout(() => row.classList.remove('ng-jump-highlight'), 1800);
 }
 
 /* ------------------------------ Save / Load / Resume ------------------------------ */
@@ -7080,7 +7226,22 @@ function buildAppState() {
     saveActiveChildBack();
     return { multiReport: true, masterInfo, orderChildren, activeChildId };
   }
-  return { report, cartons, cartonSeq };
+  if (report) {
+    return { report, cartons, cartonSeq };
+  }
+  // No report/orderChildren yet — still on the Order Info/Setup screen (e.g. the "Save #
+  // Lưu file gốc" button next to Split Report). Capture the in-progress draft (fields +
+  // product rows) so saving here doesn't silently produce a file that reopens blank.
+  return {
+    draftSetup: true,
+    buyer: ($('#f-buyer') || {}).value || '',
+    poNo: ($('#f-po') || {}).value || '',
+    factory: ($('#f-factory') || {}).value || '',
+    dept: ($('#f-dept') || {}).value || '',
+    date: ($('#f-date') || {}).value || '',
+    qualityMode: ($('#f-qualitymode') || {}).value || QUALITY_MODES.NONAQL,
+    products: productsDraft
+  };
 }
 
 // ---- Auto-save safety net (localStorage) ----
@@ -7682,6 +7843,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stEl) {
       const st = JSON.parse(stEl.textContent);
       if (st && (st.report || st.multiReport)) { showResumeDialog(st); return; }
+      // A draft saved from the Setup screen (no audit started yet) — just prefill the form,
+      // no need for the "Resume previous work?" dialog since there's no audit to discard.
+      if (st && st.draftSetup) {
+        $('#f-buyer').value = st.buyer || '';
+        $('#f-po').value = st.poNo || '';
+        setFactoryValue(st.factory || '');
+        setDeptValue(st.dept || '');
+        $('#f-date').value = st.date || todayStr();
+        $('#f-qualitymode').value = st.qualityMode || QUALITY_MODES.NONAQL;
+        onQualityModeChange();
+        productsDraft = (st.products || []).map(p => ({...p}));
+        renderProductList();
+        showView('setup');
+        return;
+      }
     }
   } catch (_) {}
   // No embedded saved-file state (this is the plain, blank app) — check for an in-progress
